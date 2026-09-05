@@ -1,7 +1,7 @@
 ---
 name: feature-dev
 description: The feature lane of Scruffy. Use when something is wanted rather than broken — new behaviour, a new component, an extension to an existing one. Also handles cleanup work: debt, duplication, dead code. Handles requirements through draft PR. Invoked by scruffy's router, or directly on "feature-dev <key>".
-argument-hint: "<jira key | url | pasted description>"
+argument-hint: "<jira key | url | ticktick task | pasted description>"
 ---
 
 # Scruffy / Feature-Dev
@@ -202,9 +202,11 @@ Criteria that genuinely cannot be tested — a visual judgement, a performance t
 
 ## Step 6 — Implement
 
-Worktree per item, mandatory.
+Worktree per item, mandatory. Create and clean up per `../scruffy/references/worktrees.md`; that file also owns which terminal states keep the worktree and which release it.
 
-Follow the plan, one commit per step, code review between steps. **Run the acceptance tests after every step** — on a cheap loop this is nearly free, and it tells you which criterion each step actually delivered.
+Follow the plan, one commit per step. **Code review between steps** is a fresh subagent, not a second pass by the model that wrote the step — hand it the two SHAs bounding the step, the plan step and acceptance criteria it was meant to satisfy, and nothing else from this run's context. It reports Critical / Important / Minor; Critical and Important get fixed before the next step starts, Minor carries to step 8. **Run the acceptance tests after every step** — on a cheap loop this is nearly free, and it tells you which criterion each step actually delivered.
+
+**A design that changes existing behaviour (step 4) is a candidate for defense-in-depth, not just a fix at the new call site.** If the design crosses a contract — the blast radius mapped in step 3 — add a cheap guard at each boundary it crosses, not only at the point where the new behaviour lives. This stays inside what step 3 already mapped; it is not licence to harden code the feature doesn't touch.
 
 **Find the repo's conventions before writing a line.** No language standards travel with this skill; the repo's rules are what apply:
 
@@ -275,6 +277,8 @@ A feature PR has a harder job than a bug PR: there is no symptom to point at, so
 Run `unslop-prose rewrite --preset crisp` over it.
 
 **Then comment on the ticket** with the PR link.
+
+**TickTick-sourced item:** also move the card, per `../scruffy/references/ticktick.md` — comment with the PR link, then move it to the `In Review` column if that board has one. Every other terminal state leaves the card where it is.
 
 ---
 

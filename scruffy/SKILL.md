@@ -1,7 +1,7 @@
 ---
 name: scruffy
-description: Use when handed a Jira key or URL, a GitHub issue or PR URL, a support request, a Slack thread, or plain text describing something broken or wanted — one item or many. Also on "use scruffy" or "scruffy, take this".
-argument-hint: "<jira key | url | pasted text> ... (one or many)"
+description: Use when handed a Jira key or URL, a GitHub issue or PR URL, a TickTick task, a support request, a Slack thread, or plain text describing something broken or wanted — one item or many. Also on "use scruffy" or "scruffy, take this".
+argument-hint: "<jira key | url | github url | ticktick task | pasted text> ... (one or many)"
 ---
 
 # Scruffy
@@ -69,7 +69,7 @@ This is the only trigger the correction loop has. A run ends when the PR opens, 
 
 ## Step 2 — Intake and classify
 
-Per item: Jira via the Atlassian MCP; GitHub via `gh issue view` / `gh pr view --comments --files`; anything else as-is.
+Per item: Jira via the Atlassian MCP; GitHub via `gh issue view` / `gh pr view --comments --files`; TickTick per `references/ticktick.md`; anything else as-is.
 
 **Read whole field blocks. Never grep a dump for the value you expect** — you cannot see what you did not think to search for. When a Jira dump is too large to read whole, parse it and print the fields you need in full: `labels`, `attachment`, `issuelinks`, `parent`, `components`, `comment.comments`.
 

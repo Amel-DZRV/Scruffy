@@ -53,4 +53,4 @@ Simulator or emulator by default; a physical device only when Amel asks. Staged 
 
 ## Trackers
 
-Jira over the Atlassian MCP, projects `MOSAIC` and `GSPG`; write access works. GitHub via `gh`.
+Jira over the Atlassian MCP, projects `MOSAIC` and `GSPG`; write access works. GitHub via `gh`. TickTick via its own MCP tools — intake and status write-back, `references/ticktick.md`.

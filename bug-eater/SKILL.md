@@ -1,7 +1,7 @@
 ---
 name: bug-eater
 description: The bug lane of Scruffy. Use when an item has been classified as a bug — something is broken and the fix belongs in code. Handles gather through draft PR. Invoked by scruffy's router, or directly on "bug-eater <key>".
-argument-hint: "<jira key | url | pasted text>"
+argument-hint: "<jira key | url | ticktick task | pasted text>"
 ---
 
 # Scruffy / Bug-Eater
@@ -65,7 +65,7 @@ Neither writable — no description, or a description nobody can parse into a sy
 
 ### Stop 1
 
-Only what `gh`, Jira, grep, or web search cannot answer. Read every comment before you ask — a question already answered in comment 4 is the same defect as asking a lookup.
+Only what `gh`, Jira, TickTick, grep, or web search cannot answer. Read every comment before you ask — a question already answered in comment 4 is the same defect as asking a lookup.
 
 He may not know either; he is not the reporter. Three ways out per question: answer it, ask the reporter (→ `needs info`), or assume it (→ recorded, and surfaced in the PR body).
 
@@ -136,6 +136,8 @@ Strong model, **no shared context** — they anchor on each other otherwise and 
 | Forward from change | what landed recently near the area; what did it break |
 | Sideways from contract | what the spec, config, or template promises; where reality diverges |
 
+**Forward-from-change doesn't have to guess which commit.** When the suspect area has enough history that "recently" spans dozens of commits, bisect instead of reading each by eye — `git bisect` driven by the red test once one exists (step 3), or a linear walk scripted the same way for a symptom that only shows up under the test suite, not a single run. Reasoning about which commit looks suspicious is a guess; a bisection that lands on a commit is a fact the chain can cite by SHA.
+
 Diversify by **entry point, not personality.** A "pessimistic" persona changes tone, not reasoning. Different starting evidence is what actually produces independent chains.
 
 Each returns:
@@ -184,7 +186,7 @@ One paragraph: what changes, where, and the one trade-off that matters. For a cr
 
 **Default: fix at the source.** The correct fix at the real cause, even outside the reported component, even in another team's file. Teams are generally happier to review a fix than to write one from scratch, and a PR can always be closed if they disagree. A symptom patch that leaves the cause in place is the more expensive mistake.
 
-Adjacent breakage found along the way → **its own Jira ticket, linked from the PR.** Never bundled. Reviewers on a repo you do not own have no patience for scope creep from outside.
+Adjacent breakage found along the way → **its own tracker ticket, linked from the PR.** Jira if this one came from Jira; a TickTick-sourced item still gets a Jira or GitHub issue filed for it — TickTick is where Amel's own task lives, not where a reviewer on another team can see follow-up work. Never bundled. Reviewers on a repo you do not own have no patience for scope creep from outside.
 
 ### Stop 2
 
@@ -203,9 +205,13 @@ Then log two ledger columns for every proposal: whether stop 2 fired, and what t
 
 ## Step 6 — Implement
 
-Worktree per item, mandatory — concurrent items may touch the same repo.
+Worktree per item, mandatory — concurrent items may touch the same repo. Create and clean up per `../scruffy/references/worktrees.md`; that file also owns which terminal states keep the worktree and which release it.
 
-**Plan only when it earns one.** Multi-file or multi-concern → `superpowers:writing-plans` into `plan.md`, then `subagent-driven-development`, one helper per independent step, code review between them, one commit each. A three-line fix goes straight to the diff; a plan and a subagent chain for a one-liner is pure ceremony.
+**Plan only when it earns one.** Multi-file or multi-concern → `superpowers:writing-plans` into `plan.md`, then `subagent-driven-development`, one helper per independent step, one commit each. A three-line fix goes straight to the diff; a plan and a subagent chain for a one-liner is pure ceremony.
+
+**Code review between steps** means a fresh subagent, not a second look from the model that wrote the step. Give it only the two SHAs bounding the step, the plan step it was supposed to satisfy, and nothing from this run's own context — a reviewer primed with the implementer's reasoning inherits its blind spots. It reports Critical / Important / Minor; Critical and Important get fixed before the next step starts, Minor gets noted and carried to step 8.
+
+**Fixing at the source doesn't stop at the origin.** The chain in step 4 already names every link between cause and symptom — each one is a place the same class of bug can recur through a different caller, a mock, or a future edit. Where a link is cheap to guard (a validation at a boundary the chain crossed, not a rewrite), add it alongside the fix. This is defense-in-depth, not scope creep: it stays inside the file(s) the chain already touched, and it does not chase problems the chain didn't find.
 
 **Find the repo's conventions before writing a line.** Bug-Eater carries no language standards of its own — the repo's rules are what the reviewer enforces, and a PR that is stylistically correct by some other standard still gets a review comment. In precedence order:
 
@@ -279,3 +285,5 @@ Everything else stays in `chain.md`. Link to it or drop it.
 Run `unslop-prose rewrite --preset crisp` over the body. A PR body taking minutes to read is a defect in the body, not proof of thoroughness.
 
 **Then comment on the ticket** — the PR link, and the repro confirmation from step 3 if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
+
+**TickTick-sourced item:** also move the card, per `../scruffy/references/ticktick.md` — comment with the PR link, then move it to the `In Review` column if that board has one. Every other terminal state leaves the card where it is.

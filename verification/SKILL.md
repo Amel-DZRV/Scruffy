@@ -138,6 +138,8 @@ The repo's suite, not the changed file's tests. Paste commands and output — pa
 - Snapshot failure on one it did not touch → **possible regression, `decision needed`, never auto-updated.**
 - A suite re-run to green is `blocked` and flagged flaky. **Not a pass.** Re-running until green is laundering, and it is indistinguishable from a real intermittent failure until someone looks.
 
+**Before flagging it and moving on, check for the ordinary cause.** Most flaky tests are guessing at timing — a fixed `sleep`/`setTimeout` racing real async work — rather than something environmental. If the test waits on a wall-clock delay, replace it with a poll on the actual condition (the value existing, the state reached, the file written) and re-run before escalating. A test that goes from flaky to reliably green after this swap was never a regression; one that stays flaky after it is a real finding, not a timing guess, and `blocked` is correct.
+
 **4. Reviewer evidence, where the change is visual.**
 
 "After" capture on the same device and screen as the "before". This cannot fail and is not proof — a before/after pair proves nothing to a skeptic, since the "before" could be any build. It is what gets the PR approved, which is a different and equally real goal. Do not confuse the two.

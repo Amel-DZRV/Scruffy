@@ -27,6 +27,7 @@ Flat, one level under `skills/` — that's where Claude Code discovers them. Nes
 /scruffy fix this bug: MOSAIC-3559
 /scruffy I want to develop this feature, here's the ticket: MOSAIC-3612
 /scruffy verify this solution and review the PR: <url>
+/scruffy here's a TickTick task: <task url or id>
 ```
 
 When you say which it is, the router takes it and doesn't re-litigate. Classification only stops to ask when an item is genuinely ambiguous — a bug report that's really a feature request, a PR that's really a question.

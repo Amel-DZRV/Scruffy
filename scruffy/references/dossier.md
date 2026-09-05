@@ -2,7 +2,7 @@
 
 One per work item, at `~/Projects/tickets/<KEY>/`.
 
-`<KEY>` is the Jira key, `<repo>-<number>` for GitHub, or `<slug>-<today>` for pasted text.
+`<KEY>` is the Jira key, `<repo>-<number>` for GitHub, `ticktick-<taskId>` for a TickTick task, or `<slug>-<today>` for pasted text.
 
 ## Files
 
