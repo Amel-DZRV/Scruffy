@@ -12,6 +12,7 @@ One per work item, at `~/Projects/tickets/<KEY>/`.
 | `summary.md` | the one file written for Amel rather than for you |
 | `chain.md` | every hypothesis, ranked, with the rejected ones and why they lost |
 | `plan.md` | only when the change earned a plan |
+| `seam.md` | feature lane only — the blast-radius map from `feature-dev` step 3 |
 | `evidence/` | every command and its output — including the red test's failure, which is proof and not a log |
 | one terminal artifact | `verdict.md`, `memo.md`, `questions.md`, or `blocked.md` |
 
@@ -57,11 +58,13 @@ Run `unslop-prose` over it before printing. It is written for a human to read la
 
 `~/Projects/tickets/LEDGER.md`, one row per item, appended at the end of the run.
 
+**Neither this file nor `REVIEWS.md` is created by a run.** Preflight creates whichever is missing from `references/ledger-template.md`, header row and all, before anything is spent — an append that invents its own columns is a ledger nobody can slice later.
+
 | Column | Why |
 |---|---|
 | date, key, lane, repo, cost class | Lets rates be sliced — trust is rarely uniform across lanes |
 | terminal state | The distribution across the states *is* the health metric |
-| stops fired | Stop 2 firing on most items means classification is too weak; stop 3 never firing means its trigger is mis-specified |
+| stops fired | **Run numbering, 1–3, as in `scruffy`** — not each lane's local count. Stop 2 firing on most items means classification is too weak; stop 3 never firing means its trigger is mis-specified |
 | **what the fix touched** | same file / same component / another team's code / a shared contract. Pairs with the stop-3 column to tune its trigger from real rows rather than guesses |
 | opus escalated, and why | The honest read on whether sonnet is sufficient |
 | chain correct? | Filled in after the fact. The most important column |
@@ -69,7 +72,22 @@ Run `unslop-prose` over it before printing. It is written for a human to read la
 
 **A run never writes its own PR outcome.** Preflight of the *next* run backfills it: for every row with a PR link and a blank outcome, `gh pr view <url> --json state,reviewDecision,mergedAt`. Four lines of bash, no model. A column that never fills makes the whole ledger decorative.
 
-Standalone verification runs write a dossier but **no ledger row** — they produce no stop and no PR, so there is nothing to correlate. PR reviews get their own short log instead; see `verification`.
+Standalone verification runs write a dossier but **no ledger row** — they produce no stop and no PR, so there is nothing to correlate. PR reviews append one row to `~/Projects/tickets/REVIEWS.md` instead — its columns are below.
+
+## Review log
+
+`~/Projects/tickets/REVIEWS.md`, one row per PR reviewed in `verification` mode 3. Kept separate from the ledger on purpose: a review produces no stop, no lane and no PR of its own, so it correlates against nothing in those columns.
+
+| Column | Why |
+|---|---|
+| date, PR url, repo | Which review this was |
+| radius | `contained` or `shared` — the depth call from `verification` mode 3 |
+| depth | `shallow` or `deep`, and when it fell back, why |
+| independent test written? | Blank on a shallow review; `yes` / `no seam found` on a deep one |
+| confirmed the claim? | `yes` / `no` / `passed on parent too` |
+| what it did not cover | The finding this mode exists to produce |
+
+The question these rows answer over time: **how often does a fix that reads correctly fail an independent test.** One review cannot tell you; thirty can.
 
 ## What the ledger is for
 

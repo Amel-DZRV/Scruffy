@@ -13,8 +13,31 @@ Helpers run in parallel, cheapest model that answers reliably. They do not need 
 | Repos | Every repo the run could touch exists, worktree clean, `git fetch` succeeds, file count recorded |
 | Toolchain | Whatever the routed repos actually need — discovered from their build files and CI config, not assumed |
 | Access | `gh auth status`, tracker reachable, network for web search |
-| Skills | Every `SKILL.md` this run will read is present and readable at its absolute path |
+| Skills | Every `SKILL.md` this run will read is present and readable at its absolute path — the list is below, and it is not optional |
+| Ledger files | `~/Projects/tickets/LEDGER.md` and `REVIEWS.md` exist with their header rows. Missing → create from `references/ledger-template.md`. Header drifted → report, never rewrite |
 | Ledger backfill | For every ledger row with a PR link and a blank outcome: `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Bash, no model. **Fetches the review comments as well as the outcome** — see `references/learning.md`; this is the only trigger the correction loop has |
+
+## Which skills to check
+
+A run reads skills from three places, and a missing one fails deep into the run rather than here. Assert all three.
+
+**The Scruffy modules**, wherever they are installed — flat, one level under `skills/`:
+
+`scruffy`, `bug-eater`, `verification`, `feature-dev`
+
+**External skills the lanes invoke by name.** These are not vendored; they are whatever the machine has installed, and a lane that calls a missing one has no fallback:
+
+| Skill | Called by |
+|---|---|
+| `superpowers:writing-plans` | `bug-eater` step 6, `feature-dev` step 4 |
+| `superpowers:subagent-driven-development` | `bug-eater` step 6 |
+| `mattpocock-skills:grilling` | `feature-dev` step 1 — emptying the ambiguity frontier |
+| `unslop-prose` | `chain.md`, `summary.md`, both PR bodies |
+| `unslop` | `bug-eater` step 8, `feature-dev` step 8 |
+
+A missing one is a **warning, not a block** — the step it serves degrades rather than stopping. Say which step is degraded, in the pass/fail table and again in `summary.md`. `superpowers:writing-plans` missing means plans get written inline; `mattpocock-skills:grilling` missing means the frontier is swept by hand against the table in `feature-dev` step 1, which is worse but not nothing.
+
+**Repo skills**, per `references/repo-routing.md`, for the repos this run actually routed to — `run-doordash-consumer`, `devapp`, `sdui-accessibility-manual-test`, `attributing-ai-tools`, and the rest. These are a **block**, not a warning: they are how evidence gets built, and there is no degraded path. Assert the absolute path, since `Skill` cannot reach them from outside their repo.
 
 ## Check the toolchain the repo asks for, not a generic one
 

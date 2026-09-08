@@ -34,6 +34,8 @@ Hitting a cap routes to `blocked` with state preserved. Never a silent retry, ne
 | Deep PR review — test-writing attempts | **2** | fall back to shallow, with a note saying why |
 | Whole run, **total** agent invocations | **60** cumulative | Remaining items `deferred`, named individually |
 
+**60 is two or three bug items, not a batch.** One bug spends roughly 15–20: gather fan-out, the mechanical locate, three investigators, two skeptics, red test, implement, one code review per plan step, verify, PR body. A feature spends more, because the design step fans out again. Size the run against that number before promising Amel a queue of eight — the honest answer is that most of them will come back `deferred`.
+
 **Chain attempts and fix attempts do not share a budget.** One exhausting the other is how a correct diagnosis gets abandoned, or a wrong one gets implemented three times. Counted separately in `state.md`.
 
 ## Concurrency and the build slot

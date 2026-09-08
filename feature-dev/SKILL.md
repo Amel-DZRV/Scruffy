@@ -8,7 +8,7 @@ argument-hint: "<jira key | url | ticktick task | pasted description>"
 
 One feature, start to finish. The router classified it; this file builds it.
 
-**This module owns the spec and the design.** Proof belongs to `verification`, which it calls at step 5 and step 7. Preflight, worktrees, the dossier and the ledger belong to the shared spine.
+**This module owns the spec and the design.** Proof belongs to `verification`, which it calls twice: **step 5** for the acceptance tests (its mode 1b, once per criterion) and **step 7** for the claims (1c–1d). Its 1a is skipped — refuting a design is a different question from refuting a diagnosis, and this lane does its own at step 4. Preflight, worktrees, the dossier and the ledger belong to the shared spine.
 
 ## How this differs from a bug
 
@@ -31,12 +31,14 @@ Two consequences run through this whole file:
 
 Both batched across every item in a run.
 
+**Numbered as `scruffy` numbers them.** The run has three stops; this lane owns the last two. Stop 1 is classification and belongs to the router. The ledger records these numbers.
+
 | Stop | When | You are asking |
 |---|---|---|
-| 1 | After requirements | What the spec genuinely does not determine |
-| 2 | After design | Which approach — when two are each defensible and the trade-off is his |
+| 2 | After requirements | What the spec genuinely does not determine |
+| 3 | After design | Which approach — when two are each defensible and the trade-off is his |
 
-Unlike Bug-Eater, **stop 2 firing is normal here.** A feature with two viable designs and a real trade-off should reach him. It is stop 2 *never* firing that means the trigger is mis-specified.
+Unlike Bug-Eater, **stop 3 firing is normal here.** A feature with two viable designs and a real trade-off should reach him. It is stop 3 *never* firing that means the trigger is mis-specified.
 
 ## Terminal states
 
@@ -106,7 +108,7 @@ All four writable, frontier empty → proceed. Inferred parts stated loudly, in 
 
 **Acceptance criteria genuinely undeterminable → `needs info`.** Not the whole feature; name the specific criterion that is missing.
 
-### Stop 1
+### Stop 2
 
 One batch, sectioned, numbered, **your recommended answer beside each.** Everything the hunt turned up that survived the filter.
 
@@ -114,7 +116,7 @@ Three ways out per question: answer it, ask the requester (→ `needs info` for 
 
 **Be more willing to fire this than Bug-Eater is**, and make it count when it fires. The asymmetry is the whole point: an unnecessary question costs him a moment; an unnecessary week costs him a week. But a *second* round of questions after he thought he was done is worse than either — which is why the frontier is emptied first, in one pass, rather than discovered a step at a time.
 
-After this stop the criteria are complete. Everything downstream runs without him until stop 2.
+After this stop the criteria are complete. Everything downstream runs without him until stop 3.
 
 ## Step 2 — Prior art
 
@@ -174,7 +176,7 @@ Speculative generality is the failure mode here — building the flexible versio
 
 Two skeptics on the top approach, told to **prove it wrong**, defaulting to refuted when uncertain. On a feature they are asking a different question than on a bug: not *is this the cause* but **is this the right seam** — will this design survive contact with the next requirement, does it fight the codebase, does it quietly change something it should not.
 
-### Stop 2
+### Stop 3
 
 Fires when two approaches are each defensible and the trade-off is his: shipping speed versus longevity, a new dependency, a changed contract, a bigger refactor than the ticket implies.
 
@@ -190,13 +192,13 @@ Escalate to `decision needed` instead when the honest answer is that the feature
 
 ## Step 5 — Acceptance tests, red first
 
-Hand off to `verification`. Same rule as a bug, applied to behaviour that does not exist yet: **write the test, watch it fail, then build.**
+Hand off to `verification` — **mode 1, feature-caller row.** Its 1a is skipped (this lane already refuted the design at step 4, which is a different question), and its 1b runs once per criterion. Same rule as a bug, applied to behaviour that does not exist yet: **write the test, watch it fail, then build.**
 
 **One test per acceptance criterion.** Not one test for the feature. This is what makes "done" mechanical rather than a judgement call — done is when the last red test goes green and none of the others broke.
 
 The failure mode here is different from a bug's and worth naming: on a bug, a test that will not go red means the diagnosis is wrong. On a feature, **a test that will not go red means the behaviour already exists** — which sends you back to step 2, because you are about to build something twice.
 
-All criteria red, all recorded with their hashes, before a line of implementation.
+All criteria red, all recorded with their hashes, before a line of implementation. **Each test written at its final path in the repo's suite before it is run**, for the same reason a bug's is: the hash is of that file at that path, and a test relocated during implementation invalidates the one check that cannot be argued with.
 
 Criteria that genuinely cannot be tested — a visual judgement, a performance target with no harness — are named in the PR body as unverified. **Do not quietly drop them, and do not build a harness that was not asked for.** An unverifiable criterion is a finding.
 
@@ -232,7 +234,7 @@ The moment scope control actually matters. Anything you find yourself wanting to
 
 Hand off to `verification`:
 
-1. **Every acceptance test green**, each file re-hashed against its step-5 hash. A mismatch is reported, not absorbed — a test loosened until it passed proves nothing, and on a feature it is easier to rationalize because there was no original behaviour to preserve.
+1. **Every acceptance test green**, each file re-hashed against its step-5 hash. A mismatch is reported, not absorbed — a test loosened until it passed proves nothing, and on a feature it is easier to rationalize because there was no original behaviour to preserve. Step 5 wrote each test at its final path, so **relocation is not an available explanation**; a mismatch means implementation edited a criterion's test.
 2. **The full suite green.** Commands and output pasted; pass counts, not full logs.
 3. **Nothing else moved.** Failures in untouched areas → `decision needed`, never auto-updated. A suite re-run to green is `blocked` and flagged flaky.
 4. **Reviewer evidence** for anything visual — captures on the same device and screen, per platform.
@@ -266,7 +268,7 @@ A feature PR has a harder job than a bug PR: there is no symptom to point at, so
 - **Why** — the problem from step 1. A reviewer who does not know the goal cannot judge the design.
 - **Acceptance criteria, each with its passing test named.** The table from step 7. This is the core of the body and it is what makes "done" checkable rather than assertable.
 - **Non-goals.** Pre-empts the "shouldn't this also…" comment, which is the most common round-trip on a feature.
-- **The design, in two or three sentences**, and — when stop 2 fired — the approach that was rejected and why. Unlike a bug PR, that context is load-bearing here: the reviewer is being asked to accept a design, not just a fix.
+- **The design, in two or three sentences**, and — when stop 3 fired — the approach that was rejected and why. Unlike a bug PR, that context is load-bearing here: the reviewer is being asked to accept a design, not just a fix.
 - **Blast radius.** What reads this, what it changes. Say plainly when it only adds.
 - **Screenshots** for anything visual, inside the description.
 - **Assumptions, when a guess was made.** One line. A spec inferred rather than stated is the thing most worth surfacing, because the requester is the only person who can catch it.
@@ -289,7 +291,7 @@ A young or empty repo makes steps 2 and 3 nearly vacant — no prior art, no ana
 What changes:
 
 - **The "fits the existing grain" design bias is meaningless.** Replace it with **fits the stack's conventions** — how the framework's own docs and the nearest well-regarded open-source project in that stack solve this. Borrowed grain beats invented grain.
-- **A design decision here is a precedent**, and the next five features will copy it. That raises the bar on stop 2: choices that would be routine in a mature repo — a state management approach, a data layer boundary, a testing style — are architectural here and worth surfacing.
+- **A design decision here is a precedent**, and the next five features will copy it. That raises the bar on stop 3: choices that would be routine in a mature repo — a state management approach, a data layer boundary, a testing style — are architectural here and worth surfacing.
 - **Write the decision down**, in the repo's `CLAUDE.md` or an ADR. Not for ceremony: so the next run discovers a convention instead of inventing a second one. An inconsistent young codebase costs far more than an opinionated one.
 - Everything else — criteria, non-goals, red tests, scope discipline — runs unchanged. They matter *more* on a greenfield project, not less, because nothing else is holding the shape.
 

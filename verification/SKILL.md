@@ -88,7 +88,16 @@ The summary is written and left to be read. It does not halt the run and wait �
 
 # Mode 1 — Called by a lane
 
-The lane owes you: the symptom in the reporter's words, the suspect area, the conditions, and the surviving chain. You owe it: a red test, and a verdict.
+Two lanes call this mode and they arrive with different things in hand. **Read the row for your caller before 1a.**
+
+| Caller | Owes you | 1a | 1b writes | Won't go red means |
+|---|---|---|---|---|
+| `bug-eater` | the symptom in the reporter's words, the suspect area, the conditions, the surviving chain | **runs** — refute the chain | one red test at the seam the chain names | the diagnosis is wrong → next hypothesis |
+| `feature-dev` | the acceptance criteria, the non-goals, the seam map, the chosen approach | **skipped** — see below | **one red test per acceptance criterion** | the behaviour already exists → back to its step 2 |
+
+**1a is skipped for `feature-dev`, and that is not an oversight.** There is no diagnosis to refute — a feature has no cause. That lane runs its own skeptics at its step 4, against the *design*, asking whether this is the right seam rather than whether this is the right cause. Running 1a on a feature would refute a chain that does not exist.
+
+Everything else — 1b's discipline, the hash, 1c's claims, 1d's revert check — applies to both, with the per-criterion difference noted at each step.
 
 ## 1a. Refute the diagnosis
 
@@ -102,6 +111,8 @@ Skeptics, not debaters. Do not run a consensus round: models converge on the mos
 
 Against the surviving chain, at a seam, asserting the reporter's symptom.
 
+**Write it at its final path first.** Where the repo's own suite would keep this test, named and structured the way the repo names and structures tests. Not a scratch file to be tidied away later: the hash below is the hash of *this* file at *this* path, and a test relocated afterwards invalidates it. A workflow that relocates as a matter of course produces a hash mismatch on every run, which trains whoever reads the report to wave the check through — and then it is guarding nothing.
+
 **Run it. Watch it go red.** Keep the failure output in `evidence/` — it is not a log, it is claim 2's proof, and the revert check below depends on it existing.
 
 **Hash the test file and record the hash in `state.md`:**
@@ -113,6 +124,8 @@ shasum -a 256 <test file> | tee -a evidence/red-test.sha
 This is the mechanism behind claim 1. Comparing the assertion by eye is an instruction a model gives itself and can rationalize its way out of; a hash mismatch cannot be reasoned away. Record it here, check it after the fix.
 
 Does not go red → the chain is wrong, however well it read. Report back to the lane; it drops to the next hypothesis. **Chain-attempt budget**, three, then `blocked`.
+
+**For `feature-dev`, one test per acceptance criterion, and the failure means the opposite.** A criterion's test that will not go red is not a wrong diagnosis — it means the behaviour is already there, and the lane is about to build something twice. Report it back and send that lane to its step 2, prior art. Every criterion is red, and every hash recorded, before a line of implementation. A criterion that cannot be turned into a test at all is a finding: name it, and it goes in the PR body as unverified rather than quietly dropped.
 
 Record the exact command in `state.md`. It becomes the regression test in the PR.
 
@@ -126,7 +139,11 @@ Same test. **Re-hash the file and compare against the hash recorded in 1b.**
 shasum -a 256 <test file>          # must match evidence/red-test.sha
 ```
 
-A mismatch means the test changed during implementation. **Report it; do not absorb it.** A red test edited until it passed proves nothing, and this comparison is the only thing standing between you and that failure. If the test genuinely had to move — relocated into the repo's suite, for instance — re-run it red on the parent commit and record a new hash, rather than waving the mismatch through.
+A mismatch means the test changed after it was observed red. **Report it; do not absorb it.** A red test edited until it passed proves nothing, and this comparison is the only thing standing between you and that failure.
+
+**A mismatch should be rare.** 1b wrote the test at its final path precisely so that the ordinary course of a run does not move it, which means there is no routine explanation to reach for. If one genuinely became necessary — the fix restructured the file the test lives in, say — the test is re-run red on the parent commit and a new hash recorded, and both the move and the reason go in the PR body. That is a finding, not a formality. If mismatches are showing up on most runs, something upstream is editing tests during implementation; fix that rather than the check.
+
+**For `feature-dev`, this is a table, not a line.** Every acceptance criterion, its test, its step-1b hash, and green or not. "The suite is green" does not answer "is it done"; a criterion-by-criterion table does, and it is the artifact that goes in the PR body.
 
 **2. The full suite is green.**
 
@@ -143,6 +160,11 @@ The repo's suite, not the changed file's tests. Paste commands and output — pa
 **4. Reviewer evidence, where the change is visual.**
 
 "After" capture on the same device and screen as the "before". This cannot fail and is not proof — a before/after pair proves nothing to a skeptic, since the "before" could be any build. It is what gets the PR approved, which is a different and equally real goal. Do not confuse the two.
+
+**5 and 6 — `feature-dev` only.**
+
+- **Every acceptance criterion maps to a passing test, by name.** The table from claim 1. A criterion with no test is unverified and is named as such.
+- **The non-goals still hold.** Read the diff against the non-goals written at that lane's step 1. A feature that quietly grew past its stated boundary is the most common thing a reviewer objects to, and the author is always the last to notice — which is why this is checked here, by the module that did not write it, rather than by the lane.
 
 ## 1d. The revert check
 

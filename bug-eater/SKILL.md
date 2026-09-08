@@ -8,7 +8,7 @@ argument-hint: "<jira key | url | ticktick task | pasted text>"
 
 One bug, start to finish. The router classified it; this file fixes it.
 
-**This module owns diagnosis.** Proof belongs to `verification`, which it calls at step 3 and step 7. Preflight, worktrees, the dossier and the ledger belong to the shared spine.
+**This module owns diagnosis.** Proof belongs to `verification`, and this lane calls it three times, not twice: **step 4d** for refutation (its mode 1a), **step 4e** for the red test (1b), **step 7** for the four claims (1c–1d). Step 3 pins the conditions those calls need; it does not call it. Preflight, worktrees, the dossier and the ledger belong to the shared spine.
 
 **Amel stops at most twice in this lane.** Everything else you prove.
 
@@ -16,10 +16,12 @@ One bug, start to finish. The router classified it; this file fixes it.
 
 Both batched across every item in a run. Never one interrupt per bug.
 
+**Numbered as `scruffy` numbers them.** The run has three stops; this lane owns the last two. There is no stop 1 here — that is classification, and the router owns it. The ledger records these numbers, so a lane that renumbers them to 1 and 2 writes rows nobody can read.
+
 | Stop | When | You are asking |
 |---|---|---|
-| 1 | After gather | Only what nobody can look up |
-| 2 | Before implementing | Which of two equally correct fixes — only when the choice is his |
+| 2 | After gather | Only what nobody can look up |
+| 3 | Before implementing | Which of two equally correct fixes — only when the choice is his |
 
 A well-specified bug fires neither. If both fire routinely, this file is wrong, not him.
 
@@ -29,7 +31,7 @@ A well-specified bug fires neither. If both fire routinely, this file is wrong, 
 |---|---|---|
 | `PR opened` | step 9 | branch + draft PR |
 | `recommend close` | step 2 | `verdict.md` — merged PR named, red test passing on clean main |
-| `needs info` | step 1 or 3 | `questions.md`, ready to paste as a ticket comment |
+| `needs info` | step 1 or 2 | `questions.md`, ready to paste as a ticket comment |
 | `decision needed` | step 5 or 7 | `memo.md` — what changed, the trade-off, who decides. Also covers "already in flight" (step 5). |
 | `blocked` | any step | `blocked.md` with the exact failure |
 
@@ -63,7 +65,7 @@ Neither writable — no description, or a description nobody can parse into a sy
 
 **Hard stop:** gather ends when you can state the symptom in the reporter's conditions, name a suspect area, and give a version or commit range. Past that you are investigating, and that is step 4.
 
-### Stop 1
+### Stop 2
 
 Only what `gh`, Jira, TickTick, grep, or web search cannot answer. Read every comment before you ask — a question already answered in comment 4 is the same defect as asking a lookup.
 
@@ -73,7 +75,7 @@ He may not know either; he is not the reporter. Three ways out per question: ans
 
 Cheap, early, terminal. On a repo with heavy PR traffic this is a common exit and the cheapest one to reach.
 
-Look for a merged PR whose title or diff plainly names this symptom. This gate is deliberately shallow — it catches the obvious cases and nothing else. The definitive check is the red test in step 3, which will catch what this misses at no extra cost.
+Look for a merged PR whose title or diff plainly names this symptom. This gate is deliberately shallow — it catches the obvious cases and nothing else. The definitive check is the red test in step 4e, which will catch what this misses at no extra cost.
 
 **Search open PRs too, not just merged ones.** `gh pr list --search` over the symptom keywords and the suspect files, same call shape. An open PR is the likelier find — the ticket is still open — and the failure mode is worse: a merged fix you miss just costs an investigation, while an in-flight PR you miss costs a duplicate PR filed against a colleague's work on a repo you do not own.
 
@@ -83,19 +85,21 @@ A hit here is a **flag carried forward, not an exit.** Record it in `state.md` a
 
 Cannot reproduce, and nothing found that would have fixed it → `needs info`, not `recommend close`. Absence of a repro is not absence of a bug — usually it means the reporter had conditions you did not recreate. Post the question as a ticket comment.
 
-## Step 3 — Reproduce, as a test
+## Step 3 — Pin the reproduction
 
 **This is the step that replaced Amel watching a simulator or emulator.** He is not present for it.
 
-The order is deliberate and inverted from how a human works it. A human reproduces by hand first, then writes tests after the fix. Do the opposite: a test written after the fix is the classic way to end up with one that would have passed before it. **Write the failing test first, watch it fail, then fix.** That failure *is* the reproduction.
+The order is deliberate and inverted from how a human works it. A human reproduces by hand first, then writes tests after the fix. Do the opposite: **the failing test is written first, watched failing, and only then fixed.** That failure *is* the reproduction.
 
-Pin the conditions before you build:
+**But the test is not written here.** It is written at step 4e, against a chain — because a red test has to assert at a seam on the real call path, and until step 4 has produced a cause you do not know where that seam is. A test written before the chain asserts wherever it was easy to reach, which is exactly the parallel-path failure `verification` forbids.
+
+What this step owns is everything the test will need and cannot get later: the conditions, the device, and the "before" capture on clean main. Pin them now:
 
 - **Latest main, always.** Never a release branch, never the reporter's version.
 - **Claim a device.** Take one that is not running an app under test, record its identifier in `state.md`, pin the rest of the run to it. All busy → boot a fresh one rather than queue. Commands per platform in `references/platforms/`.
 - **Missing device or config is assumed, and the assumption is stated** — in the ticket comment and the PR body. "Reported without a device; reproduced on iPhone 17, iOS 26.5" narrows the bug for whoever reads it next.
 
-Then hand off to `verification` for the red test itself. What this lane owes it: the symptom in the reporter's words, the suspect area, the conditions.
+Record all of it in `state.md`. When step 4e calls `verification`, this is what the lane owes it: the symptom in the reporter's words, the suspect area, and these conditions.
 
 **Visual bugs.** Order of preference, cheapest falsifiable assertion first:
 
@@ -136,7 +140,7 @@ Strong model, **no shared context** — they anchor on each other otherwise and 
 | Forward from change | what landed recently near the area; what did it break |
 | Sideways from contract | what the spec, config, or template promises; where reality diverges |
 
-**Forward-from-change doesn't have to guess which commit.** When the suspect area has enough history that "recently" spans dozens of commits, bisect instead of reading each by eye — `git bisect` driven by the red test once one exists (step 3), or a linear walk scripted the same way for a symptom that only shows up under the test suite, not a single run. Reasoning about which commit looks suspicious is a guess; a bisection that lands on a commit is a fact the chain can cite by SHA.
+**Forward-from-change doesn't have to guess which commit.** When the suspect area has enough history that "recently" spans dozens of commits, bisect instead of reading each by eye — `git bisect` driven by whatever reproduces the symptom mechanically — a script, an existing failing case, or the red test itself if an earlier chain attempt already produced one, since 4e has not run yet on the first pass — or a linear walk scripted the same way for a symptom that only shows up under the test suite, not a single run. Reasoning about which commit looks suspicious is a guess; a bisection that lands on a commit is a fact the chain can cite by SHA.
 
 Diversify by **entry point, not personality.** A "pessimistic" persona changes tone, not reasoning. Different starting evidence is what actually produces independent chains.
 
@@ -160,15 +164,19 @@ Two entry points independently reaching the same cause is real signal — unlike
 
 ### 4d. Two skeptics, top chain only
 
-Each told to **prove it wrong**, defaulting to refuted when uncertain. This is the cheapest place to kill a wrong answer — it runs before any build.
+**This is `verification` mode 1a — call it, do not reimplement it.** The lane owes it the top chain; it owns how the refutation runs.
+
+Each skeptic is told to **prove it wrong**, defaulting to refuted when uncertain. This is the cheapest place to kill a wrong answer — it runs before any build.
 
 Both refute → promote hypothesis 2, repeat once. All refuted → `blocked`, both skeptics' reasoning kept.
 
 ### 4e. The red test is the judge
 
-Everything above is a ranked guess — cited, argued, still a guess. The test is the only part that can come back and say no.
+**This is `verification` mode 1b.** Everything above is a ranked guess — cited, argued, still a guess. The test is the only part that can come back and say no.
 
-Write it against the surviving chain (step 3's machinery) and watch it fail on the symptom. Fails → chain proven, proceed. Does not fail → the chain is wrong regardless of how well it read; drop to the next hypothesis. **Chain-attempt budget: three.** Separate from the fix-attempt budget in step 7 — they do not share, or one exhausts the other.
+Write it against the surviving chain, using the conditions step 3 pinned, and watch it fail on the symptom.
+
+**Write it where the repo would keep it, before you run it.** Its final path in the repo's own suite, its naming, its fixtures — the conventions from step 6, applied now rather than after. The hash `verification` takes in 1b is the hash of the file at that path, and a test relocated later invalidates it. Relocation used to happen at step 6, which made a hash mismatch fire on every single run and taught the reader to wave it through; the whole value of the hash is that a mismatch is abnormal. Fails → chain proven, proceed. Does not fail → the chain is wrong regardless of how well it read; drop to the next hypothesis. **Chain-attempt budget: three.** Separate from the fix-attempt budget in step 7 — they do not share, or one exhausts the other.
 
 `chain.md` keeps **all three hypotheses**, not just the winner. The rejected ones and why they lost are what teach the next person, and what you fall back to when the red test refuses to go red. Run `unslop-prose` over it in cleanup mode — a human reads this file later.
 
@@ -188,7 +196,7 @@ One paragraph: what changes, where, and the one trade-off that matters. For a cr
 
 Adjacent breakage found along the way → **its own tracker ticket, linked from the PR.** Jira if this one came from Jira; a TickTick-sourced item still gets a Jira or GitHub issue filed for it — TickTick is where Amel's own task lives, not where a reviewer on another team can see follow-up work. Never bundled. Reviewers on a repo you do not own have no patience for scope creep from outside.
 
-### Stop 2
+### Stop 3
 
 Fires only when two fixes are each defensible and choosing is Amel's call — product behaviour, cross-platform consistency, or ownership. Batched, recommendation beside each. Nothing is approved until he says so.
 
@@ -201,7 +209,7 @@ Escalate to `decision needed` instead of proposing when the fix would be a proje
 
 When genuinely unsure, **propose it and say what you would have asked.** One extra sentence for him to read, no interrupt, and the ledger records whether the stop was wanted. Ambiguity gets logged, not resolved by a coin flip.
 
-Then log two ledger columns for every proposal: whether stop 2 fired, and what the fix touched — same file / same component / another team's code / a shared contract. After twenty rows the real rule is readable: fired and he answered "obviously do it" → too tight; did not fire and he was surprised at the PR → too loose; fired and he deliberated → correct.
+Then log two ledger columns for every proposal: whether stop 3 fired, and what the fix touched — same file / same component / another team's code / a shared contract. After twenty rows the real rule is readable: fired and he answered "obviously do it" → too tight; did not fire and he was surprised at the PR → too loose; fired and he deliberated → correct.
 
 ## Step 6 — Implement
 
@@ -221,7 +229,7 @@ Worktree per item, mandatory — concurrent items may touch the same repo. Creat
 
 Do this again in step 8, against what actually got written rather than what was intended.
 
-**Move the red test into the repo's suite.** It was written in step 3 to prove a chain, and it may not live where the repo would naturally put it. Relocate it, match the repo's conventions, so it reads as a regression test someone would have written — not a probe left behind.
+**Do not move the red test.** It was already written at its final path in step 4e, under the conventions above, precisely so that it reads as a regression test someone would have written rather than a probe left behind — and so that its hash survives to step 7. Moving it here breaks the one check that cannot be argued with. If it is genuinely in the wrong place, that is a step 4e defect: fix it there, re-run it red, and record the new hash, rather than relocating a test that has already been observed failing.
 
 **`[DEBUG-*]` probes.** Temporary prints inserted to see what a value actually is at runtime, when reading alone will not settle it:
 
@@ -237,12 +245,14 @@ print("[DEBUG-onAppear] fired for \(type(of: subview)), count=\(count)")
 
 Hand off to `verification`. Four claims, each able to fail:
 
-1. **The red test turns green** — same test, **file re-hashed against the hash recorded in step 3.** A mismatch is reported, not absorbed. A red test adjusted during implementation until it passed proves nothing, and that is the easiest thing in this whole workflow to cheat.
+1. **The red test turns green** — same test, **file re-hashed against the hash recorded in step 4e.** A mismatch is reported, not absorbed. A red test adjusted during implementation until it passed proves nothing, and that is the easiest thing in this whole workflow to cheat.
+
+   **There is no routine reason for a mismatch.** The test was written at its final path and hashed there, so relocation is not an explanation — the only honest ones are that implementation edited the test, or that the test genuinely had to move, and both are reported. A test that had to move is re-run red on the parent commit and re-hashed, per `verification` 1c; it is never waved through. A mismatch that appears on most runs means this lane is editing tests during implementation, which is the defect, not the check.
 2. **The full suite is green** — the repo's suite, not the changed file's tests. Commands and output pasted; pass counts, not full logs.
 3. **Nothing else moved** — snapshot failures on components you touched are intentional, update the baseline. Failures on components you did not touch → `decision needed`, never auto-updated. A suite re-run to green is `blocked` and flagged flaky, not a pass.
 4. **Reviewer evidence** — "after" screenshot, same device and screen as the "before", replayed from the recorded path or batched back to him.
 
-**Revert check** — revert the diff, confirm the test goes red again — **only when the test is cheap to run.** A package target in seconds: mandatory. A 35-minute app build: skip it. The step-3 failure output, kept in `evidence/`, already establishes the test failing on code without the fix, provided the file is unchanged. That is what claim 1's hash check proves.
+**Revert check** — revert the diff, confirm the test goes red again — **only when the test is cheap to run.** A package target in seconds: mandatory. A 35-minute app build: skip it. The step-4e failure output, kept in `evidence/`, already establishes the test failing on code without the fix, provided the file is unchanged. That is what claim 1's hash check proves.
 
 **Two failure modes, two responses:**
 
@@ -284,6 +294,6 @@ Everything else stays in `chain.md`. Link to it or drop it.
 
 Run `unslop-prose rewrite --preset crisp` over the body. A PR body taking minutes to read is a defect in the body, not proof of thoroughness.
 
-**Then comment on the ticket** — the PR link, and the repro confirmation from step 3 if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
+**Then comment on the ticket** — the PR link, and the repro confirmation — the conditions from step 3 and the red failure from 4e — if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
 
 **TickTick-sourced item:** also move the card, per `../scruffy/references/ticktick.md` — comment with the PR link, then move it to the `In Review` column if that board has one. Every other terminal state leaves the card where it is.

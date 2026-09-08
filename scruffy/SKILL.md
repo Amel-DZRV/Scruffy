@@ -34,6 +34,8 @@ This file owns what no module can: classification, repo routing, the dossier, th
 
 A **stop** is a hard halt: ask, wait, act on the answer. Each is batched across every item in the run — never one interrupt per item.
 
+**These numbers are the run's, and the lanes use them.** A lane fires at most two of the three, but it calls them 2 and 3 — never its own 1 and 2. The ledger's `stops fired` column, and every reference to "stop 3" anywhere in this skillset, means the numbering in this table.
+
 | Stop | Owner | When | You are asking |
 |---|---|---|---|
 | 1 | this file | after classify | Bug, feature, or review? — **only if genuinely unclear** |
@@ -114,6 +116,8 @@ One lane invocation per work item. Route every helper by model — `references/m
 The lane owns its own steps. This file does not reach inside one; it holds the budget, watches for cap exhaustion, and collects terminal states.
 
 **Budget.** Declare it at launch. When what remains will not cover a full run for the next item, that item is `deferred` and named — not started and abandoned halfway. Verification reports what each item cost; use that, do not guess.
+
+**Worktrees.** One per work item, created before the lane starts and released according to the terminal state it reaches — `references/worktrees.md`. Concurrent items may touch the same repo, so this is not optional even on a single-item run.
 
 **Concurrency.** Everything before a build runs unbounded parallel. Builds and device work pass through the build slot — `references/models.md`.
 

@@ -69,4 +69,8 @@ verification/     the proof engine, invocable on its own
 
 Written, not yet run. Expect the first real ticket to produce `LEARNED.md` entries — that's the design working, not failing.
 
-Known gaps: `repo-routing.md` carries over from the prototype and should be checked before the first run. Nothing has been exercised against a real repo, and the discovery step — which is load-bearing — is the part most likely to need correcting.
+A consistency pass has been done over the four files: the run's three stops are numbered the same way everywhere, the red test is written at its final path *before* it's observed red (so a hash mismatch stays abnormal rather than firing every run), `verification` has an explicit entry path for the feature lane, and the ledger has a template so the first append isn't inventing its own columns.
+
+Known gaps: `repo-routing.md` carries over from the prototype and should be checked before the first run — the paths and the `.isolation/state/` layout are the parts nobody but Amel can verify. Nothing has been exercised against a real repo, and the discovery step — which is load-bearing — is the part most likely to need correcting.
+
+**First run should be one bug on a cheap loop** — a Jest or package-target repo, single item, watched. The expensive path (build slot, device claim, batched probes, before/after replay) has the most untested surface and the worst failure cost.
