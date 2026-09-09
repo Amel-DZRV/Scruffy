@@ -97,15 +97,39 @@ diff that is **not** that path. This also catches the real failure mode — edit
 neighbouring test to stop it failing — which a flat ban would have caught by accident
 and this catches on purpose.
 
-### D3 — The guard hook gates PR creation, not tool use generally
+### D3 — The guard hook gates the push, and it is advisory by construction
 
 "PreToolUse-style, outside model context" is right about the property that matters
 (not self-graded) but a `PreToolUse` hook on every tool call has nowhere sensible to
-fire. The gate belongs at the point of no return: the hook matches `Bash` calls whose
-command contains `gh pr create`, and refuses when the declaration is missing, invalid,
-or contradicted by the diff. Tier 1's other checks run as an explicit script at step 7
-and write their report into `evidence/`; the hook re-reads that report rather than
-recomputing it, so a missing report is itself a failure.
+fire. The gate belongs at the point of no return.
+
+**Correction to an earlier draft of this plan:** gating on `Bash` commands containing
+`gh pr create` is trivially bypassed — `gh api`, the GitHub MCP tool, a shell alias, or
+opening the PR from the branch in a browser all route around it. A matcher on one string
+is theatre. The gate is therefore three layers, and the plan is explicit that none of
+them is authoritative:
+
+1. **`PreToolUse` on the set, not the string** — `Bash` matching `git push`, `gh pr`,
+   and `hub`, plus the MCP tool names (`mcp__github__create_pull_request`,
+   `mcp__github__push_files`). Catches the ordinary path.
+2. **A `pre-push` hook installed into the worktree** by `worktrees.md`'s setup. This one
+   sits below the agent's tool layer entirely and catches every route through git.
+   `--no-verify` defeats it, which is the point: bypass becomes an explicit, visible act
+   in the transcript rather than an accident.
+3. **The PR body carries the commands to re-run.** On a repo Amel does not own there is
+   no CI check Scruffy can require, so the last authority is the reviewer. Every Tier 1
+   and Tier 3 claim in the body names the command that produced it, against a named SHA.
+
+The honest statement, which belongs in `evidence-ladder.md` and not just here: **on a
+repo you do not own, the gate cannot be authoritative.** What it can do is make the
+compliant path the cheapest one, make bypass visible, and make every claim independently
+re-runnable by the reviewer. Appendix C is the rest of that argument.
+
+Tier 1's checks run as an explicit script at step 7 and write their report into
+`evidence/`. The hook **recomputes the cheap checks itself** rather than trusting that
+report — checks 2, 3 and 6 are pure git operations costing milliseconds — and trusts the
+report only for the expensive ones (compile, coverage), which are bound to a HEAD SHA
+and a diff hash. A report whose SHA does not match HEAD is a failure, not a warning.
 
 ### D4 — The step 3 approval replaces stop 3; it is not a fourth stop
 
@@ -639,3 +663,168 @@ Three mechanisms, so this does not decay back to an iOS-first skillset:
 3. **The ledger is sliced by platform** before any tuning decision. `tiers_unmet ×
    regression_found_in_review` answered on pooled rows would let iOS's numbers set
    Android's thresholds, which is the statistical version of the same bias.
+
+---
+
+## Appendix C — Hardening: what "bullet-proof" can and cannot mean
+
+A claim can be wrong three ways. The ladder as specified covers two of them well.
+
+| Failure | Covered by |
+|---|---|
+| The artifact does not exist | tier selection, repair cap, gap template, labels |
+| The artifact exists but does not cover the criterion | Tier 4 blind verification |
+| **The artifact exists and was manufactured** | thin — this appendix |
+
+The third is the one that matters, because a manufactured artifact is
+*indistinguishable from a real one* at review time. It is also the failure the source
+document's core rule is aimed at ("the agent that produced the diff never grades its own
+work") without yet having a mechanism behind it.
+
+**The target is not "cannot be cheated."** A sufficiently determined agent with shell
+access can defeat any of this. The target is three properties, in order:
+
+1. **Mechanically caught** — the cheat fails a check that runs outside model context.
+2. **Otherwise explicitly declared** — the cheat requires writing down that you did it.
+3. **Otherwise statistically visible** — the ledger surfaces it across runs even when a
+   single run looks clean.
+
+Anything that is none of the three is an unguarded claim, and §C7 says to write those
+down rather than pretend they are covered.
+
+### C1 — Git is the witness, not the file
+
+Every ordering claim in this design is currently an assertion by the thing being
+checked. "The red test was written before the fix" is proven by a hash in `state.md` —
+a file the same agent writes. "The declaration was computed from the final diff" is
+proven by nothing at all.
+
+**Commit evidence at the moment it is produced**, on the work branch:
+
+- The red test and its failing output, committed when it goes red, *before* any fix
+  commit exists. Ordering becomes a property of `git log`, not of a field.
+- `declaration.json` and `tier1.json` each pinned to the HEAD SHA they describe. Any
+  later commit invalidates them and the guard recomputes.
+
+This is the single highest-value hardening item, because it converts three separate
+self-reported facts into one thing that cannot be back-dated without rewriting history —
+which is itself visible. It also costs almost nothing: the commits are already being
+made.
+
+### C2 — Both allowlists are self-declared; bind them to their moment
+
+`red_test.path` (D2) and `baselines_updated[]` (Tier 1 check 6) are allowlists written by
+the agent whose work they exempt. As specified, an agent that wants green can name a
+neighbouring test as the red test, or declare a golden re-record it should not have made.
+
+Bind each to the moment it was legitimate:
+
+- `red_test.path` is read from the **step-3 commit**, not from the declaration. If the
+  declaration names a different path, that is a mismatch and a hard failure — the same
+  shape as the existing hash check, which `verification/SKILL.md` already treats as
+  non-absorbable.
+- A `baselines_updated[]` entry requires the golden's **pre-image to have existed** at
+  the step-3 SHA. Recording a reference that never existed is a legitimate first-time
+  capture; re-recording one that did is the assertion-weakening move, and git can tell
+  them apart even though the working tree cannot.
+
+### C3 — Verdicts are files written by the checker, never model reports
+
+The blind verifier's answer reaches the run as text in a transcript, which means the
+orchestrating agent is the one reporting whether it passed. That is exactly the
+self-grading the ladder exists to remove, reintroduced at the last step.
+
+The verifier writes `evidence/tier4-verdict.json` itself. The gate reads the file. The
+same rule applies to `tier1.json`. **No gate in this design may take its input from a
+model's summary of a result** — this is a one-line rule and it should be stated in
+`evidence-ladder.md` as such, because it is the kind of thing that erodes quietly.
+
+Corollary for phase 5: the verifier's context payload is assembled by a script from the
+declaration's manifest and hashed into `evidence/`. "Never receives the diff" is then
+checkable after the fact rather than being an instruction.
+
+### C4 — A red-team corpus, one fixture per known cheat
+
+`tests/run.sh` as specified proves the checks *run*. It does not prove they *catch*
+anything, and a check that always returns `pass` would sail through a pass-fixture suite.
+
+Add a corpus of diffs that must fail, one per cheat the design knows about:
+
+| Cheat | Must be caught by |
+|---|---|
+| Edit a neighbouring test until green | check 2 |
+| Re-record a golden instead of fixing | check 6 + C2 |
+| Weaken the red test's assertion | red-test hash (existing) |
+| Leave a `[DEBUG-*]` probe | check 3 |
+| Reference an API that does not exist | check 1 |
+| Classify a Compose fix as `logic` | guard hook + content signal |
+| Hand-edit `tier1.json` | SHA binding (C1) |
+| Feed the verifier the diff | payload hash (C3) |
+| Back-date the red test | commit ordering (C1) |
+
+**Rule: a check with no cheat-fixture is a placeholder, not a check.** This is the same
+standard `verification/SKILL.md` already applies to tests ("a check that cannot fail is
+not a check") — applied to the checking machinery itself.
+
+### C5 — `LEARNED.md` becomes a permanent regression corpus
+
+Four entries exist today; three of them are mechanically checkable and none of them is
+checked by anything. They will recur.
+
+Every `LEARNED.md` entry whose rule is mechanical gets a fixture, permanently:
+
+- *"Never run an unscoped string replace"* → the diff from that incident, which must fail
+  check 2. Already named as a manual step in phase 1; make it a fixture instead.
+- *"Read whole Jira field blocks"* → a gather-stage assertion, not a Tier 1 check, but the
+  same principle applies.
+- *"Long git operations need a background run"* → a preflight assertion on repo file count.
+
+This closes the correction loop that `learning.md` describes but cannot currently
+enforce: today a lesson is prose the next run is asked to remember. A fixture is a lesson
+the next run cannot forget. It also gives `LEARNED.md` a natural size limit — entries
+that graduate to fixtures stop needing to be read.
+
+### C6 — Meta-checks, because the loop can fail silently
+
+Every mechanism here degrades quietly if its input stops arriving. Three assertions in
+preflight, each cheap:
+
+- **Backfill health.** If the last N ledger rows have blank `PR outcome`, the backfill is
+  broken and every tuning conclusion downstream is drawn on stale data. Report it; do not
+  proceed as though the ledger is live.
+- **Label saturation.** If most PRs carry `unverified-*`, the label has stopped meaning
+  anything and the ladder is mis-tuned. That is a finding about the ladder, not a reason
+  to relax the label.
+- **Unmet rate by platform.** Per Appendix B4 — Android hitting the repair cap for
+  environmental reasons must not be read as evidence about the ladder's thresholds.
+
+### C7 — Write down what remains unguarded
+
+The residue, stated rather than hidden, because a design that claims total coverage is
+less trustworthy than one that names its gaps — which is the same argument
+`verification/SKILL.md` already makes about PRs that are quiet about what they could not
+verify:
+
+- **The gate is advisory on repos Amel does not own** (D3). No CI check can be required
+  there. Bypass is visible, not prevented.
+- **The blind verifier is an LLM and is non-deterministic.** Two runs may disagree. Its
+  value is measurable — `blind_verifier_result × regression_found_in_review` over twenty
+  rows gives a false-pass rate — but it is a gate whose reliability is itself an
+  empirical question, and it should not be described as though it were a compiler.
+- **Tier 3 rung 4 (pinned stills) remains non-falsifiable.** Pinning conditions makes the
+  pair *comparable*; it does not make it *proof*. `verification/SKILL.md` is already
+  correct about this and the ladder must not quietly upgrade it by putting it in a table
+  next to things that can fail.
+- **Perf on Android below Macrobenchmark is a weak signal** (B1), and a median with a
+  spread is the most that can be claimed.
+
+### Where this lands in the build order
+
+C1, C2 and C3 are not a seventh phase — they are corrections to phases 1, 2 and 5 and
+should be built into those phases rather than bolted on afterwards. C4 and C5 extend
+phase 1's test suite. C6 is a phase 2 addition to preflight.
+
+The ordering argument is the same one that put Tier 1 first: **the hardening is worth
+more than the tiers it protects.** A ladder with five tiers and a self-graded declaration
+is weaker than a ladder with two tiers and a witness, because the first one produces
+confident output that cannot be checked and the second produces less output that can.
