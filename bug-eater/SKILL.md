@@ -8,7 +8,7 @@ argument-hint: "<jira key | url | ticktick task | pasted text>"
 
 One bug, start to finish. The router classified it; this file fixes it.
 
-**This module owns diagnosis.** Proof belongs to `verification`, which it calls at step 3 and step 7. Preflight, worktrees, the dossier and the ledger belong to the shared spine.
+**This module owns diagnosis.** Proof belongs to `verification`, which it calls at step 4e and step 7; step 3 pins the conditions that handoff runs under. Preflight, worktrees, the dossier and the ledger belong to the shared spine.
 
 **Amel stops at most twice in this lane.** Everything else you prove.
 
@@ -47,7 +47,9 @@ Fan out, cheap models, strict output contract. Cheap agents locate and transcrib
 - The tracker, searched for duplicate reports of the same symptom. Two reports narrow the conditions faster than one.
 - Reporter context — engineer, PM, or support. It calibrates how literally to read the symptom.
 - Repo fetched, history read around the suspect area
-- **Discover how the repo works, rather than assuming.** Platform and language from what is on disk; build and test commands from the build files and the CI config; PR conventions from `.github/PULL_REQUEST_TEMPLATE.md`; lint rules from the tooling config. Record what you found in `state.md` so nothing downstream re-derives it. What is *not* discoverable — which repo a ticket belongs to, repo-specific launch skills, how long a full build takes — comes from the router or from Amel.
+- **Discover how the repo works, rather than assuming.** Platform and language from what is on disk; build and test commands from the build files and the CI config; PR conventions from `.github/PULL_REQUEST_TEMPLATE.md`; lint rules from the tooling config. Record what you found in `state.md` so nothing downstream re-derives it.
+- **Establish the cost class here.** Run `verification`'s economics discovery: time one suite run, on the commit the fix will branch from, so it doubles as the baseline (`evidence/baseline.txt`). Record cheap or expensive in `state.md`. Diagnosis depth in step 4 keys off this, so it must exist before step 4 starts.
+- What is *not* discoverable — which repo a ticket belongs to, repo-specific launch skills — comes from the router or from Amel.
 - Web search for framework-level symptoms: a crash inside Litho, a Yoga layout behaviour, an OS-version regression
 
 Every claim lands tagged **claim** or **verified**, with its source. Provenance not tracked from here gets reconstructed later, badly, and the chain has to cite `file:line` to a stranger.
@@ -57,7 +59,7 @@ Every claim lands tagged **claim** or **verified**, with its source. Provenance 
 - What is happening
 - What should happen instead
 
-Both writable → proceed. The second is inferred about 80% of the time; **infer it and state the inference loudly** rather than asking. It goes in `summary.md` as an assumption and into the PR body where a reviewer can challenge it. Asking Amel what correct behaviour looks like on every ticket is a defect — he would have guessed it too.
+Both writable → proceed. The second is inferred about 80% of the time; **infer it and state the inference loudly** rather than asking. It goes in `summary.md` as an assumption, into the PR body where a reviewer can challenge it, and — the part that makes the guess safe — it becomes the red test's assertion, verbatim, at step 4e. A wrong inference then isn't buried in a body sentence; it is the one line of test code the reviewer reads anyway. Asking Amel what correct behaviour looks like on every ticket is a defect — he would have guessed it too.
 
 Neither writable — no description, or a description nobody can parse into a symptom — → `needs info`, questions written ready to paste.
 
@@ -73,7 +75,7 @@ He may not know either; he is not the reporter. Three ways out per question: ans
 
 Cheap, early, terminal. On a repo with heavy PR traffic this is a common exit and the cheapest one to reach.
 
-Look for a merged PR whose title or diff plainly names this symptom. This gate is deliberately shallow — it catches the obvious cases and nothing else. The definitive check is the red test in step 3, which will catch what this misses at no extra cost.
+Look for a merged PR whose title or diff plainly names this symptom. This gate is deliberately shallow — it catches the obvious cases and nothing else. The definitive check is the red test in step 4e, which will catch what this misses at no extra cost.
 
 **Search open PRs too, not just merged ones.** `gh pr list --search` over the symptom keywords and the suspect files, same call shape. An open PR is the likelier find — the ticket is still open — and the failure mode is worse: a merged fix you miss just costs an investigation, while an in-flight PR you miss costs a duplicate PR filed against a colleague's work on a repo you do not own.
 
@@ -95,7 +97,7 @@ Pin the conditions before you build:
 - **Claim a device.** Take one that is not running an app under test, record its identifier in `state.md`, pin the rest of the run to it. All busy → boot a fresh one rather than queue. Commands per platform in `references/platforms/`.
 - **Missing device or config is assumed, and the assumption is stated** — in the ticket comment and the PR body. "Reported without a device; reproduced on iPhone 17, iOS 26.5" narrows the bug for whoever reads it next.
 
-Then hand off to `verification` for the red test itself. What this lane owes it: the symptom in the reporter's words, the suspect area, the conditions.
+The red test itself is written by `verification` — but **against the surviving chain, which does not exist until step 4.** This step pins the conditions, claims the device, and captures the before-state; the handoff happens at step 4e, once step 4 has a top-ranked chain. What this lane owes `verification` then: the symptom in the reporter's words, the suspect area, the conditions pinned here, and the top chain.
 
 **Visual bugs.** Order of preference, cheapest falsifiable assertion first:
 
@@ -122,13 +124,18 @@ Screenshots are **reviewer evidence, not verification.** They cannot fail. A pai
 
 ### 4a. Locate, mechanically
 
-Cheap agent, no reasoning. Screen → template → component → renderer file, plus recent commits touching that area. One fact sheet, handed identically to all three investigators below.
+Cheap agent, no reasoning. Screen → template → component → renderer file, plus recent commits touching that area. One fact sheet, handed identically to every investigator below — one or three, 4b decides.
 
 This is a lookup, not an insight. Do not spend a strong model on it, and do not make three agents each redo it.
 
-### 4b. Three blind investigators
+### 4b. Investigators — as many as the loop costs
 
-Strong model, **no shared context** — they anchor on each other otherwise and you lose the independence you paid for. Each gets the ticket, the attachment descriptions, the fact sheet, and one entry point:
+**The count is the cost class's call, read from `state.md` — never a read on how obvious the bug looks.** "This one is simple" is the rationalization that guts the whole pipeline; the recorded class is a fact, an impression of the bug is not.
+
+- **Cheap loop: one investigator**, on the entry point the gathered evidence favors. A wrong chain costs seconds to disprove — the red test is the judge either way, and the chain-attempt budget (three, unchanged) already bounds the retries.
+- **Expensive loop: three, blind**, because a wrong chain there costs a build.
+
+When three run: strong model, **no shared context** — they anchor on each other otherwise and you lose the independence you paid for. Each gets the ticket, the attachment descriptions, the fact sheet, and one entry point:
 
 | Entry point | Starts from |
 |---|---|
@@ -136,7 +143,7 @@ Strong model, **no shared context** — they anchor on each other otherwise and 
 | Forward from change | what landed recently near the area; what did it break |
 | Sideways from contract | what the spec, config, or template promises; where reality diverges |
 
-**Forward-from-change doesn't have to guess which commit.** When the suspect area has enough history that "recently" spans dozens of commits, bisect instead of reading each by eye — `git bisect` driven by the red test once one exists (step 3), or a linear walk scripted the same way for a symptom that only shows up under the test suite, not a single run. Reasoning about which commit looks suspicious is a guess; a bisection that lands on a commit is a fact the chain can cite by SHA.
+**Forward-from-change doesn't have to guess which commit.** When the suspect area has enough history that "recently" spans dozens of commits, bisect instead of reading each by eye — `git bisect` driven by the red test once one exists (step 4e), or a linear walk scripted the same way for a symptom that only shows up under the test suite, not a single run. Reasoning about which commit looks suspicious is a guess; a bisection that lands on a commit is a fact the chain can cite by SHA.
 
 Diversify by **entry point, not personality.** A "pessimistic" persona changes tone, not reasoning. Different starting evidence is what actually produces independent chains.
 
@@ -158,9 +165,11 @@ Two entry points independently reaching the same cause is real signal — unlike
 
 **No debate round, and no judge model.** Models converge on the most confidently argued answer, not the correct one, and three agents agreeing feels like strong evidence while being nearly none. Debate rounds also multiply invocations faster than anything else in the run and buy the least.
 
-### 4d. Two skeptics, top chain only
+### 4d. The skeptic pass — verification's, run once
 
-Each told to **prove it wrong**, defaulting to refuted when uncertain. This is the cheapest place to kill a wrong answer — it runs before any build.
+The top chain gets refuted **once, by `verification`'s 1a, at the handoff below** — two skeptics, each told to prove it wrong, defaulting to refuted when uncertain. Do not run a lane-side pass as well; the same chain refuted twice by four agents buys nothing the first two did not.
+
+On a **cheap loop there are no skeptics at all** — verification skips 1a and the red test refutes at the same cost, more strictly. On an expensive loop the pass is what stands between a wrong chain and a wasted build.
 
 Both refute → promote hypothesis 2, repeat once. All refuted → `blocked`, both skeptics' reasoning kept.
 
@@ -168,7 +177,7 @@ Both refute → promote hypothesis 2, repeat once. All refuted → `blocked`, bo
 
 Everything above is a ranked guess — cited, argued, still a guess. The test is the only part that can come back and say no.
 
-Write it against the surviving chain (step 3's machinery) and watch it fail on the symptom. Fails → chain proven, proceed. Does not fail → the chain is wrong regardless of how well it read; drop to the next hypothesis. **Chain-attempt budget: three.** Separate from the fix-attempt budget in step 7 — they do not share, or one exhausts the other.
+Hand off to `verification` here: it runs the skeptic pass when the loop is expensive (4d), then writes the test against the surviving chain, under step 3's pinned conditions and device, and watches it fail on the symptom. Fails → chain proven, proceed. Does not fail → the chain is wrong regardless of how well it read; drop to the next hypothesis. **Chain-attempt budget: three.** Separate from the fix-attempt budget in step 7 — they do not share, or one exhausts the other.
 
 `chain.md` keeps **all three hypotheses**, not just the winner. The rejected ones and why they lost are what teach the next person, and what you fall back to when the red test refuses to go red. Run `unslop-prose` over it in cleanup mode — a human reads this file later.
 
@@ -221,7 +230,7 @@ Worktree per item, mandatory — concurrent items may touch the same repo. Creat
 
 Do this again in step 8, against what actually got written rather than what was intended.
 
-**Move the red test into the repo's suite.** It was written in step 3 to prove a chain, and it may not live where the repo would naturally put it. Relocate it, match the repo's conventions, so it reads as a regression test someone would have written — not a probe left behind.
+**Move the red test into the repo's suite — before the first fix commit.** It was written to prove a chain, and it may not live where the repo would naturally put it. Relocate it, match the repo's conventions, re-run it red, and let `verification` re-hash and commit it there — so the test-only commit already holds the test in its final home, reading as a regression test someone would have written. Relocating it *after* fix commits exist trips verification's hash check and forces the earned-exception path — re-observed red on the parent, a new test-only commit — which is pure rework for choosing the wrong moment.
 
 **`[DEBUG-*]` probes.** Temporary prints inserted to see what a value actually is at runtime, when reading alone will not settle it:
 
@@ -237,12 +246,12 @@ print("[DEBUG-onAppear] fired for \(type(of: subview)), count=\(count)")
 
 Hand off to `verification`. Four claims, each able to fail:
 
-1. **The red test turns green** — same test, **file re-hashed against the hash recorded in step 3.** A mismatch is reported, not absorbed. A red test adjusted during implementation until it passed proves nothing, and that is the easiest thing in this whole workflow to cheat.
-2. **The full suite is green** — the repo's suite, not the changed file's tests. Commands and output pasted; pass counts, not full logs.
+1. **The red test turns green** — same test, **file re-hashed against the hash recorded at the step 4e handoff.** A mismatch is reported, not absorbed. A red test adjusted during implementation until it passed proves nothing, and that is the easiest thing in this whole workflow to cheat.
+2. **No new suite failures against baseline** — the repo's suite, not the changed file's tests, compared against the parent-commit baseline `verification` recorded. Commands and the delta pasted; pass counts, not full logs.
 3. **Nothing else moved** — snapshot failures on components you touched are intentional, update the baseline. Failures on components you did not touch → `decision needed`, never auto-updated. A suite re-run to green is `blocked` and flagged flaky, not a pass.
 4. **Reviewer evidence** — "after" screenshot, same device and screen as the "before", replayed from the recorded path or batched back to him.
 
-**Revert check** — revert the diff, confirm the test goes red again — **only when the test is cheap to run.** A package target in seconds: mandatory. A 35-minute app build: skip it. The step-3 failure output, kept in `evidence/`, already establishes the test failing on code without the fix, provided the file is unchanged. That is what claim 1's hash check proves.
+**Revert check** — revert the diff, confirm the test goes red again — **only when the test is cheap to run.** A package target in seconds: mandatory. A 35-minute app build: skip it. The red failure output from step 4e, kept in `evidence/`, already establishes the test failing on code without the fix, provided the file is unchanged. That is what claim 1's hash check and the test-only commit prove.
 
 **Two failure modes, two responses:**
 
@@ -260,7 +269,7 @@ The blocked summary is written and left for him to read. It does not halt the ru
 - Read the `noise` category explicitly, not as part of a general pass — it catches doc-comments restating a name.
 - Re-run the step 6 convention check — lint config, written conventions, surrounding code — against the diff as written.
 
-**Any edit beyond comments and prints sends this back to step 7.** An unverified cleanup edit is exactly how a green run ships a broken diff. Comment-only cleanup does not.
+**Any edit beyond comments and prints sends this back to step 7.** An unverified cleanup edit is exactly how a green run ships a broken diff. Comment-only cleanup does not — **except in the red test's file, which cleanup does not touch at all.** Even a comment there changes the hash and breaks what the test-only commit proves, forcing a re-observation nobody wanted over a formatting nit.
 
 ## Step 9 — Draft PR
 
@@ -276,7 +285,7 @@ Structure — problem, solution, logic, in the words a non-renderer engineer wou
 - **Assumptions, when a guess was made.** One line. The ticket rarely states what correct behaviour should be, and that guess drove the whole fix — invisible to a reviewer, who will assume the ticket specified it. *"Ticket didn't state expected behaviour; assumed the icon should be inset by the standard container padding, matching sibling components. Reproduced on iPhone 17, iOS 26.5 — no device given."* No guesses, no line.
 - **Blast radius.** What else reads the thing you changed. The first question anyone asks about a changed default, and the default here is fixing at source in shared code.
 - **Considered and rejected, one line.** Stops the "why not just do X" round-trip, which is the most common one on a repo you do not own.
-- **Proof** — the red test named, verification output trimmed to pass counts. **When a process failure meant something could not run, say so and name the check.** A PR quiet about what it could not verify is worse than one that admits it.
+- **Proof** — paste the proof block from `verification` verbatim: verdict tier, the claims table with SHAs and commands, the replay line, and the mandatory `Not proven` line. **When a process failure meant something could not run, that line says so and names the check.** A PR quiet about what it could not verify is worse than one that admits it.
 - **How to review** — actionable only. A device, a branch, an OS version, a named test. Never the diff's size or file count; that is not something to do.
 - **Next steps** — real next steps and linked follow-up tickets only. Never a prose description of a deferred bug; the ticket is where that lives.
 
@@ -284,6 +293,6 @@ Everything else stays in `chain.md`. Link to it or drop it.
 
 Run `unslop-prose rewrite --preset crisp` over the body. A PR body taking minutes to read is a defect in the body, not proof of thoroughness.
 
-**Then comment on the ticket** — the PR link, and the repro confirmation from step 3 if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
+**Then comment on the ticket** — the PR link, and the repro confirmation from step 4e if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
 
 **TickTick-sourced item:** also move the card, per `../scruffy/references/ticktick.md` — comment with the PR link, then move it to the `In Review` column if that board has one. Every other terminal state leaves the card where it is.

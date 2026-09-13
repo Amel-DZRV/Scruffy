@@ -38,7 +38,7 @@ A **stop** is a hard halt: ask, wait, act on the answer. Each is batched across 
 |---|---|---|---|
 | 1 | this file | after classify | Bug, feature, or review? — **only if genuinely unclear** |
 | 2 | the lane | after gather | Everything nobody can look up — **only if something is missing** |
-| 3 | the lane | before implementing | Which of two equally correct fixes — **only if the choice is his** |
+| 3 | the lane | before implementing | Which of two equally correct fixes — **only if the choice is his**. On a feature that earned a plan, this is the plan package, iterated until he says "go" — the one stop that is a conversation |
 
 None of these fire on a well-specified bug. If you are firing all three routinely, the skill is wrong, not him.
 
@@ -123,6 +123,6 @@ The lane owns its own steps. This file does not reach inside one; it holds the b
 
 Then append one row per item to `~/Projects/tickets/LEDGER.md`. **Leave the PR-outcome column blank** — a workflow grading its own output is exactly the bias this design exists to remove. The next run's preflight backfills it.
 
-Finish with one table: every input, one row, terminal state, evidence, PR link. Anything deferred or capped is named individually. Silent truncation reads as "covered everything" when it did not.
+Finish with one table: every input, one row, terminal state, **proof verdict** (`MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`), evidence, PR link. The verdict column is the triage: MERGE-READY rows are the PRs Amel can approve on the proof block alone. Anything deferred or capped is named individually. Silent truncation reads as "covered everything" when it did not.
 
 Then `references/learning.md`: every comment he leaves on a PR is a defect in this skill, not just in that fix. Write it down. Correcting a run fixes one run; writing it down fixes all of them.

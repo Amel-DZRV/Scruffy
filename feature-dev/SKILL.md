@@ -34,9 +34,9 @@ Both batched across every item in a run.
 | Stop | When | You are asking |
 |---|---|---|
 | 1 | After requirements | What the spec genuinely does not determine |
-| 2 | After design | Which approach — when two are each defensible and the trade-off is his |
+| 2 | After design, with the plan drafted | The plan package — iterated until he says "go" |
 
-Unlike Bug-Eater, **stop 2 firing is normal here.** A feature with two viable designs and a real trade-off should reach him. It is stop 2 *never* firing that means the trigger is mis-specified.
+Unlike Bug-Eater, **stop 2 firing is normal here.** A feature that earned a plan always reaches him, and it is a conversation rather than a single batch — the one deliberate exception to batching in all of Scruffy, argued for in step 4. It is stop 2 *never* firing that means the trigger is mis-specified.
 
 ## Terminal states
 
@@ -174,19 +174,25 @@ Speculative generality is the failure mode here — building the flexible versio
 
 Two skeptics on the top approach, told to **prove it wrong**, defaulting to refuted when uncertain. On a feature they are asking a different question than on a bug: not *is this the cause* but **is this the right seam** — will this design survive contact with the next requirement, does it fight the codebase, does it quietly change something it should not.
 
-### Stop 2
+### Then plan — before the stop, not after
 
-Fires when two approaches are each defensible and the trade-off is his: shipping speed versus longevity, a new dependency, a changed contract, a bigger refactor than the ticket implies.
-
-Batched, recommendation beside each, the trade-off in one sentence each. **Nothing is built until he says so.**
-
-Escalate to `decision needed` instead when the honest answer is that the feature as specified is the wrong shape — the requested solution does not serve the stated goal, or the scope is a project rather than a change.
-
-### Then plan
-
-`superpowers:writing-plans`, scoped to the approved approach. Features earn a plan far more often than bugs do — the work is multi-step by nature.
+`superpowers:writing-plans`, scoped to the top approach. Features earn a plan far more often than bugs do — the work is multi-step by nature. The plan is drafted **before** stop 2, because the plan is the artifact he most needs to see, and a stop that shows him a design summary while the plan gets written afterwards asks him to approve a thing that does not exist yet.
 
 **Slice it vertically.** Each step should leave the repo working and be independently reviewable. A plan whose first four steps produce nothing runnable cannot be verified incrementally, and its failures all arrive at once at the end.
+
+**Every step carries four fields: what, files it touches, criteria it delivers, depends on.** Not decoration — these are what make the dependency graph derivable in step 6; a plan without them cannot be orchestrated and runs serial. A step whose files cannot be named yet is not yet a step.
+
+### Stop 2 — the plan review loop
+
+Present **one package**: the spec recap (criteria and non-goals), the chosen design and the rejected alternative with the trade-off in one sentence, the step DAG, the criterion→step mapping, the blast radius, and every open trade-off with a recommendation beside it.
+
+Then loop: he comments, the package is revised **in full** and re-presented. Repeat until an explicit "go". **Nothing is built until he says so.**
+
+This is the one place in Scruffy where batching deliberately bends into a conversation: a plan round costs him minutes, a wrong plan costs a built week nobody wanted, and no reviewer catches it because the code is fine. The "second round is worse" rule still binds *within* a round — each round is complete, carries everything that changed since the last one, and dribbles nothing across rounds.
+
+**A feature too small to earn a plan** — single step, one seam — skips the loop and takes the old single batch: the approach question, recommendation beside it, nothing built until he answers.
+
+Escalate to `decision needed` instead when the honest answer is that the feature as specified is the wrong shape — the requested solution does not serve the stated goal, or the scope is a project rather than a change.
 
 ## Step 5 — Acceptance tests, red first
 
@@ -196,15 +202,29 @@ Hand off to `verification`. Same rule as a bug, applied to behaviour that does n
 
 The failure mode here is different from a bug's and worth naming: on a bug, a test that will not go red means the diagnosis is wrong. On a feature, **a test that will not go red means the behaviour already exists** — which sends you back to step 2, because you are about to build something twice.
 
-All criteria red, all recorded with their hashes, before a line of implementation.
+All criteria red, all recorded with their hashes, before a line of implementation. **Commit the acceptance tests on their own, before any implementation commit** — the branch history `parent → tests → implementation` is the reviewer-facing proof that the tests were not written to fit the code, and it falls out of the one-commit-per-step flow in step 6 for free.
 
 Criteria that genuinely cannot be tested — a visual judgement, a performance target with no harness — are named in the PR body as unverified. **Do not quietly drop them, and do not build a harness that was not asked for.** An unverifiable criterion is a finding.
 
-## Step 6 — Implement
+## Step 6 — Implement, orchestrated
 
 Worktree per item, mandatory. Create and clean up per `../scruffy/references/worktrees.md`; that file also owns which terminal states keep the worktree and which release it.
 
-Follow the plan, one commit per step. **Code review between steps** is a fresh subagent, not a second pass by the model that wrote the step — hand it the two SHAs bounding the step, the plan step and acceptance criteria it was meant to satisfy, and nothing else from this run's context. It reports Critical / Important / Minor; Critical and Important get fixed before the next step starts, Minor carries to step 8. **Run the acceptance tests after every step** — on a cheap loop this is nearly free, and it tells you which criterion each step actually delivered.
+**Derive the tracks from the approved plan.** Steps connected by a `depends on` edge or by overlapping `files` belong to one track; the disjoint components run in parallel. Mechanics — derivation, the runner ladder, track worktrees, integration — live in `references/orchestration.md`.
+
+**One track → serial, in the item worktree, exactly the flow below.** Parallelism is earned by the DAG, never manufactured — two tracks that share a file were one track all along, and forcing the split buys merge conflicts, not speed.
+
+**Multiple tracks → one implementer agent per track, each in its own worktree**, branched from the step-5 test commit so every track runs its own criteria's tests from its first step. Each implementer gets a clean context contract — its track's plan steps, the spec, `seam.md`, the repo's conventions, and nothing from this run's own chatter.
+
+Per step, per track — identical whether one track runs or five:
+
+- **One commit per step.**
+- **Code review between steps** is a fresh subagent, not a second pass by the model that wrote the step — hand it the two SHAs bounding the step, the plan step and acceptance criteria it was meant to satisfy, and nothing else from this run's context. It reports Critical / Important / Minor; Critical and Important get fixed before the next step starts, Minor carries to step 8.
+- **Run the track's acceptance tests after every step** — nearly free on a cheap loop, batched through the build slot on an expensive one. It tells you which criterion each step actually delivered.
+
+**Integrate, smallest track first.** Tracks merge back into the item branch — they are independent by construction, so order is free and small-first gives the fastest signal — with the full acceptance suite after each merge. A conflict is a DAG defect — two tracks touched the same code despite the derivation — resolve it if it is mechanical (`mattpocock-skills:resolving-merge-conflicts`), route to `blocked` if it is not, and write it to `LEARNED.md` either way.
+
+**A track failing is not the run failing.** The fix budget of three is per track; an exhausted track blocks that track while the others finish and integrate. The feature is done only when every criterion's test is green — a dead track ends the item `blocked`, with the integrated branch holding the finished work and the failed track's worktree kept.
 
 **A design that changes existing behaviour (step 4) is a candidate for defense-in-depth, not just a fix at the new call site.** If the design crosses a contract — the blast radius mapped in step 3 — add a cheap guard at each boundary it crosses, not only at the point where the new behaviour lives. This stays inside what step 3 already mapped; it is not licence to harden code the feature doesn't touch.
 
@@ -233,7 +253,7 @@ The moment scope control actually matters. Anything you find yourself wanting to
 Hand off to `verification`:
 
 1. **Every acceptance test green**, each file re-hashed against its step-5 hash. A mismatch is reported, not absorbed — a test loosened until it passed proves nothing, and on a feature it is easier to rationalize because there was no original behaviour to preserve.
-2. **The full suite green.** Commands and output pasted; pass counts, not full logs.
+2. **No new suite failures against baseline.** Compared against the parent-commit baseline `verification` recorded; commands and the delta pasted — pass counts, not full logs.
 3. **Nothing else moved.** Failures in untouched areas → `decision needed`, never auto-updated. A suite re-run to green is `blocked` and flagged flaky.
 4. **Reviewer evidence** for anything visual — captures on the same device and screen, per platform.
 
@@ -242,7 +262,7 @@ Plus two checks that only apply to features:
 5. **Every acceptance criterion maps to a passing test, by name.** Not "the suite is green" — a criterion-by-criterion table. This is the artifact that answers "is it done", and it belongs in the PR body.
 6. **The non-goals still hold.** Read the diff against them. A feature that quietly grew past its stated boundary is the most common thing a reviewer objects to, and the author is always the last to notice.
 
-**Two budgets, not shared:** design attempts — the test will not go red because the behaviour exists, or the approach will not fit — three, then back to step 4. Implementation attempts — the test will not go green — three, then `blocked` with a summary.
+**Two budgets, not shared:** design attempts — the test will not go red because the behaviour exists, or the approach will not fit — three, then back to step 4. Implementation attempts — the test will not go green — three **per track** when the build was orchestrated, then that track is `blocked` with a summary; the item ends `blocked` only when a dead track leaves a criterion unmet.
 
 Process failures — toolchain, environment — get no retry loop. PR opens with proof marked incomplete and the failing check named.
 
@@ -264,7 +284,8 @@ A feature PR has a harder job than a bug PR: there is no symptom to point at, so
 
 - **What this adds, one line.** In the words of someone who wants it, not someone who built it.
 - **Why** — the problem from step 1. A reviewer who does not know the goal cannot judge the design.
-- **Acceptance criteria, each with its passing test named.** The table from step 7. This is the core of the body and it is what makes "done" checkable rather than assertable.
+- **The proof block from `verification`, pasted verbatim** — verdict tier, claims table with SHAs, replay line, the mandatory `Not proven` line.
+- **Acceptance criteria, each with its passing test named.** The table from step 7, sitting directly under the proof block. This is the core of the body and it is what makes "done" checkable rather than assertable.
 - **Non-goals.** Pre-empts the "shouldn't this also…" comment, which is the most common round-trip on a feature.
 - **The design, in two or three sentences**, and — when stop 2 fired — the approach that was rejected and why. Unlike a bug PR, that context is load-bearing here: the reviewer is being asked to accept a design, not just a fix.
 - **Blast radius.** What reads this, what it changes. Say plainly when it only adds.

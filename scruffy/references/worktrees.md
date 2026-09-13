@@ -52,3 +52,7 @@ git worktree prune
 **If removal is refused** (`contains modified or untracked files`): something in there was never committed. Never `--force` past this on your own initiative — show what is at stake and let Amel choose (fold into that item's memo rather than a separate interrupt): commit it, move it into the dossier, or discard it.
 
 **Only remove what this run created.** A path under `.worktrees/` or `worktrees/` that this item didn't open belongs to another run or to Amel directly — leave it.
+
+## Track worktrees
+
+Feature orchestration (`feature-dev/references/orchestration.md`) opens short-lived worktrees at `.worktrees/<item-key>-track-<n>`, branched from the item branch's test commit. Their lifecycle is simpler than the item's: **removed immediately after successful integration**, kept only when the track ended `blocked`. They never outlive the item's own terminal state, and the "only remove what this run created" rule covers them.

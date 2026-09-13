@@ -22,9 +22,9 @@ In order. Each is independently able to fail.
 
 | # | Claim | Proven by |
 |---|---|---|
-| 1 | The diagnosis is real | two skeptics, then the red test going red |
+| 1 | The diagnosis is real | skeptics on expensive loops, then the red test going red |
 | 2 | The test can fail | red test observed failing on the symptom, **before any fix** |
-| 3 | The fix works | that test green, full suite green |
+| 3 | The fix works | that test green, no new suite failures against baseline |
 | 4 | Nothing else broke | untouched components still passing |
 
 Claim 2 is the load-bearing one. A test written after a fix is the classic way to end up with one that would have passed anyway. **It must be watched failing first, on code without the fix.** Everything downstream rests on that observation.
@@ -45,7 +45,7 @@ Three properties, all required:
 
 ## Discover the economics first
 
-Before anything else, find out what a test run costs. This governs almost every behavioural choice below, and it is discoverable rather than configured.
+Before anything else, find out what a test run costs. This governs almost every behavioural choice below, and it is discoverable rather than configured. A lane may already have done it at gather — `state.md` carries the class, the command, and the baseline; when it does, use them rather than re-deriving.
 
 - What is the build system — `BUILD.bazel`, `Package.swift`, `build.gradle`, `package.json`, `go.mod`?
 - How does CI run the tests? The CI config is the most reliable source for the real command.
@@ -57,6 +57,8 @@ Before anything else, find out what a test run costs. This governs almost every 
 | **Expensive** — minutes to tens of minutes | full app build, emulator, integration suites | Revert check skipped. Probes batched — one build, many answers. Build slot semaphore. |
 
 Record which it is in `state.md`. A module that assumes expensive on a Jest repo wastes hours; one that assumes cheap on a Bazel iOS repo produces a silent 35-minute failure, which is the most expensive thing that can happen in a run.
+
+**The timing run is also the baseline run.** It happens on the parent commit, before any change — so keep its result: pass count and the names of any failures, in `evidence/baseline.txt`, counts in `state.md`. "The suite is green" is not a claim until the suite's starting state is known; a repo whose main is already red makes claim 4 unfalsifiable without this. Every later suite claim reads **no new failures against baseline**, not "green". When the loop is too expensive to afford a full baseline run, say so in the proof block rather than implying a clean start.
 
 **The build slot, when expensive.** Everything before the build runs unbounded parallel — reading, grepping, chaining, writing the test. Builds and device work pass through a semaphore of N, sized from the machine and not from the repo. Two concurrent full builds contend on CPU, RAM and disk regardless of which repos they belong to, and the failures look like bugs. N is 1 on a laptop unless a remote build cache exists.
 
@@ -88,13 +90,15 @@ The summary is written and left to be read. It does not halt the run and wait �
 
 # Mode 1 — Called by a lane
 
-The lane owes you: the symptom in the reporter's words, the suspect area, the conditions, and the surviving chain. You owe it: a red test, and a verdict.
+The lane owes you: the symptom in the reporter's words, the suspect area, the conditions, and its top-ranked chain — whether that chain survives is decided here. You owe it: a red test, a verdict, and the proof block for its PR body.
 
-## 1a. Refute the diagnosis
+## 1a. Refute the diagnosis — expensive loops only
 
-Two independent skeptics on the chain, each told to **prove it wrong**, defaulting to refuted when uncertain.
+**Cheap loop: skip this step, go straight to 1b.** This step exists to kill a wrong answer before paying for a build; on a cheap loop there is no build to protect, and the red test refutes at the same cost while being stricter — a skeptic argues, a test fails.
 
-This is the cheapest place to kill a wrong answer — it runs before any build. Both refute → the lane promotes its next hypothesis. All refuted → `blocked`, with both skeptics' reasoning kept.
+Expensive loop: two independent skeptics on the chain, each told to **prove it wrong**, defaulting to refuted when uncertain. Both refute → the lane promotes its next hypothesis. All refuted → `blocked`, with both skeptics' reasoning kept.
+
+Either way, **this is the only skeptic pass in the pipeline.** The lane does not run its own — the same chain refuted twice by four agents buys nothing the first two did not.
 
 Skeptics, not debaters. Do not run a consensus round: models converge on the most confidently argued answer rather than the correct one, and agreement between agents feels like strong evidence while being nearly none. Disagreement is the signal worth having.
 
@@ -102,7 +106,11 @@ Skeptics, not debaters. Do not run a consensus round: models converge on the mos
 
 Against the surviving chain, at a seam, asserting the reporter's symptom.
 
+**When the expected behaviour was inferred rather than stated** — the lane's usual case — the inference is the assertion, **verbatim, not a paraphrase of it.** The PR body's assumption line then names this test, so the riskiest guess in the run gets challenged in the one line of code the reviewer was going to read anyway, instead of in a body sentence nobody connects to the diff.
+
 **Run it. Watch it go red.** Keep the failure output in `evidence/` — it is not a log, it is claim 2's proof, and the revert check below depends on it existing.
+
+**Then commit the test on its own, before any fix exists.** The branch history becomes `parent → test-only commit → fix commit(s)`, and that ordering is the reviewer-facing proof: git shows the test predates the fix and shows every byte that changed in it since, and neither can be reasoned away after the fact. A red test squashed into the fix commit is self-attested; a red test with its own commit is on the record. Record the test-commit SHA in `state.md` — the proof block needs it.
 
 **Hash the test file and record the hash in `state.md`:**
 
@@ -110,7 +118,7 @@ Against the surviving chain, at a seam, asserting the reporter's symptom.
 shasum -a 256 <test file> | tee -a evidence/red-test.sha
 ```
 
-This is the mechanism behind claim 1. Comparing the assertion by eye is an instruction a model gives itself and can rationalize its way out of; a hash mismatch cannot be reasoned away. Record it here, check it after the fix.
+This is the in-run guard behind claim 1 — the commit is for the reviewer, the hash is for you, mid-run, before anything is committed. Comparing the assertion by eye is an instruction a model gives itself and can rationalize its way out of; a hash mismatch cannot be reasoned away. Record it here, check it after the fix.
 
 Does not go red → the chain is wrong, however well it read. Report back to the lane; it drops to the next hypothesis. **Chain-attempt budget**, three, then `blocked`.
 
@@ -126,11 +134,11 @@ Same test. **Re-hash the file and compare against the hash recorded in 1b.**
 shasum -a 256 <test file>          # must match evidence/red-test.sha
 ```
 
-A mismatch means the test changed during implementation. **Report it; do not absorb it.** A red test edited until it passed proves nothing, and this comparison is the only thing standing between you and that failure. If the test genuinely had to move — relocated into the repo's suite, for instance — re-run it red on the parent commit and record a new hash, rather than waving the mismatch through.
+A mismatch means the test changed during implementation. **Report it; do not absorb it.** A red test edited until it passed proves nothing, and this comparison is the only thing standing between you and that failure. If the test genuinely had to move — relocated into the repo's suite, for instance — re-run it red on the parent commit, record a new hash, and give it a **new test-only commit**, rather than waving the mismatch through. `git log --follow -p` over the test file must tell the same story the proof block does.
 
-**2. The full suite is green.**
+**2. No new suite failures against baseline.**
 
-The repo's suite, not the changed file's tests. Paste commands and output — pass counts, not full logs.
+The repo's suite, not the changed file's tests, compared against `evidence/baseline.txt` from the economics step. Paste commands and the delta — pass counts, not full logs. "Same two pre-existing failures as parent" is a pass; a clean-sounding "suite green" with no baseline behind it is not a claim.
 
 **3. Nothing else moved.**
 
@@ -148,7 +156,7 @@ The repo's suite, not the changed file's tests. Paste commands and output — pa
 
 Revert the diff, confirm the test goes red again. Catches the case where something *other* than the fix made it pass — a stale build artifact, an unrelated edit in the same commit.
 
-**Cheap loop: mandatory.** Expensive loop: skip it. The 1b failure output already establishes the test failing on code without the fix, provided the file is unchanged — which is exactly what claim 1's hash check proves. That is most of the value at none of the cost.
+**Cheap loop: mandatory.** Expensive loop: skip it. The 1b failure output already establishes the test failing on code without the fix, provided the file is unchanged — which is exactly what claim 1's hash check and the test-only commit prove. That is most of the value at none of the cost.
 
 ---
 
@@ -204,16 +212,60 @@ Log it: date, PR, radius, whether the independent test confirmed the claim. Sepa
 
 ---
 
+# The proof block
+
+Everything above is discipline; this is the artifact it exists to produce. **One block, fixed shape, pasted into the PR body verbatim.** The dossier is for resumption; the proof block is for the reviewer, and the whole point of a fixed shape is that Amel learns to read it in ten seconds. A lane's PR body carries it; Mode 2 puts it in the dossier verdict; Mode 3 puts it in the review.
+
+```markdown
+## Proof
+
+**Verdict: MERGE-READY**   (or REVIEW NEEDED / PROOF INCOMPLETE — with the reason, one line)
+
+| Claim | Evidence |
+|---|---|
+| Fails without fix | `<command>` at `<test-commit sha>` — exit 1, "<one-line failure excerpt>" |
+| Passes with fix | same command at `<head sha>` — pass |
+| Test unchanged since red | test-only commit `<sha>`, untouched since — `git log --follow -p <file>` |
+| Suite | <N> passed at head; baseline at parent: <N> passed (or: same <k> pre-existing failures, named) |
+| Revert check | done / skipped — expensive loop, the red commit stands in |
+
+**Replay:** `git checkout <test-commit> && <command>`  (expect red) `&& git checkout <head> && <command>`  (expect green)
+**Not proven:** what could not be checked and why — or "nothing".
+```
+
+Rules:
+
+- **Every cell is a command, a SHA, or a count.** A cell that reads "verified ✓" is the self-attestation this block exists to replace.
+- **Replay is generated on cheap loops, always.** On expensive loops, state the cost instead — "replay is a 35-minute build; red output archived below" — and fold the raw 1b failure output into a `<details>` block under the table. Trust-me is acceptable only with the receipt attached.
+- **The `Not proven` line is mandatory**, even when it says "nothing". Its absence is indistinguishable from silence about a gap.
+
+## The verdict
+
+Three tiers, so "can I just merge this" is mechanical rather than a feeling:
+
+| Verdict | Means | Criteria — all of them |
+|---|---|---|
+| **MERGE-READY** | approve on the proof alone | contained blast radius (Mode 3's radius table), all four claims proven, revert check done or expensive-loop exemption, suite delta against baseline is zero, nothing in `Not proven` |
+| **REVIEW NEEDED** | the proof holds but the judgement is his | shared blast radius, a design or trade-off embedded in the diff, or any earned exception — no seam, an unverifiable criterion |
+| **PROOF INCOMPLETE** | do not merge on this | any process failure, any claim that could not run |
+
+**Radius trumps greenness.** A shared-radius change self-demotes to REVIEW NEEDED however green it is — the tests prove the claim, not the blast radius. And the tier is a claim like any other: the ledger's PR-outcome column is what eventually says whether MERGE-READY predicts `approved as-is`, which is the number this entire module is trying to earn.
+
+---
+
 ## Dossier
 
-`evidence/` holds every command and its output, including — especially — the 1b red failure. Verdicts, attempt counts and the red-test hash go in `state.md`.
+`evidence/` holds every command and its output, including — especially — the 1b red failure and the baseline. Verdicts, attempt counts, the red-test hash and the test-commit SHA go in `state.md`.
+
+**Every evidence file starts with a three-line header:** commit SHA it ran against, the exact command, toolchain or device identifier. Output with no provenance cannot be re-trusted later — a pass count that does not say which commit it counted is a log, not evidence.
 
 What is written for Amel goes in plain words. The verdict block first:
 
 ```markdown
+**Verdict:** MERGE-READY / REVIEW NEEDED / PROOF INCOMPLETE, and the one-line reason.
 **Proven:** the test that failed before and passes now, named.
 **Not proven:** what could not be checked, and why.
-**Regressions:** none, or the exact ones.
+**Regressions:** none against baseline, or the exact ones.
 ```
 
 A check that could not run is stated, never omitted. A verification quiet about what it could not verify is worse than one that admits it — the whole point of this module is that its output is trustworthy, and silence about gaps is the fastest way to lose that.
