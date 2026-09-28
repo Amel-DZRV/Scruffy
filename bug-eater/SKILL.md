@@ -218,7 +218,7 @@ Worktree per item, mandatory — concurrent items may touch the same repo. Creat
 
 **Plan only when it earns one.** Multi-file or multi-concern → `superpowers:writing-plans` into `plan.md`, then `subagent-driven-development`, one helper per independent step, one commit each. A three-line fix goes straight to the diff; a plan and a subagent chain for a one-liner is pure ceremony.
 
-**Code review between steps** means a fresh subagent, not a second look from the model that wrote the step. Give it only the two SHAs bounding the step, the plan step it was supposed to satisfy, and nothing from this run's own context — a reviewer primed with the implementer's reasoning inherits its blind spots. It reports Critical / Important / Minor; Critical and Important get fixed before the next step starts, Minor gets noted and carried to step 8.
+**Code review between steps** means the `step-reviewer` agent, not a second look from the model that wrote the step. Give it only the two SHAs bounding the step, the plan step it was supposed to satisfy, and nothing from this run's own context — a reviewer primed with the implementer's reasoning inherits its blind spots. It reports Critical / Important / Minor; Critical and Important get fixed before the next step starts, Minor gets noted and carried to step 8.
 
 **Fixing at the source doesn't stop at the origin.** The chain in step 4 already names every link between cause and symptom — each one is a place the same class of bug can recur through a different caller, a mock, or a future edit. Where a link is cheap to guard (a validation at a boundary the chain crossed, not a rewrite), add it alongside the fix. This is defense-in-depth, not scope creep: it stays inside the file(s) the chain already touched, and it does not chase problems the chain didn't find.
 
@@ -244,7 +244,7 @@ print("[DEBUG-onAppear] fired for \(type(of: subview)), count=\(count)")
 
 ## Step 7 — Verify
 
-Hand off to `verification`. Four claims, each able to fail:
+Hand off to `verification`, which dispatches the `proof-auditor` agent with the packet it lists — SHAs, test file and hash, commands, cost class, baseline, the reporter's symptom. **Not `chain.md`, not the plan, not your reasoning.** The model that wrote the fix does not grade it. Four claims, each able to fail:
 
 1. **The red test turns green** — same test, **file re-hashed against the hash recorded at the step 4e handoff.** A mismatch is reported, not absorbed. A red test adjusted during implementation until it passed proves nothing, and that is the easiest thing in this whole workflow to cheat.
 2. **No new suite failures against baseline** — the repo's suite, not the changed file's tests, compared against the parent-commit baseline `verification` recorded. Commands and the delta pasted; pass counts, not full logs.

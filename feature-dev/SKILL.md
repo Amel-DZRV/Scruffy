@@ -219,7 +219,7 @@ Worktree per item, mandatory. Create and clean up per `../scruffy/references/wor
 Per step, per track — identical whether one track runs or five:
 
 - **One commit per step.**
-- **Code review between steps** is a fresh subagent, not a second pass by the model that wrote the step — hand it the two SHAs bounding the step, the plan step and acceptance criteria it was meant to satisfy, and nothing else from this run's context. It reports Critical / Important / Minor; Critical and Important get fixed before the next step starts, Minor carries to step 8.
+- **Code review between steps** is the `step-reviewer` agent, not a second pass by the model that wrote the step — hand it the two SHAs bounding the step, the plan step and acceptance criteria it was meant to satisfy, and nothing else from this run's context. It reports Critical / Important / Minor; Critical and Important get fixed before the next step starts, Minor carries to step 8.
 - **Run the track's acceptance tests after every step** — nearly free on a cheap loop, batched through the build slot on an expensive one. It tells you which criterion each step actually delivered.
 
 **Integrate, smallest track first.** Tracks merge back into the item branch — they are independent by construction, so order is free and small-first gives the fastest signal — with the full acceptance suite after each merge. A conflict is a DAG defect — two tracks touched the same code despite the derivation — resolve it if it is mechanical (`mattpocock-skills:resolving-merge-conflicts`), route to `blocked` if it is not, and write it to `LEARNED.md` either way.
@@ -250,7 +250,7 @@ The moment scope control actually matters. Anything you find yourself wanting to
 
 ## Step 7 — Verify
 
-Hand off to `verification`:
+Hand off to `verification`, which dispatches the `proof-auditor` agent in feature mode — SHAs, the acceptance tests and their hashes, commands, baseline, the criteria and non-goals. **Not the plan or the design notes.** It returns the proof block, the criterion table, and the non-goal check:
 
 1. **Every acceptance test green**, each file re-hashed against its step-5 hash. A mismatch is reported, not absorbed — a test loosened until it passed proves nothing, and on a feature it is easier to rationalize because there was no original behaviour to preserve.
 2. **No new suite failures against baseline.** Compared against the parent-commit baseline `verification` recorded; commands and the delta pasted — pass counts, not full logs.

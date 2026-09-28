@@ -14,7 +14,9 @@ Two rules: cheapest model that answers reliably, and every loop has a number.
 | Clustering judgement | sonnet | Deciding one fix closes two bugs needs the causal read |
 | The causal chain — ×3 blind on expensive loops, ×1 on cheap | sonnet | The chain is the deliverable; haiku returns symptom restatement. The count is the cost class in `state.md`, never a read on the bug |
 | Skeptics ×2 — expensive loops only | sonnet | Two at sonnet costs less than one at opus and catches more, because they disagree. On a cheap loop the red test is the skeptic — skip them |
-| Red test, implement, verify, PR body | sonnet | Reading call paths and suite output |
+| Red test, implement, PR body | sonnet | Reading call paths and suite output |
+| `proof-auditor` agent — 1c, 1d, verdict | sonnet, pinned in the agent file | Independence is the point, not horsepower. Fresh context, no write tools |
+| `step-reviewer` agent — between plan steps | sonnet, pinned in the agent file | Same: a reviewer primed with the implementer's reasoning inherits its blind spots |
 | Plan package assembly, track implementers, integration merges | sonnet | Track derivation is mechanical (no model at all); the merge judgement is not |
 
 Cheap agents **locate and transcribe. They do not summarize** — three paragraphs of mush costs a strong model a second read. Give them a strict output contract: fields, sources, claim-vs-verified.

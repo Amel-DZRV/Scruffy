@@ -86,6 +86,24 @@ The summary is written and left to be read. It does not halt the run and wait �
 
 **Never silently discard work.** A failed verification keeps the worktree. Amel may want to dig in.
 
+## Who runs what
+
+The model that wrote a fix does not grade it. Everything that *produces* evidence runs in the caller's context; everything that *judges* it runs in the `proof-auditor` agent, which gets SHAs, commands and hashes — never the chain, the plan, or the implementer's reasoning.
+
+| Step | Runs in | Why |
+|---|---|---|
+| Economics, baseline | caller, inline | needed before diagnosis starts |
+| 1a skeptics | **dispatched by the main thread** | a subagent cannot start subagents, so the skeptics are never launched from inside another agent |
+| 1b red test | caller, inline | it loops with the chain-attempt budget |
+| 1c, 1d, the verdict, the proof block | **`proof-auditor` agent** | the one step that must not be self-graded |
+| Reviewer evidence (captures) | caller | device work |
+
+**Dispatching the auditor.** Hand it the packet its file lists — mode, repo and dossier paths, `parent` / `test_commit` / `head` SHAs, test file(s) with their recorded hash, test and suite commands, cost class, `evidence/baseline.txt`, and the symptom in the reporter's words (or the criteria and non-goals on a feature). **Nothing else.** Pasting `chain.md` or the plan into the packet re-creates the bias the split exists to remove. On an expensive loop, dispatch it only while holding the build slot.
+
+It returns a proof block, a verdict tier, and one line per failed claim. It counts no budgets and fixes nothing — whether a failure is a fix attempt, a chain attempt, or a process failure is the caller's call, from the auditor's output.
+
+**When the agent is not installed**, run 1c and 1d inline and put `audited in-context, not independent` on the `Not proven` line. That demotes the verdict to REVIEW NEEDED at best. A self-graded MERGE-READY is the thing this module exists to prevent.
+
 ---
 
 # Mode 1 — Called by a lane
@@ -126,6 +144,8 @@ Record the exact command in `state.md`. It becomes the regression test in the PR
 
 ## 1c. After the fix — the four claims
 
+Run by `proof-auditor`. What follows is what it checks; the caller's job is the packet and acting on the result.
+
 **1. The red test is green.**
 
 Same test. **Re-hash the file and compare against the hash recorded in 1b.**
@@ -146,7 +166,7 @@ The repo's suite, not the changed file's tests, compared against `evidence/basel
 - Snapshot failure on one it did not touch → **possible regression, `decision needed`, never auto-updated.**
 - A suite re-run to green is `blocked` and flagged flaky. **Not a pass.** Re-running until green is laundering, and it is indistinguishable from a real intermittent failure until someone looks.
 
-**Before flagging it and moving on, check for the ordinary cause.** Most flaky tests are guessing at timing — a fixed `sleep`/`setTimeout` racing real async work — rather than something environmental. If the test waits on a wall-clock delay, replace it with a poll on the actual condition (the value existing, the state reached, the file written) and re-run before escalating. A test that goes from flaky to reliably green after this swap was never a regression; one that stays flaky after it is a real finding, not a timing guess, and `blocked` is correct.
+**Before flagging it and moving on, check for the ordinary cause.** Most flaky tests are guessing at timing — a fixed `sleep`/`setTimeout` racing real async work — rather than something environmental. The auditor reports whether the test waits on a wall-clock delay; if it does, the caller replaces it with a poll on the actual condition (the value existing, the state reached, the file written) and re-dispatches the auditor before escalating. A test that goes from flaky to reliably green after this swap was never a regression; one that stays flaky after it is a real finding, not a timing guess, and `blocked` is correct.
 
 **4. Reviewer evidence, where the change is visual.**
 
@@ -169,6 +189,8 @@ Same four claims, minus the refutation. What changes:
 - **Find the test that covers this change.** If one exists and was added by this diff, treat it as the red test and check it the same way: does it fail on the parent commit? A test added alongside a fix that passes without the fix is the failure this mode exists to catch.
 - **If no test covers the change, say so plainly.** Do not manufacture one to make the run look complete. "This diff has no test proving it does anything" is the verdict, and it is a useful one.
 - Suite, regression and evidence checks run unchanged.
+
+The whole mode runs in `proof-auditor` — there is nothing to produce, only a diff to judge. Dispatch it with `mode: standalone`; `test_commit` is the commit that added the covering test, or absent when none exists.
 
 Writes a dossier — resumption and evidence both need somewhere to live. **No ledger row.** The bug ledger exists to tune stop frequency and PR outcomes, and a standalone run produces neither; rows nobody reads make the ledger worse, not better.
 
@@ -196,6 +218,8 @@ To judge it, look at what reads the thing being changed — grep the callers, no
 3. **Run it against the parent commit.** It must fail. If it passes, either the bug was already gone or your test asserts the wrong thing — resolve which before going further.
 4. **Run it against their branch.** It must pass.
 5. **Check coverage against the reporter's conditions**, all of them. A fix that handles two of three reported cases is the most valuable finding this mode produces, and the one least likely to be caught by reading.
+
+Step 2 runs in the main thread, in a throwaway worktree at the parent commit, committed to a local scratch branch — never to theirs. Steps 3–5 run in `proof-auditor` with `mode: review`: the test, its hash, the parent SHA and their head. The shallow review is the auditor alone. Separating writer from runner is what keeps "your test passes on their fix" from being a claim you made about your own test.
 
 Their fix passing your test is a strong result. Their fix passing on the parent commit too means the test proves nothing about their change — say so.
 

@@ -111,6 +111,8 @@ Do this once, with every item's classification and repo in hand. Two bugs sharin
 
 One lane invocation per work item. Route every helper by model — `references/models.md`. Wrong model is the main way this gets expensive.
 
+**Lanes run in the main thread, as skills — never dispatched as subagents.** A lane fans out its own helpers (investigators, skeptics, `step-reviewer`, `proof-auditor`) and holds stops 2 and 3; a subagent can do neither. Parallelism across items comes from the helpers each lane fans out, not from wrapping lanes in agents.
+
 The lane owns its own steps. This file does not reach inside one; it holds the budget, watches for cap exhaustion, and collects terminal states.
 
 **Budget.** Declare it at launch. When what remains will not cover a full run for the next item, that item is `deferred` and named — not started and abandoned halfway. Verification reports what each item cost; use that, do not guess.

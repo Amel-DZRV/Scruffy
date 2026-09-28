@@ -11,13 +11,23 @@ Four independent skills. Scruffy routes; the others do the work.
 | `verification` | Proof. Red tests, the four claims, reviewing someone else's PR |
 | `feature-dev` | The feature lane. Requirements → design → acceptance tests → draft PR |
 
+Plus two agents the skills dispatch — you never call them directly:
+
+| Agent | Does |
+|---|---|
+| `proof-auditor` | Runs the four claims and awards the verdict, in a fresh context with no write tools. The model that wrote a fix never grades it |
+| `step-reviewer` | Reviews one implementation step from its two SHAs, with none of the implementer's reasoning |
+
 ## Install
 
 ```bash
 cp -r scruffy bug-eater verification feature-dev ~/.claude/skills/
+mkdir -p ~/.claude/agents && cp agents/*.md ~/.claude/agents/
 ```
 
-Flat, one level under `skills/` — that's where Claude Code discovers them. Nesting them breaks discovery and stops `verification` being invocable on its own.
+Flat, one level under `skills/` — that's where Claude Code discovers them. Nesting them breaks discovery and stops `verification` being invocable on its own. Agents go flat under `~/.claude/agents/`.
+
+Without the agents everything still runs, but verification grades in-context and caps the verdict at REVIEW NEEDED.
 
 ## Use
 
@@ -63,6 +73,7 @@ scruffy/          router + shared spine (preflight, dossier, models, learning, r
 bug-eater/        the bug lane, with per-platform command references
 feature-dev/      the feature lane, cleanup included
 verification/     the proof engine, invocable on its own
+agents/           proof-auditor and step-reviewer, dispatched by the skills
 ```
 
 ## Status

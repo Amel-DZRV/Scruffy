@@ -59,7 +59,13 @@ Each track agent receives — and nothing else from the run's context:
 
 It must return: commits on its track branch (one per step), and a per-step report — which criterion tests pass, reviewer findings and their disposition, `[DEBUG-*]` probes added and removed. An implementer that returns prose without commits has returned nothing.
 
-The per-step fresh reviewer runs *inside* the track, per step 6's rules. The orchestrator does not re-review — it integrates.
+**Where the per-step reviewer runs depends on the runner**, because a subagent cannot start subagents:
+
+- **Workflow tool** — the orchestrator's pipeline alternates `agent(implement step)` → `agent(step-reviewer)` per step, inside each track. Review stays per step.
+- **Parallel subagents** — a track agent cannot launch `step-reviewer` itself. It returns its commits; the orchestrator runs `step-reviewer` over each step's commit range, in order, before integrating. Critical or Important findings go back to a fresh implementer for that track, counted against its fix budget.
+- **Serial** — the orchestrator is the main thread and dispatches `step-reviewer` after each step directly.
+
+Either way the orchestrator does not add a second review of its own — it integrates.
 
 ## Integration
 
