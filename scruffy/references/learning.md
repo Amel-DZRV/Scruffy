@@ -47,6 +47,10 @@ Entries drafted from PR comments are **shown to Amel for approval**, at the star
 
 A file that fills automatically fills with noise, and a `LEARNED.md` nobody trusts is worse than a short one. Self-observed defects, where the run has direct evidence of its own mistake, are appended without asking.
 
+## Path recipes are the exception
+
+`paths/<repo>/<screen>.md` files append without approval. A recipe is verified by its own replay — a wrong one fails the gate and is marked stale — so the noise argument above does not apply. Lessons *about* captures ("crop to the component", "the sample app hides the real padding") are rules, not recipes: they come in through the PR-comment backfill and go through the propose step like everything else. See `../paths/README.md`.
+
 ## Where it goes
 
 | The correction is about | Write it to |

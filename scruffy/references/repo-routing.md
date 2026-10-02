@@ -25,7 +25,7 @@ A Jira project of `MOSAIC` does not mean the code is in `rooblocks`. Two SDUI sy
 
 ## Staging the screen
 
-Simulator or emulator by default; a physical device only when Amel asks. Staged means installed, launched, and sitting on the screen under test — a Homepage ticket ends with Homepage on screen, not the app's launch screen. Amel takes his own screenshots and recordings; tell him when you need one.
+Simulator or emulator by default; a physical device only when Amel asks. Staged means installed, launched, and sitting on the screen under test — a Homepage ticket ends with Homepage on screen, not the app's launch screen. Captures are taken by the `evidence-capturer` agent from a recorded path in `../paths/<repo>/<screen>.md`. Amel navigates once per screen, in `record` mode, batched into the run's handoff list; after that the path replays. Tell him which screens need recording, not which screenshots you need.
 
 **rooblocks / codeless** — sample app, not live preview, unless the symptom is template-only.
 - `sdui-accessibility-manual-test` — the model for this step: generates the samples, detects attached devices and simulators, builds, installs, launches on the target you pick, then asks you to look. Also the screen-reader path.

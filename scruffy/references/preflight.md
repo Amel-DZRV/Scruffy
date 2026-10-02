@@ -13,8 +13,8 @@ Helpers run in parallel, cheapest model that answers reliably. They do not need 
 | Repos | Every repo the run could touch exists, worktree clean, `git fetch` succeeds, file count recorded |
 | Toolchain | Whatever the routed repos actually need — discovered from their build files and CI config, not assumed |
 | Access | `gh auth status`, tracker reachable, network for web search |
-| Skills | Every `SKILL.md` this run will read is present and readable at its absolute path |
-| Ledger backfill | For every ledger row with a PR link and a blank outcome: `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Bash, no model. **Fetches the review comments as well as the outcome** — see `references/learning.md`; this is the only trigger the correction loop has |
+| Skills | Every `SKILL.md` this run will read is present and readable at its absolute path, and `~/.claude/agents/evidence-capturer.md`, `bug-eater/scripts/pair-diff.py`, `bug-eater/scripts/ui-touch.sh` present and executable |
+| Ledger backfill | For every ledger row with a PR link and a blank outcome: `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Bash, no model. **Fetches the review comments as well as the outcome** — see `references/learning.md`; this is the only trigger the correction loop has. Read the fetched `comments` and `reviews` bodies for attached images or screenshot requests to fill the pair-outcome column. |
 
 ## Check the toolchain the repo asks for, not a generic one
 
@@ -36,7 +36,21 @@ Multiple build output bases are enormous, and running out mid-build is a silent 
 
 ## Soft checks
 
-Some tools only degrade a path rather than blocking it. Missing `axe` drops iOS visual evidence to snapshot plus screenshot, which is still sufficient. Report as a warning; do not route anything to `blocked` over a soft check alone.
+Some tools only degrade a path rather than blocking it. Missing `axe` degrades the capture gate to build identity only, and the pair is marked `ungated` in the proof block. Report as a warning; do not route anything to `blocked` over a soft check alone.
+
+Install with `brew install cameroncooke/axe/axe`.
+
+If brew's post-install codesign step refuses (Command Line Tools older than Xcode):
+
+```bash
+curl -fL -o axe.tar.gz "https://github.com/cameroncooke/AXe/releases/download/v<version>/AXe-macOS-homebrew-v<version>.tar.gz"
+tar -xzf axe.tar.gz
+mkdir -p "$(brew --cellar)/axe/<version>/libexec"
+cp -R axe Frameworks AXe_AXe.bundle "$(brew --cellar)/axe/<version>/libexec/"
+codesign --force --sign - --timestamp=none "$(brew --cellar)/axe/<version>/libexec/Frameworks/"*.framework
+codesign --force --sign - --timestamp=none "$(brew --cellar)/axe/<version>/libexec/axe"
+brew link axe
+```
 
 ## Skill reachability
 

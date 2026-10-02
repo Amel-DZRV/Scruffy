@@ -30,6 +30,7 @@ Carries at minimum:
 - **two separate attempt counters** — chain attempts and fix attempts. They do not share a budget
 - on an orchestrated feature: per-track state — current step and fix-attempt counter for each track, so a crashed orchestration resumes track by track rather than restarting the fan-out
 - every stop, its answer, and every assumption made in place of one
+- the path file used for captures and its status at dispatch, the mask, and the agent's last status per label
 
 ## `summary.md`
 
@@ -70,8 +71,9 @@ Run `unslop-prose` over it before printing. It is written for a human to read la
 | chain correct? | Filled in after the fact. The most important column |
 | **proof verdict** | `MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`, from the PR's proof block |
 | **PR outcome** | `approved as-is` / `approved with comments` / `changes requested` / `closed unmerged` |
+| **pair outcome** | `accepted` / `replaced` (reviewer or Amel attached a different image) / `requested` (a reviewer asked for a screenshot the PR lacked) / `n/a` (NON-UI). Backfilled with `PR outcome` from the PR's comments and attachments. `requested` on a row whose proof block said `not applicable` is a defect in `ui-touch.sh`'s patterns; `replaced` is a framing lesson for `LEARNED.md` |
 
-**A run never writes its own PR outcome.** Preflight of the *next* run backfills it: for every row with a PR link and a blank outcome, `gh pr view <url> --json state,reviewDecision,mergedAt`. Four lines of bash, no model. A column that never fills makes the whole ledger decorative.
+**A run never writes its own PR outcome.** Preflight of the *next* run backfills it: for every row with a PR link and a blank outcome, `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Four lines of bash, no model. A column that never fills makes the whole ledger decorative.
 
 Standalone verification runs write a dossier but **no ledger row** — they produce no stop and no PR, so there is nothing to correlate. PR reviews get their own short log instead; see `verification`.
 
@@ -82,3 +84,5 @@ Amel's bar is: *it will most likely take care of the bug, and have proof of it.*
 Twenty rows of `approved as-is` is trust as a number. Three consecutive `closed unmerged` means stop and fix the skill.
 
 The proof-verdict column pairs with PR outcome to answer the sharper question: **does `MERGE-READY` predict `approved as-is`?** When it reliably does, approving on the proof block alone is a decision backed by the ledger rather than a leap. A `MERGE-READY` row ending `changes requested` is a defect in the verdict criteria, and worth more attention than any single bug.
+
+The pair-outcome column is what tunes the capture gate: `requested` means the UI detector missed, `replaced` means the capture was of the wrong thing or framed wrong.

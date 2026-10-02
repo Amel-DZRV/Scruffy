@@ -107,18 +107,22 @@ The red test itself is written by `verification` — but **against the surviving
 
 Never invent a snapshot suite where none exists. That is separate work and it will get the PR rejected.
 
-**The "before" screenshot is captured here, on clean main, in the same session.** Capture command per platform in `references/platforms/`. Once the fix is applied it cannot be recovered without another build.
+**The "before" pair is captured here, on clean main, by the `evidence-capturer` agent.** It is dispatched from the main thread with the packet its file lists — device from `state.md`, the parent SHA, bundle id, the build-identity file written at install, and the path file. Look the path up first: `scruffy/paths/<repo>/<screen>.md`, `<screen>` derived from the component or template name. Fresh → `capture` mode. **Missing → `record` mode, and the item is parked, not stalled. Stale → parked with a batched handoff reading `repair path file <path>`**; a stale path is never re-recorded automatically, because recording over it would destroy the one thing that shows what changed. Amel edits it by hand per `../scruffy/paths/README.md`. The exception: a `stale_reason` naming `os` is a runtime change, not a broken recipe — `record` mode, into `<screen>@<os>.md`, keeping both files.
 
-Same device, same OS, same window as the "after" — so the pair differs only by the diff. That consistency is the point: the before/after pair is the single thing that most reliably gets a PR approved, and screenshots taken by different people at different times do not do that job.
+Same device, same OS, same pinned settings as the "after" — the agent enforces that, and the pair diff at step 7 checks it. That consistency is the point: the before/after pair is the single thing that most reliably gets a PR approved, and a pair that differs by anything other than the diff does not do that job.
 
-**Navigation is the unreliable part, not capture.** Use the repo's launch skills; for SDUI, rendering the component from a template or sample app usually beats navigating a real user flow. If the screen cannot be reached:
+**Navigation is the unreliable part, not capture.** A `record` run needs Amel once, on main, and never again for that screen:
 
-- **Notify, do not stall.** Park the item, keep working the other bugs, resume when Amel says the screen is ready.
-- **Batch the handoffs.** Across a run, hand him one list — three screens, step-by-step for each, any order. Not one ping per bug.
-- **Record the path.** Read the accessibility tree as he navigates and write down the taps, so the "after" shot replays automatically. Otherwise a visual bug interrupts him twice — once on main, once on the fix — which is the two-presence problem this skill exists to remove.
-- Replay failing on the "after" falls back to asking again. Never ship a mismatched pair.
+- **Notify, do not stall.** Park the item, keep working the other bugs, resume when he says the screen is up.
+- **Batch the handoffs.** Across a run, hand him one list — three screens, the launch skill for each, any order. Not one ping per bug.
+- **The agent records the path while he navigates**, so the "after" replays without him. That is what removes the two-presence problem this skill exists to remove.
+- `PATH STALE` on the "after" falls back to one more handoff. Never ship a mismatched pair.
 
-Screenshots are **reviewer evidence, not verification.** They cannot fail. A pair proves nothing to a skeptic — the "before" could be any build. The red test is what proves the fix; the screenshots are what get it approved. Both matter; do not confuse them.
+Agent statuses and what they mean here: `CAPTURED` → continue. `GATE FAILED` or `NO PATH` → park, add to the handoff list. `PATH STALE` → flip the path file to stale per `../scruffy/paths/README.md`, park with a `repair path file` handoff — not a re-record. Except when the reason is that the file already exists: then nothing is flipped, because the file on disk is healthy; the item parks with the handoff `path exists: repair or rename <path>`. `BUILD MISMATCH` → process failure, reinstall, dispatch again; never a retry loop.
+
+**Where the build identity comes from.** Whoever installs the app writes `evidence/build-identity-<label>.txt` per `references/platforms/<platform>.md`, "Build identity", right after install. The agent re-hashes at capture. Without that file the agent returns `PACKET INCOMPLETE`, which is correct: a screenshot of an unknown build is not evidence. Response: supply the missing field and dispatch again; it is never guessed.
+
+Screenshots are **reviewer evidence, not verification.** They cannot fail. A pair proves nothing to a skeptic — the "before" could be any build, which is exactly why the build-identity check exists. The red test is what proves the fix; the screenshots are what get it approved. Both matter; do not confuse them.
 
 ## Step 4 — Chain
 
@@ -249,7 +253,7 @@ Hand off to `verification`, which dispatches the `proof-auditor` agent with the 
 1. **The red test turns green** — same test, **file re-hashed against the hash recorded at the step 4e handoff.** A mismatch is reported, not absorbed. A red test adjusted during implementation until it passed proves nothing, and that is the easiest thing in this whole workflow to cheat.
 2. **No new suite failures against baseline** — the repo's suite, not the changed file's tests, compared against the parent-commit baseline `verification` recorded. Commands and the delta pasted; pass counts, not full logs.
 3. **Nothing else moved** — snapshot failures on components you touched are intentional, update the baseline. Failures on components you did not touch → `decision needed`, never auto-updated. A suite re-run to green is `blocked` and flagged flaky, not a pass.
-4. **Reviewer evidence** — "after" screenshot, same device and screen as the "before", replayed from the recorded path or batched back to him.
+4. **Reviewer evidence** — the `evidence-capturer` dispatched again with the "before" packet and only `sha`, `label` and `build_identity` changed. Then `pair-diff.py before after --mask <the after report's mask: line>` — the gate element's frame, in screenshot pixels. `mask: none` is valid only for a pair expected to be pixel-identical; a UI fix passes the gate element's frame, because the script exits 0 only when every change sits inside a mask. Exit 1 means the pair differs outside the fix and is not shipped — re-capture once, then `decision needed` with both images attached. Exit 2 is a process failure, never a pass: the row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>`. `bug-eater/scripts/ui-touch.sh <repo> <parent> <head>` decides whether a pair is owed at all; `UI` with no `CAPTURED` pair is `PROOF INCOMPLETE`, named on the `Not proven` line.
 
 **Revert check** — revert the diff, confirm the test goes red again — **only when the test is cheap to run.** A package target in seconds: mandatory. A 35-minute app build: skip it. The red failure output from step 4e, kept in `evidence/`, already establishes the test failing on code without the fix, provided the file is unchanged. That is what claim 1's hash check and the test-only commit prove.
 
@@ -285,13 +289,15 @@ Structure — problem, solution, logic, in the words a non-renderer engineer wou
 - **Assumptions, when a guess was made.** One line. The ticket rarely states what correct behaviour should be, and that guess drove the whole fix — invisible to a reviewer, who will assume the ticket specified it. *"Ticket didn't state expected behaviour; assumed the icon should be inset by the standard container padding, matching sibling components. Reproduced on iPhone 17, iOS 26.5 — no device given."* No guesses, no line.
 - **Blast radius.** What else reads the thing you changed. The first question anyone asks about a changed default, and the default here is fixing at source in shared code.
 - **Considered and rejected, one line.** Stops the "why not just do X" round-trip, which is the most common one on a repo you do not own.
-- **Proof** — paste the proof block from `verification` verbatim: verdict tier, the claims table with SHAs and commands, the replay line, and the mandatory `Not proven` line. **When a process failure meant something could not run, that line says so and names the check.** A PR quiet about what it could not verify is worse than one that admits it.
+- **Proof** — paste the proof block from `verification` verbatim: verdict tier, the claims table with SHAs and commands, the replay line, and the mandatory `Not proven` line. **When a process failure meant something could not run, that line says so and names the check.** A PR quiet about what it could not verify is worse than one that admits it. For a `UI` diff the proof block's `Reviewer evidence` row names both capture files, the gate element, and the pair-diff result. The two images sit inline directly under the block.
 - **How to review** — actionable only. A device, a branch, an OS version, a named test. Never the diff's size or file count; that is not something to do.
 - **Next steps** — real next steps and linked follow-up tickets only. Never a prose description of a deferred bug; the ticket is where that lives.
 
 Everything else stays in `chain.md`. Link to it or drop it.
 
 Run `unslop-prose rewrite --preset crisp` over the body. A PR body taking minutes to read is a defect in the body, not proof of thoroughness.
+
+**Commit any new or changed path file in Scruffy** alongside the ticket comment — a recorded path that lives only in `~/.claude/skills/` is lost on the next install; see Scruffy's README for which install shape writes it into the repo directly.
 
 **Then comment on the ticket** — the PR link, and the repro confirmation from step 4e if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
 

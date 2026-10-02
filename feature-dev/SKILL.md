@@ -206,6 +206,8 @@ All criteria red, all recorded with their hashes, before a line of implementatio
 
 Criteria that genuinely cannot be tested — a visual judgement, a performance target with no harness — are named in the PR body as unverified. **Do not quietly drop them, and do not build a harness that was not asked for.** An unverifiable criterion is a finding.
 
+For a visual criterion, dispatch `evidence-capturer` with `label: before` at this point, on the parent commit — the same packet bug-eater's step 3 describes.
+
 ## Step 6 — Implement, orchestrated
 
 Worktree per item, mandatory. Create and clean up per `../scruffy/references/worktrees.md`; that file also owns which terminal states keep the worktree and which release it.
@@ -255,7 +257,7 @@ Hand off to `verification`, which dispatches the `proof-auditor` agent in featur
 1. **Every acceptance test green**, each file re-hashed against its step-5 hash. A mismatch is reported, not absorbed — a test loosened until it passed proves nothing, and on a feature it is easier to rationalize because there was no original behaviour to preserve.
 2. **No new suite failures against baseline.** Compared against the parent-commit baseline `verification` recorded; commands and the delta pasted — pass counts, not full logs.
 3. **Nothing else moved.** Failures in untouched areas → `decision needed`, never auto-updated. A suite re-run to green is `blocked` and flagged flaky.
-4. **Reviewer evidence** for anything visual — captures on the same device and screen, per platform.
+4. **Reviewer evidence** — the `evidence-capturer` dispatched again with the "before" packet and only `sha`, `label` and `build_identity` changed. Then `pair-diff.py before after --mask <the after report's mask: line>` — the gate element's frame, in screenshot pixels. `mask: none` is valid only for a pair expected to be pixel-identical; a visual criterion passes the gate element's frame, because the script exits 0 only when every change sits inside a mask. Exit 1 means the pair differs outside the fix and is not shipped — re-capture once, then `decision needed` with both images attached. Exit 2 is a process failure, never a pass: the row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>`. `bug-eater/scripts/ui-touch.sh <repo> <parent> <head>` decides whether a pair is owed at all; `UI` with no `CAPTURED` pair is `PROOF INCOMPLETE`, named on the `Not proven` line.
 
 Plus two checks that only apply to features:
 
@@ -289,7 +291,7 @@ A feature PR has a harder job than a bug PR: there is no symptom to point at, so
 - **Non-goals.** Pre-empts the "shouldn't this also…" comment, which is the most common round-trip on a feature.
 - **The design, in two or three sentences**, and — when stop 2 fired — the approach that was rejected and why. Unlike a bug PR, that context is load-bearing here: the reviewer is being asked to accept a design, not just a fix.
 - **Blast radius.** What reads this, what it changes. Say plainly when it only adds.
-- **Screenshots** for anything visual, inside the description.
+- **Screenshots** for anything visual, inside the description, from the `evidence-capturer` pair — never a hand-taken image. `NON-UI` diffs carry no images and say so in one line.
 - **Assumptions, when a guess was made.** One line. A spec inferred rather than stated is the thing most worth surfacing, because the requester is the only person who can catch it.
 - **Unverified criteria**, named. A PR quiet about what it could not verify is worse than one that admits it.
 - **How to review** — actionable only. A branch, a device, a named test, a screen to open.
