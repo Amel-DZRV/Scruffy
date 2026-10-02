@@ -2,6 +2,11 @@
 name: bug-eater
 description: The bug lane of Scruffy. Use when an item has been classified as a bug — something is broken and the fix belongs in code. Handles gather through draft PR. Invoked by scruffy's router, or directly on "bug-eater <key>".
 argument-hint: "<jira key | url | ticktick task | pasted text>"
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "$HOME/.claude/skills/bug-eater/scripts/goal-check.sh"
 ---
 
 # Scruffy / Bug-Eater
@@ -245,6 +250,31 @@ When genuinely unsure, **propose it and say what you would have asked.** One ext
 
 Then log two ledger columns for every proposal: whether stop 2 fired, and what the fix touched — same file / same component / another team's code / a shared contract. After twenty rows the real rule is readable: fired and he answered "obviously do it" → too tight; did not fire and he was surprised at the PR → too loose; fired and he deliberated → correct.
 
+## The goal — autonomous execution from here to the proof
+
+Step 5 produced a confirmed-red test, and Stop 2 (if it fired) is answered. From this point to the end of step 8 nothing asks anyone for anything, and the run does not stop on its own judgement that it is done — a completion condition decides, checked after every turn.
+
+**Claude Code's `/goal` cannot be set by a skill.** It is a command Amel types, a wrapper around a session-scoped Stop hook whose evaluator reads only the transcript and runs nothing itself. This lane gets the same behaviour from the Stop hook in this file's frontmatter, backed by `scripts/goal-check.sh`: after every turn the script reads what the inline runs wrote under `evidence/`, and either lets the turn end or sends the unmet checks back as the next instruction. (A prompt-type hook was rejected because it never sees the transcript; an agent-type hook because it is experimental and read-only.)
+
+**Arm it** by writing `evidence/goal.active` as the last act of step 6, never earlier — a goal armed during Stop 2 would stop you waiting for him. Three `key=value` lines: `test_file=<path to the red test>`, `success_marker=<regex the platform prints on a pass, e.g. TEST SUCCEEDED>`, `ui=1` when `ui-touch.sh` says `UI`, else `ui=0`.
+
+**The condition**, which you also write into `state.md` and print in chat verbatim:
+
+> The red test `<name>` passes with its original failing assertion and an unchanged file hash; the full suite shows no new failures against baseline; for a UI bug, an after-screenshot has been captured and judged to show the right change against the before-screenshot; or stop after 3 fix attempts.
+
+**What counts is output in this conversation.** Every run that satisfies the condition happens inline, in the main thread, so the real output lands in the transcript — never a subagent's "tests passed". The inline runs for step 8 use this shape, and the script reads the files it writes:
+
+```bash
+<test cmd> > evidence/goal-red.log 2>&1; echo $? > evidence/goal-red.exit
+<suite cmd> > evidence/goal-suite.log 2>&1; echo $? > evidence/goal-suite.exit
+```
+
+then print the tail of each log and the exit file, and write `evidence/goal-suite.delta` (first line `NO NEW FAILURES` or the failure names, compared by name against `evidence/baseline.txt`). A green exit with no success marker in the log is a failure, not a pass.
+
+**Disarm** when step 8 ends: the script removes the marker itself on success and writes `evidence/goal.met`. Fix attempts exhausted → write `evidence/goal.blocked` and `blocked.md`, which lets the turn end. The harness also overrides a Stop hook after eight consecutive blocks without progress; three fix attempts sit well inside that.
+
+**If the hook does not run** (hooks disabled, folder untrusted — `/goal` itself is unavailable in the same cases): print the condition above as a ready-to-paste `/goal <condition>` line and carry on; the inline-run rule and the `proof-auditor` pass do not depend on the hook.
+
 ## Step 7 — Implement
 
 Worktree per item, mandatory — concurrent items may touch the same repo. Create and clean up per `../scruffy/references/worktrees.md`; that file also owns which terminal states keep the worktree and which release it.
@@ -277,12 +307,14 @@ print("[DEBUG-onAppear] fired for \(type(of: subview)), count=\(count)")
 
 ## Step 8 — Verify
 
+**Produce first, grade second.** The goal's inline runs (see *The goal*) come first, in this thread, so their output is in the conversation and the Stop hook can read their files. Only then hand off to `verification`, which dispatches the `proof-auditor` agent to re-run the claims independently. The goal proves the work was done; the auditor judges it — the writer still never grades itself.
+
 Hand off to `verification`, which dispatches the `proof-auditor` agent with the packet it lists — SHAs, test file and hash, commands, cost class, baseline, the reporter's symptom. **Not `chain.md`, not the plan, not your reasoning.** The model that wrote the fix does not grade it. Four claims, each able to fail:
 
 1. **The red test turns green** — same test, **file re-hashed against the hash recorded at the step 5 handoff.** A mismatch is reported, not absorbed. A red test adjusted during implementation until it passed proves nothing, and that is the easiest thing in this whole workflow to cheat.
 2. **No new suite failures against baseline** — the repo's suite, not the changed file's tests, compared against the parent-commit baseline `verification` recorded. Commands and the delta pasted; pass counts, not full logs.
 3. **Nothing else moved** — snapshot failures on components you touched are intentional, update the baseline. Failures on components you did not touch → `decision needed`, never auto-updated. A suite re-run to green is `blocked` and flagged flaky, not a pass.
-4. **Reviewer evidence** — the `evidence-capturer` dispatched again with the "before" packet and only `sha`, `label` and `build_identity` changed. Then `pair-diff.py before after --mask <the after report's mask: line>` — the gate element's frame, in screenshot pixels. `mask: none` is valid only for a pair expected to be pixel-identical; a UI fix passes the gate element's frame, because the script exits 0 only when every change sits inside a mask. Exit 1 means the pair differs outside the fix and is not shipped — re-capture once, then `decision needed` with both images attached. Exit 2 is a process failure, never a pass: the row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>`. `bug-eater/scripts/ui-touch.sh <repo> <parent> <head>` decides whether a pair is owed at all; `UI` with no `CAPTURED` pair is `PROOF INCOMPLETE`, named on the `Not proven` line.
+4. **Reviewer evidence** — the after-capture taken **inline** by following `agents/evidence-capturer.md`'s procedure in this thread (the same packet as the "before", with only `sha`, `label` and `build_identity` changed, and the same refusals), so the capture report and image are in the conversation; the `before` was dispatched as an agent at step 3 because it ran before the goal. Then `pair-diff.py before after --mask <the after report's mask: line>` — the gate element's frame, in screenshot pixels. `mask: none` is valid only for a pair expected to be pixel-identical; a UI fix passes the gate element's frame, because the script exits 0 only when every change sits inside a mask. Exit 1 means the pair differs outside the fix and is not shipped — re-capture once, then `decision needed` with both images attached. Exit 2 is a process failure, never a pass: the row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>`. `bug-eater/scripts/ui-touch.sh <repo> <parent> <head>` decides whether a pair is owed at all; `UI` with no `CAPTURED` pair is `PROOF INCOMPLETE`, named on the `Not proven` line.
 
 **Revert check** — revert the diff, confirm the test goes red again — **only when the test is cheap to run.** A package target in seconds: mandatory. A 35-minute app build: skip it. The red failure output from step 5, kept in `evidence/`, already establishes the test failing on code without the fix, provided the file is unchanged. That is what claim 1's hash check and the test-only commit prove.
 

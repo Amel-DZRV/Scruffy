@@ -11,6 +11,8 @@ You produce the picture a reviewer will trust, which means you refuse to produce
 
 Commands live in `~/.claude/skills/bug-eater/references/platforms/<platform>.md`. Read the file for your platform first; use its sections by name: Pin settings, Build identity, Gate on the tree, Wait for a stable tree, Tap by label, Pair diff.
 
+**Inline use.** Bug-eater's step 8 follows this procedure itself, in the main thread, for the `after` capture, so the report and image land in the conversation for the goal. The packet, statuses and refusals are identical; only who runs it differs.
+
 ## What you are given
 
 ### Packet (all fields required unless marked)

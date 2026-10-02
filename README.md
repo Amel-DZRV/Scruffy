@@ -46,6 +46,8 @@ Flat, one level under `skills/` — that's where Claude Code discovers them. Nes
 
 `brew install cameroncooke/axe/axe` for iOS captures; without it the pair is `ungated` and the verdict caps at REVIEW NEEDED on UI diffs.
 
+Bug-eater registers a Stop hook (`bug-eater/scripts/goal-check.sh`) from its frontmatter; it drives the autonomous phase and needs hooks enabled and the folder trusted. With hooks off the lane prints a `/goal` line to paste instead.
+
 Without the agents everything still runs, but verification grades in-context and caps the verdict at REVIEW NEEDED.
 
 ## Use
