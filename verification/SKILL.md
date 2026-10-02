@@ -255,7 +255,7 @@ Log it: date, PR, radius, whether the independent test confirmed the claim. Sepa
 
 # The proof block
 
-Everything above is discipline; this is the artifact it exists to produce. **One block, fixed shape, pasted verbatim as the PR's first comment — the body carries only the verdict tier and a pointer to it.** The dossier is for resumption; the proof block is for the reviewer, and the whole point of a fixed shape is that Amel learns to read it in ten seconds. A lane's PR body carries it; Mode 2 puts it in the dossier verdict; Mode 3 puts it in the review.
+Everything above is discipline; this is the artifact it exists to produce. **One block, fixed shape, pasted verbatim into the PR description (in a collapsible section headed by the verdict tier).** The dossier is for resumption; the proof block is for the reviewer, and the whole point of a fixed shape is that Amel learns to read it in ten seconds. A lane's PR body carries it; Mode 2 puts it in the dossier verdict; Mode 3 puts it in the review.
 
 ```markdown
 ## Proof
