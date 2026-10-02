@@ -20,6 +20,10 @@ New shape: **a test that fails on exactly what the reporter complained about, th
 
 Never claim a thing is verified without output you can point at.
 
+## Say where you are
+
+Print a `▶ Step N/8 — <name>: <what is happening>` line before each router step below and a `✔` line when it ends, in plain text in the chat — and say what a long wait is for (preflight checks, a dispatched lane). Each lane does the same for its own steps, with the item key as a prefix; see bug-eater's *Progress, in the chat*. Amel follows a run by reading the conversation, so a step that is not announced did not visibly happen.
+
 ## This file routes; the modules work
 
 | Module | Owns |
@@ -37,7 +41,7 @@ A **stop** is a hard halt: ask, wait, act on the answer. Each is batched across 
 | Stop | Owner | When | You are asking |
 |---|---|---|---|
 | 1 | this file | after classify | Bug, feature, or review? — **only if genuinely unclear** |
-| 2 | the lane | after gather | Everything nobody can look up — **only if something is missing** |
+| 2 | the lane | after gather — **the intake gate** | Everything the rest of the run needs from a human, once: one reporter message, plus anything only Amel can do (recording a screen path). Nothing after this gate asks anyone for anything — **only if something is missing** |
 | 3 | the lane | before implementing | Which of two equally correct fixes — **only if the choice is his**. On a feature that earned a plan, this is the plan package, iterated until he says "go" — the one stop that is a conversation |
 
 None of these fire on a well-specified bug. If you are firing all three routinely, the skill is wrong, not him.
@@ -51,7 +55,7 @@ Every item reaches exactly one. **A PR is not the only exit.**
 | `PR opened` | Fixed, verified, draft PR up | branch + draft PR |
 | `recommend close` | Already fixed, or not reproducible on current code | `verdict.md`, naming the merged PRs |
 | `decision needed` | Real, but the call is product / consistency / ownership — including a colleague's PR already in flight | `memo.md` — what changed, the trade-off, who decides |
-| `needs info` | Too thin to act on; only the reporter can answer | `questions.md`, ready to paste as a ticket comment |
+| `needs info` | Too thin to act on; only the reporter can answer. Reached at the intake gate only | `questions.md`, ready to paste as a ticket comment |
 | `blocked` | Could not verify — toolchain, access, or a refuted chain | `blocked.md` with the exact failure |
 | `deferred` | Budget ran out before this item started | named in the final table, never started-and-abandoned |
 

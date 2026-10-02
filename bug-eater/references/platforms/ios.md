@@ -137,7 +137,7 @@ There is no point-to-element command; resolve a point by searching the last tree
 python3 <skill dir>/bug-eater/scripts/pair-diff.py before.png after.png --mask <x,y,w,h in screenshot pixels of the changed component> --threshold 0.005
 ```
 
-Status bar rows are masked by default. Exit 1 means the pair differs outside the fix, and is not shipped. Exit 2 is a process failure — `size_mismatch=<bw>x<bh>-vs-<aw>x<ah>`, `mask_invalid=<value>`, or `mask_too_large=<value>` on the contract line.
+Status bar rows are masked by default. Exit 1 means the pair differs outside the fix, and is not shipped. Exit 3 means nothing changed inside the mask — an identical pair — which fails the proof. Exit 2 is a process failure — `size_mismatch=<bw>x<bh>-vs-<aw>x<ah>`, `mask_invalid=<value>`, or `mask_too_large=<value>` on the contract line.
 
 **Masks are pixels; `axe` frames are points.** `xcrun simctl io screenshot` writes pixels, `axe describe-ui` reports points, and on every Retina simulator the two differ by the device scale. Both numbers are readable from the capture already taken:
 
@@ -147,3 +147,11 @@ python3 -c 'import json; t=json.load(open("before.tree.json")); n=t[0] if isinst
 ```
 
 `scale = screenshot pixel width / root node frame width` — 1206 / 402 = 3.0 on an iPhone 17 — then `mask pixels = frame × scale`, applied to all four values (`x`, `y`, `w`, `h`), not just the size. A mask converted on two of four values lands off-screen and masks nothing.
+
+## Tree diff
+
+```bash
+python3 <skill dir>/bug-eater/scripts/tree-diff.py before.tree.json after.tree.json
+```
+
+Prints `a11y: UNCHANGED | CHANGED | ATTENTION` and one line per finding. Exit 0 always (2 when a tree cannot be read, reported as `UNAVAILABLE`). A secondary signal: it never gates and never changes the verdict.

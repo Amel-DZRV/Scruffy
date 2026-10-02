@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""Compare a before/after screenshot pair. Exit 0 when they differ only inside the masks."""
+"""Compare a before/after screenshot pair.
+
+Exit 0: differs only inside the masks, and something did change inside them.
+Exit 1: differs outside the masks.
+Exit 2: process failure (size mismatch, bad or oversized mask).
+Exit 3: nothing changed inside the supplied mask(s) — the pair is identical where the fix
+        should show. Stage one of the before/after proof: a fix that changed nothing visible
+        fails here. Only applies when a real mask is supplied; `none` still means the pair is
+        expected to be identical."""
 import argparse, sys
 from PIL import Image, ImageChops
 
@@ -55,8 +63,24 @@ def main():
     for box in masks:
         diff.paste(0, box)
     changed = diff.histogram()[255] / (b.width * b.height)
-    print(f"changed={changed:.5f} masked={len(masks)} threshold={a.threshold}")
-    sys.exit(0 if changed <= a.threshold else 1)
+
+    # Change inside the supplied masks only (status bar excluded): the fix must show here.
+    inside = 0.0
+    if supplied:
+        raw = ImageChops.difference(b, f).convert("L").point(lambda v: 255 if v > 16 else 0)
+        raw.paste(0, (0, 0, b.width, a.status_bar_height))
+        region = Image.new("L", b.size, 0)
+        for _, (x, y, w, h) in supplied:
+            region.paste(255, (x, y, x + w, y + h))
+        inside_px = ImageChops.multiply(raw, region).histogram()[255]
+        area = max(1, region.histogram()[255])
+        inside = inside_px / area
+    print(f"changed={changed:.5f} masked={len(masks)} threshold={a.threshold} inside={inside:.5f}")
+    if changed > a.threshold:
+        sys.exit(1)
+    if supplied and inside == 0.0:
+        sys.exit(3)
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()

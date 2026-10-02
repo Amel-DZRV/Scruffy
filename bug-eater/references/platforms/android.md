@@ -90,4 +90,12 @@ Same script as iOS. The default status bar mask height is in physical pixels; pa
 
 `uiautomator dump` reports `bounds` in device pixels, the same units `adb exec-out screencap` writes, so the points-to-pixels conversion iOS needs does not apply here. A mask read off the tree goes straight to `--mask`.
 
-Exit 1 means the pair differs outside the fix, and is not shipped. Exit 2 is a process failure — `size_mismatch=<bw>x<bh>-vs-<aw>x<ah>`, `mask_invalid=<value>`, or `mask_too_large=<value>` on the contract line.
+Exit 1 means the pair differs outside the fix, and is not shipped. Exit 3 means nothing changed inside the mask — an identical pair — which fails the proof. Exit 2 is a process failure — `size_mismatch=<bw>x<bh>-vs-<aw>x<ah>`, `mask_invalid=<value>`, or `mask_too_large=<value>` on the contract line.
+
+## Tree diff
+
+```bash
+python3 <skill dir>/bug-eater/scripts/tree-diff.py before.tree.xml after.tree.xml
+```
+
+Prints `a11y: UNCHANGED | CHANGED | ATTENTION` and one line per finding. Exit 0 always (2 when a tree cannot be read, reported as `UNAVAILABLE`). A secondary signal: it never gates and never changes the verdict.
