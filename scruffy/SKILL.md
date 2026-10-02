@@ -20,6 +20,10 @@ New shape: **a test that fails on exactly what the reporter complained about, th
 
 Never claim a thing is verified without output you can point at.
 
+## Say where you are
+
+Print a `▶ Step N/8 — <name>: <what is happening>` line before each router step below and a `✔` line when it ends, in plain text in the chat — and say what a long wait is for (preflight checks, a dispatched lane). Each lane does the same for its own steps, with the item key as a prefix; see bug-eater's *Progress, in the chat*. Amel follows a run by reading the conversation, so a step that is not announced did not visibly happen.
+
 ## This file routes; the modules work
 
 | Module | Owns |

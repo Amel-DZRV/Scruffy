@@ -30,6 +30,21 @@ A well-specified bug fires neither. If both fire routinely, this file is wrong, 
 
 **Commander's intent.** The intake gate is the only point in the run that drafts a message for a reporter, and the only point that asks a human to do anything. Once it closes, no step — verification included — pauses to ask for anything. What cannot be obtained after the gate degrades to a named gap on the `Not proven` line (`PROOF INCOMPLETE` where the verdict table says so), never to a question. Stop 2 sits before the autonomous handoff, so it does not break this.
 
+## Progress, in the chat
+
+Amel follows a run by reading the conversation, and this workflow has not been proven end to end, so **every step announces itself in chat as plain text, before any tool call for that step and again when it ends.** Not only in `summary.md` — that file is the record, this is the live view.
+
+```
+▶ MOSAIC-3559 · Step 5/10 — Red test: writing the failing test against the confirmed cause
+✔ MOSAIC-3559 · Step 5/10 done — test fails on "icon fires twice"; hash and test-only commit recorded
+```
+
+- One line to start, one to finish; a step that found nothing or failed says so (`✘ … — could not reproduce, ending blocked`).
+- **Say what is being waited on.** A build, a device, a dispatched agent: `… building the parent for the before-capture (expected ~35 min, holding the build slot)`, `… dispatching evidence-capturer (before, iPhone 17)`. A silent wait reads as a hang.
+- **During the goal**, start each turn with its progress against the condition — `◎ MOSAIC-3559 · goal 2/3 met — waiting on: after-screenshot comparison` — so the Stop hook's pushback is visible as progress, not as a mystery restart.
+- At the intake gate, say plainly that the run is stopped and waiting, and on what.
+- Several items: prefix every line with the key, and print the one-line status table whenever an item reaches a terminal state.
+
 ## Terminal states
 
 | State | Reached at | Artifact |
