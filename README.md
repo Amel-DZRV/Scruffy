@@ -11,21 +11,40 @@ Four independent skills. Scruffy routes; the others do the work.
 | `verification` | Proof. Red tests, the four claims, reviewing someone else's PR |
 | `feature-dev` | The feature lane. Requirements → design → acceptance tests → draft PR |
 
-Plus two agents the skills dispatch — you never call them directly:
+Plus three agents the skills dispatch — you never call them directly:
 
 | Agent | Does |
 |---|---|
 | `proof-auditor` | Runs the four claims and awards the verdict, in a fresh context with no write tools. The model that wrote a fix never grades it |
 | `step-reviewer` | Reviews one implementation step from its two SHAs, with none of the implementer's reasoning |
+| `evidence-capturer` | Takes the before/after pair from a simulator or emulator by a recorded path, gated on the accessibility tree and the installed binary's hash. You navigate a new screen once; it replays forever after |
 
 ## Install
+
+Symlink, so recorded path files are written straight into the repo:
+
+```bash
+mkdir -p ~/.claude/skills ~/.claude/agents
+for s in scruffy bug-eater verification feature-dev; do ln -sfn "$PWD/$s" ~/.claude/skills/$s; done
+cp agents/*.md ~/.claude/agents/
+chmod +x bug-eater/scripts/*.sh bug-eater/scripts/*.py
+```
+
+The capture agent records new path files under `~/.claude/skills/scruffy/paths/`. With symlinks that *is* the repo, so a recorded path is a file you can commit. With a copy install it isn't, and the recording is lost on the next install.
+
+Copying works too:
 
 ```bash
 cp -r scruffy bug-eater verification feature-dev ~/.claude/skills/
 mkdir -p ~/.claude/agents && cp agents/*.md ~/.claude/agents/
+chmod +x ~/.claude/skills/bug-eater/scripts/*.sh ~/.claude/skills/bug-eater/scripts/*.py
 ```
 
+Under a copy install, copy new files from `~/.claude/skills/scruffy/paths/` back into the repo before committing.
+
 Flat, one level under `skills/` — that's where Claude Code discovers them. Nesting them breaks discovery and stops `verification` being invocable on its own. Agents go flat under `~/.claude/agents/`.
+
+`brew install cameroncooke/axe/axe` for iOS captures; without it the pair is `ungated` and the verdict caps at REVIEW NEEDED on UI diffs.
 
 Without the agents everything still runs, but verification grades in-context and caps the verdict at REVIEW NEEDED.
 
@@ -54,7 +73,7 @@ verification https://github.com/org/repo/pull/1234
 
 The old shape was: ask a human to look at a simulator and say whether the bug is real, then ask again whether it's fixed. That's two 35-minute builds someone has to be present for, and it's why runs never finished.
 
-The new shape is **a test that fails on exactly what the reporter complained about, then passes.** Plus suite output, snapshot diffs, and before/after captures for anything visual. You read the PR instead of watching the work.
+The new shape is **a test that fails on exactly what the reporter complained about, then passes.** Plus suite output, snapshot diffs, and before/after captures for anything visual, taken by an agent from a recorded path rather than by you. You read the PR instead of watching the work.
 
 Never claim a thing is verified without output you can point at.
 
@@ -73,7 +92,7 @@ scruffy/          router + shared spine (preflight, dossier, models, learning, r
 bug-eater/        the bug lane, with per-platform command references
 feature-dev/      the feature lane, cleanup included
 verification/     the proof engine, invocable on its own
-agents/           proof-auditor and step-reviewer, dispatched by the skills
+agents/           proof-auditor, step-reviewer and evidence-capturer, dispatched by the skills
 ```
 
 ## Status

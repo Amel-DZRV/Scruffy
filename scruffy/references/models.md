@@ -17,6 +17,7 @@ Two rules: cheapest model that answers reliably, and every loop has a number.
 | Red test, implement, PR body | sonnet | Reading call paths and suite output |
 | `proof-auditor` agent — 1c, 1d, verdict | sonnet, pinned in the agent file | Independence is the point, not horsepower. Fresh context, no write tools |
 | `step-reviewer` agent — between plan steps | sonnet, pinned in the agent file | Same: a reviewer primed with the implementer's reasoning inherits its blind spots |
+| `evidence-capturer` agent — before/after captures | sonnet, pinned in the agent file | Resolving labels to frames and judging a stable tree needs reading, not horsepower. Device work: passes through the build slot on expensive loops |
 | Plan package assembly, track implementers, integration merges | sonnet | Track derivation is mechanical (no model at all); the merge judgement is not |
 
 Cheap agents **locate and transcribe. They do not summarize** — three paragraphs of mush costs a strong model a second read. Give them a strict output contract: fields, sources, claim-vs-verified.
@@ -47,6 +48,8 @@ Concurrency and total are different numbers. Concurrency is capped by the sessio
 
 **Builds and device work pass through a semaphore of N.** Sized from the machine, not from the repo — two concurrent full builds contend on CPU, RAM and disk regardless of which repos they belong to, and the failures look like bugs.
 
+**Device work takes the slot regardless of cost class.** Pinning settings, launching and capturing are all global to a simulator, so a cheap-loop item holds the slot for them too; a second concurrent item boots its own simulator rather than sharing one. Two items sharing a device can interleave an appearance or status-bar change between one item's before and after, and the pair diff then reports a change the fix did not make.
+
 - **N = 1** on a laptop running full Bazel or Gradle app builds.
 - **N > 1** with a remote build cache, or when the builds are `devapp`-scale rather than full app.
 
@@ -56,7 +59,7 @@ Check for a cache before assuming:
 grep -rE "remote_cache|remote_executor|bes_backend|remote_download" .bazelrc* 2>/dev/null
 ```
 
-Repos with a **cheap** cost class — Jest, package targets, Go — need no slot at all. See `verification`, which discovers the class.
+Repos with a **cheap** cost class — Jest, package targets, Go — need no slot for test runs; device work still takes it. See `verification`, which discovers the class.
 
 ## Budget
 

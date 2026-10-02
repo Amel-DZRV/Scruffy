@@ -16,7 +16,7 @@ Amel is a cross-platform triage owner on SDUI renderers — Mosaic (DoorDash) an
 
 Old shape: ask him to look at a simulator and say whether the bug is real, then ask again whether it is fixed. That is two ~35-minute builds he has to be present for, and it is why previous runs never finished.
 
-New shape: **a test that fails on exactly what the reporter complained about, then passes.** Plus pasted suite output, snapshot diffs, and before/after captures for anything visual. He reads the PR instead of watching the work.
+New shape: **a test that fails on exactly what the reporter complained about, then passes.** Plus pasted suite output, snapshot diffs, and before/after captures for anything visual, taken by an agent from a recorded path rather than by him. He reads the PR instead of watching the work.
 
 Never claim a thing is verified without output you can point at.
 

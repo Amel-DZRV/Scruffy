@@ -96,9 +96,10 @@ The model that wrote a fix does not grade it. Everything that *produces* evidenc
 | 1a skeptics | **dispatched by the main thread** | a subagent cannot start subagents, so the skeptics are never launched from inside another agent |
 | 1b red test | caller, inline | it loops with the chain-attempt budget |
 | 1c, 1d, the verdict, the proof block | **`proof-auditor` agent** | the one step that must not be self-graded |
-| Reviewer evidence (captures) | caller | device work |
+| Reviewer evidence (captures) | **`evidence-capturer` agent**, dispatched by the main thread twice — before at the lane's step 3, after at 1c | gated on the tree and the installed binary; identical packets except the SHA, so the pair differs only by the diff |
+| Pair diff, UI-touch decision | `proof-auditor` | the auditor runs `pair-diff.py` and `ui-touch.sh` itself; a pass reported by the caller is not a pass |
 
-**Dispatching the auditor.** Hand it the packet its file lists — mode, repo and dossier paths, `parent` / `test_commit` / `head` SHAs, test file(s) with their recorded hash, test and suite commands, cost class, `evidence/baseline.txt`, and the symptom in the reporter's words (or the criteria and non-goals on a feature). **Nothing else.** Pasting `chain.md` or the plan into the packet re-creates the bias the split exists to remove. On an expensive loop, dispatch it only while holding the build slot.
+**Dispatching the auditor.** Hand it the packet its file lists — mode, repo and dossier paths, `parent` / `test_commit` / `head` SHAs, test file(s) with their recorded hash, test and suite commands, cost class, `evidence/baseline.txt`, and the symptom in the reporter's words (or the criteria and non-goals on a feature), the two capture reports and images when a pair was taken, and the `ui-touch.sh` output for `parent..head`. **Nothing else.** Pasting `chain.md` or the plan into the packet re-creates the bias the split exists to remove. On an expensive loop, dispatch it only while holding the build slot.
 
 It returns a proof block, a verdict tier, and one line per failed claim. It counts no budgets and fixes nothing — whether a failure is a fix attempt, a chain attempt, or a process failure is the caller's call, from the auditor's output.
 
@@ -168,9 +169,17 @@ The repo's suite, not the changed file's tests, compared against `evidence/basel
 
 **Before flagging it and moving on, check for the ordinary cause.** Most flaky tests are guessing at timing — a fixed `sleep`/`setTimeout` racing real async work — rather than something environmental. The auditor reports whether the test waits on a wall-clock delay; if it does, the caller replaces it with a poll on the actual condition (the value existing, the state reached, the file written) and re-dispatches the auditor before escalating. A test that goes from flaky to reliably green after this swap was never a regression; one that stays flaky after it is a real finding, not a timing guess, and `blocked` is correct.
 
-**4. Reviewer evidence, where the change is visual.**
+**4. Reviewer evidence, where the diff touches UI.**
 
-"After" capture on the same device and screen as the "before". This cannot fail and is not proof — a before/after pair proves nothing to a skeptic, since the "before" could be any build. It is what gets the PR approved, which is a different and equally real goal. Do not confuse the two.
+`ui-touch.sh <repo> <parent> <head>` decides, mechanically, whether a pair is owed. `NON-UI` → this claim reads `not applicable — NON-UI` and nothing else. `UI` → all of the following, or the claim fails:
+
+- `evidence/capture-before.md` and `capture-after.md` exist, each with the three-line header, `build_identity: match`, and the same gate element.
+- The before header's SHA is `parent`; the after header's SHA is `head`.
+- `pair-diff.py capture-before.png capture-after.png --mask <mask from the after report, or none>` exits 0. The script treats `none` as no mask, and it always masks the status bar, so `masked=1` with `mask: none` is expected.
+- **The mask must be the gate element's frame**, in screenshot pixels. `mask: none` is valid only for a pair expected to be pixel-identical; a UI fix passes the gate element's frame, because a change outside every mask is what exits 1 — a pass with no mask over the fix is the fix going unexamined. The auditor rejects a mask covering more than half the screenshot, which is what exit 2 reports.
+- **Exit 2 is a process failure, not a diff result and never a pass.** The row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>`, taken from the script's contract line, and repeats on the `Not proven` line.
+
+A pair cannot fail in the sense the red test can — it does not assert the symptom — and it is still not proof. It is what gets the PR approved, which is a different and equally real goal. But a *missing* pair on a UI diff is a gap the reviewer will hit first, so it is `Not proven` material and demotes the verdict.
 
 ## 1d. The revert check
 
@@ -232,6 +241,8 @@ A review verdict, not a PR and not a commit. **Never push to someone else's bran
 - What it does not cover
 - The test itself, offered — it is more useful to them than a comment
 
+**No pair on an external PR.** Build identity is what makes a pair evidence, and you cannot produce it for someone else's branch — no install of yours, no hash to compare. So on a `UI` diff the Reviewer evidence row reads `not applicable — external PR, no build identity available`, and it **does not demote the verdict and is not repeated on the `Not proven` line** — that line is for gaps that demote, and nothing here was ever obtainable. This is the one exception to the gate below; a review of a UI change is not held at PROOF INCOMPLETE for a picture nobody could have taken.
+
 Log it: date, PR, radius, whether the independent test confirmed the claim. Separate from the bug ledger. Over time it answers a question worth knowing — how often does a fix that reads correctly fail an independent test.
 
 ---
@@ -252,6 +263,7 @@ Everything above is discipline; this is the artifact it exists to produce. **One
 | Test unchanged since red | test-only commit `<sha>`, untouched since — `git log --follow -p <file>` |
 | Suite | <N> passed at head; baseline at parent: <N> passed (or: same <k> pre-existing failures, named) |
 | Revert check | done / skipped — expensive loop, the red commit stands in |
+| Reviewer evidence | `capture-before.png` @ `<parent sha>`, `capture-after.png` @ `<head sha>`, gate `<label role>`, pair-diff `changed=<f>` exit 0 — or `not applicable — NON-UI` — or `not applicable — external PR, no build identity available` (Mode 3) — or `MISSING: <status the agent returned>` / `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>` / `MISSING: mask invalid <value>` / `MISSING: mask too large <value>` |
 
 **Replay:** `git checkout <test-commit> && <command>`  (expect red) `&& git checkout <head> && <command>`  (expect green)
 **Not proven:** what could not be checked and why — or "nothing".
@@ -262,6 +274,7 @@ Rules:
 - **Every cell is a command, a SHA, or a count.** A cell that reads "verified ✓" is the self-attestation this block exists to replace.
 - **Replay is generated on cheap loops, always.** On expensive loops, state the cost instead — "replay is a 35-minute build; red output archived below" — and fold the raw 1b failure output into a `<details>` block under the table. Trust-me is acceptable only with the receipt attached.
 - **The `Not proven` line is mandatory**, even when it says "nothing". Its absence is indistinguishable from silence about a gap.
+- A `MISSING` cell in the Reviewer evidence row is repeated on the `Not proven` line. A `not applicable` cell never is — `Not proven` carries gaps that demote, and neither `NON-UI` nor an external PR is one.
 
 ## The verdict
 
@@ -269,9 +282,11 @@ Three tiers, so "can I just merge this" is mechanical rather than a feeling:
 
 | Verdict | Means | Criteria — all of them |
 |---|---|---|
-| **MERGE-READY** | approve on the proof alone | contained blast radius (Mode 3's radius table), all four claims proven, revert check done or expensive-loop exemption, suite delta against baseline is zero, nothing in `Not proven` |
+| **MERGE-READY** | approve on the proof alone | contained blast radius (Mode 3's radius table), all four claims proven, revert check done or expensive-loop exemption, suite delta against baseline is zero, nothing in `Not proven`, Reviewer evidence row is a pair or `not applicable` |
 | **REVIEW NEEDED** | the proof holds but the judgement is his | shared blast radius, a design or trade-off embedded in the diff, or any earned exception — no seam, an unverifiable criterion |
-| **PROOF INCOMPLETE** | do not merge on this | any process failure, any claim that could not run |
+| **PROOF INCOMPLETE** | do not merge on this | any process failure, any claim that could not run, a `UI` diff with a `MISSING` Reviewer evidence row |
+
+**A UI diff without a verified pair cannot be MERGE-READY.** This is a gate, not a reminder — an agent that forgot to capture cannot talk its way past a row that reads `MISSING`. It governs Modes 1 and 2; Mode 3's `not applicable — external PR, no build identity available` is the single named exception, because there no pair was ever obtainable.
 
 **Radius trumps greenness.** A shared-radius change self-demotes to REVIEW NEEDED however green it is — the tests prove the claim, not the blast radius. And the tier is a claim like any other: the ledger's PR-outcome column is what eventually says whether MERGE-READY predicts `approved as-is`, which is the number this entire module is trying to earn.
 

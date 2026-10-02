@@ -24,6 +24,8 @@ The caller hands you a packet. Anything missing that you need → stop and retur
 | test command, suite command | claims 2 and 3 |
 | cost class, `evidence/baseline.txt` | revert check yes/no; the suite delta |
 | symptom in the reporter's words — or, for a feature, the acceptance criteria and non-goals | what the test is supposed to assert |
+| `ui_touch` | output of `bug-eater/scripts/ui-touch.sh <repo> <parent> <head>` — or run it yourself if absent |
+| `captures` | paths of `capture-before.md`, `capture-after.md` and their PNGs; absent when the lane took none |
 
 You will **not** be given `chain.md`, the plan, or the implementer's notes. If a caller includes them, ignore them.
 
@@ -51,7 +53,8 @@ You will **not** be given `chain.md`, the plan, or the implementer's notes. If a
    ```
    Expensive loop: record "skipped — expensive loop, the red commit stands in".
 7. **Blast radius — derive it yourself.** For each changed symbol that others read (a default, a protocol, a config key, a base class), grep its callers. Contained or shared, with the caller count as evidence. Do not take the caller's word for it.
-8. **Feature mode only:** a criterion → passing-test table, by test name; and read the diff against each non-goal.
+8. **Reviewer evidence.** Run `ui-touch.sh` yourself; when the packet supplies `ui_touch`, compare — disagreement is a finding. When absent, your run is the value. On `UI`: open both capture reports, check `build_identity: match`, the SHAs against `parent` and `head`, the same gate element in both, then run `pair-diff.py` with the after report's mask — pass the after report's `mask:` value verbatim. The script accepts `none`, and the status bar is always masked by it, so `masked=1` with `mask: none` is expected; but `none` is a valid *mask* only for a pair expected pixel-identical, and a mask covering more than half the screenshot is rejected. **Exit 2 is a process failure, never a pass:** the Reviewer evidence row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>` from the script's contract line, and that text is repeated on the `Not proven` line. Fill the Reviewer evidence row from what you ran. Never from the caller's summary.
+9. **Feature mode only:** a criterion → passing-test table, by test name; and read the diff against each non-goal.
 
 Builds on an expensive loop: the caller dispatches you only while it holds the build slot. Run one suite pass, not several.
 
