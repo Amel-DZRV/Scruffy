@@ -24,4 +24,4 @@ A TickTick task is an intake source like a Jira key or a GitHub issue, with one 
 
 ## Cross-platform note
 
-Two lanes both end at step 9 with "comment on the ticket." For a TickTick-sourced item this step is: add the PR-link comment (always), then attempt the column move (step above). Neither substitutes for the other.
+Two lanes both end at their PR step with "comment on the ticket." For a TickTick-sourced item this step is: add the PR-link comment (always), then attempt the column move (step above). Neither substitutes for the other.

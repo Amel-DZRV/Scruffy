@@ -16,7 +16,7 @@ Bug-eater step 3 and feature-dev step 5 derive `<screen>` from the ticket's comp
 | Successful replay of a stale path after a fix to it | the caller sets `fresh`, updates `verified` | none |
 | Editing steps by hand | Amel | he is the approval |
 
-Recorded files are committed to Scruffy at the end of the run — bug-eater step 9 does it alongside the ticket comment.
+Recorded files are committed to Scruffy at the end of the run — bug-eater step 10 does it alongside the ticket comment.
 
 Recipes append without approval because a wrong recipe fails its own replay and is marked stale. That is the whole difference between this library and `LEARNED.md`: a rule cannot be replayed, a path can.
 
