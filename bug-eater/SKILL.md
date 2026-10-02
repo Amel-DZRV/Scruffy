@@ -18,10 +18,12 @@ Both batched across every item in a run. Never one interrupt per bug.
 
 | Stop | When | You are asking |
 |---|---|---|
-| 1 | After gather | Only what nobody can look up |
-| 2 | Before implementing | Which of two equally correct fixes — only when the choice is his |
+| 1 | End of gather — **the intake gate** | Everything the rest of the run needs from a human, in one go: the reporter message, plus anything only Amel can do (recording a screen path) |
+| 2 | Before implementing — after the red test is confirmed | Which of two equally correct fixes — only when the choice is his |
 
 A well-specified bug fires neither. If both fire routinely, this file is wrong, not him.
+
+**Commander's intent.** The intake gate is the only point in the run that drafts a message for a reporter, and the only point that asks a human to do anything. Once it closes, no step — verification included — pauses to ask for anything. What cannot be obtained after the gate degrades to a named gap on the `Not proven` line (`PROOF INCOMPLETE` where the verdict table says so), never to a question. Stop 2 sits before the autonomous handoff, so it does not break this.
 
 ## Terminal states
 
@@ -29,7 +31,7 @@ A well-specified bug fires neither. If both fire routinely, this file is wrong, 
 |---|---|---|
 | `PR opened` | step 9 | branch + draft PR |
 | `recommend close` | step 2 | `verdict.md` — merged PR named, red test passing on clean main |
-| `needs info` | step 1 or 3 | `questions.md`, ready to paste as a ticket comment |
+| `needs info` | step 1, at the intake gate | `questions.md`, ready to paste as a ticket comment |
 | `decision needed` | step 5 or 7 | `memo.md` — what changed, the trade-off, who decides. Also covers "already in flight" (step 5). |
 | `blocked` | any step | `blocked.md` with the exact failure |
 
@@ -42,7 +44,7 @@ Forcing a PR onto an already-fixed ticket is worse than saying so.
 Fan out, cheap models, strict output contract. Cheap agents locate and transcribe; they do not summarize.
 
 - The full ticket, every comment
-- **Every attachment opened and described in words.** Images and video both. Treat a screenshot as the broken state — that is what it almost always is. Describe it into the dossier ("the icon sits flush against the left edge with no padding") so nothing downstream reopens the file. An attachment plainly showing a *working* state is a flag to surface, not a thing to silently reinterpret.
+- **Every attachment opened and described in words.** Images and video both. Treat a screenshot as the broken state — that is what it almost always is. Describe it into the dossier ("the icon sits flush against the left edge with no padding") so nothing downstream reopens the file. An attachment plainly showing a *working* state is a flag to surface, not a thing to silently reinterpret. **Download the broken-state screenshot into `evidence/reporter-before.<ext>`** — for a UI bug it is the reporter's own "before", and the fallback when the capture agent cannot produce one.
 - **Linked tickets, one hop.** Read them in the same context. Do not walk the graph further.
 - The tracker, searched for duplicate reports of the same symptom. Two reports narrow the conditions faster than one.
 - Reporter context — engineer, PM, or support. It calibrates how literally to read the symptom.
@@ -50,6 +52,7 @@ Fan out, cheap models, strict output contract. Cheap agents locate and transcrib
 - **Discover how the repo works, rather than assuming.** Platform and language from what is on disk; build and test commands from the build files and the CI config; PR conventions from `.github/PULL_REQUEST_TEMPLATE.md`; lint rules from the tooling config. Record what you found in `state.md` so nothing downstream re-derives it.
 - **Establish the cost class here.** Run `verification`'s economics discovery: time one suite run, on the commit the fix will branch from, so it doubles as the baseline (`evidence/baseline.txt`). Record cheap or expensive in `state.md`. Diagnosis depth in step 4 keys off this, so it must exist before step 4 starts.
 - What is *not* discoverable — which repo a ticket belongs to, repo-specific launch skills — comes from the router or from Amel.
+- **For a UI bug, look the path file up now**, not at step 3: `scruffy/paths/<repo>/<screen>.md` per `../scruffy/paths/README.md`. Record whether it is fresh, stale or missing in `state.md`; the intake gate below acts on it.
 - Web search for framework-level symptoms: a crash inside Litho, a Yoga layout behaviour, an OS-version regression
 
 Every claim lands tagged **claim** or **verified**, with its source. Provenance not tracked from here gets reconstructed later, badly, and the chain has to cite `file:line` to a stranger.
@@ -65,11 +68,28 @@ Neither writable — no description, or a description nobody can parse into a sy
 
 **Hard stop:** gather ends when you can state the symptom in the reporter's conditions, name a suspect area, and give a version or commit range. Past that you are investigating, and that is step 4.
 
-### Stop 1
+### Stop 1 — the intake gate
 
 Only what `gh`, Jira, TickTick, grep, or web search cannot answer. Read every comment before you ask — a question already answered in comment 4 is the same defect as asking a lookup.
 
-He may not know either; he is not the reporter. Three ways out per question: answer it, ask the reporter (→ `needs info`), or assume it (→ recorded, and surfaced in the PR body).
+**Front-load. This is the only message you will ever draft for the reporter**, so it must carry everything the rest of the run needs. Run the checklist against what the ticket and comments already state, and ask only for the gaps:
+
+- platform and device (model, OS version)
+- app version, and the branch or build the reporter was on
+- feature flags and experiment arms
+- platform-specific repro inputs — for Codeless, the JSON template or payload that renders the broken screen; for Mosaic, the screen or template name and any account or data state it needs
+- **UI bugs only: a screenshot of the broken state.** Skip it when one is already attached, which step 1 downloaded to `evidence/reporter-before.<ext>`. Otherwise ask for it; a screenshot of the working state is not a substitute.
+
+Anything the ticket cannot answer and the reporter cannot be asked is assumed instead and recorded (see below). Nothing on this list is re-asked later, by any step.
+
+**The gate also carries Amel's own asks**, in the same stop, because the reporter cannot do them and nothing after the gate may:
+
+- **Missing path file → record it now.** Install the parent build, dispatch `evidence-capturer` in `record` mode, and have Amel navigate to the screen while it records, before the gate closes. A missing path is no longer a step-3 park; the gate is where it is resolved.
+- **Stale path file → `repair path file <path>`**, listed here, done by hand per `../scruffy/paths/README.md`. Same exception as before: a `stale_reason` naming `os` is `record` mode into `<screen>@<os>.md`, also done here.
+
+Draft the reporter message as `questions.md`, ready to paste as one ticket comment, and print Amel's asks as a short list under it. The run waits at the gate for the answers; when they arrive it never returns to it.
+
+He may not know the answers either; he is not the reporter. Three ways out per question: answer it, ask the reporter (→ `needs info` when the item cannot proceed without it), or assume it (→ recorded, and surfaced in the PR body).
 
 ## Step 2 — Already dead?
 
@@ -83,7 +103,7 @@ A hit here is a **flag carried forward, not an exit.** Record it in `state.md` a
 
 **A close recommendation needs proof of the same shape as everything else.** The red test, written and run against clean main, passing without any fix. Naming a merged PR is an argument; a green test on untouched main is proof. Closing someone's ticket wrongly on a repo you do not own is expensive.
 
-Cannot reproduce, and nothing found that would have fixed it → `needs info`, not `recommend close`. Absence of a repro is not absence of a bug — usually it means the reporter had conditions you did not recreate. Post the question as a ticket comment.
+Cannot reproduce, and nothing found that would have fixed it → `blocked`, not `recommend close`. Absence of a repro is not absence of a bug — usually it means the reporter had conditions you did not recreate. `blocked.md` names the conditions tried (the ones the intake gate collected) and the gap. **No second reporter message is drafted here** — the gate already asked for everything; Amel decides whether to go back to the reporter.
 
 ## Step 3 — Reproduce, as a test
 
@@ -95,7 +115,7 @@ Pin the conditions before you build:
 
 - **Latest main, always.** Never a release branch, never the reporter's version.
 - **Claim a device.** Take one that is not running an app under test, record its identifier in `state.md`, pin the rest of the run to it. All busy → boot a fresh one rather than queue. Commands per platform in `references/platforms/`.
-- **Missing device or config is assumed, and the assumption is stated** — in the ticket comment and the PR body. "Reported without a device; reproduced on iPhone 17, iOS 26.5" narrows the bug for whoever reads it next.
+- **Missing device or config is assumed, and the assumption is stated** — in the PR body. "Reported without a device; reproduced on iPhone 17, iOS 26.5" narrows the bug for whoever reads it next. The gate already asked; this is for what the reporter could not say. It is never a new question.
 
 The red test itself is written by `verification` — but **against the surviving chain, which does not exist until step 4.** This step pins the conditions, claims the device, and captures the before-state; the handoff happens at step 4e, once step 4 has a top-ranked chain. What this lane owes `verification` then: the symptom in the reporter's words, the suspect area, the conditions pinned here, and the top chain.
 
@@ -107,18 +127,17 @@ The red test itself is written by `verification` — but **against the surviving
 
 Never invent a snapshot suite where none exists. That is separate work and it will get the PR rejected.
 
-**The "before" pair is captured here, on clean main, by the `evidence-capturer` agent.** It is dispatched from the main thread with the packet its file lists — device from `state.md`, the parent SHA, bundle id, the build-identity file written at install, and the path file. Look the path up first: `scruffy/paths/<repo>/<screen>.md`, `<screen>` derived from the component or template name. Fresh → `capture` mode. **Missing → `record` mode, and the item is parked, not stalled. Stale → parked with a batched handoff reading `repair path file <path>`**; a stale path is never re-recorded automatically, because recording over it would destroy the one thing that shows what changed. Amel edits it by hand per `../scruffy/paths/README.md`. The exception: a `stale_reason` naming `os` is a runtime change, not a broken recipe — `record` mode, into `<screen>@<os>.md`, keeping both files.
+**The "before" pair is captured here, on clean main, by the `evidence-capturer` agent.** It is dispatched from the main thread with the packet its file lists — device from `state.md`, the parent SHA, bundle id, the build-identity file written at install, and the path file. The path file was looked up and, if missing or stale, resolved at the intake gate (step 1), so by here it is fresh and this is `capture` mode. A stale path is never re-recorded automatically, because recording over it would destroy the one thing that shows what changed; the gate lists it as `repair path file <path>` for Amel, and a `stale_reason` naming `os` is the one exception (`record` into `<screen>@<os>.md`, also at the gate).
 
 Same device, same OS, same pinned settings as the "after" — the agent enforces that, and the pair diff at step 7 checks it. That consistency is the point: the before/after pair is the single thing that most reliably gets a PR approved, and a pair that differs by anything other than the diff does not do that job.
 
-**Navigation is the unreliable part, not capture.** A `record` run needs Amel once, on main, and never again for that screen:
+**Navigation is the unreliable part, not capture.** A `record` run needs Amel once, on main, and never again for that screen. It happens inside the intake gate, never mid-run:
 
-- **Notify, do not stall.** Park the item, keep working the other bugs, resume when he says the screen is up.
-- **Batch the handoffs.** Across a run, hand him one list — three screens, the launch skill for each, any order. Not one ping per bug.
+- **Batch the asks.** Across a run, one list at the gate — three screens, the launch skill for each, any order. Not one ping per bug.
 - **The agent records the path while he navigates**, so the "after" replays without him. That is what removes the two-presence problem this skill exists to remove.
-- `PATH STALE` on the "after" falls back to one more handoff. Never ship a mismatched pair.
+- **After the gate nothing parks and nothing asks.** A capture that fails later is a gap, not a handoff: the pair is not shipped, the row on the proof block reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict is `PROOF INCOMPLETE`. The reporter's `reporter-before` screenshot still goes in the PR as the "before", labelled as theirs.
 
-Agent statuses and what they mean here: `CAPTURED` → continue. `GATE FAILED` or `NO PATH` → park, add to the handoff list. `PATH STALE` → flip the path file to stale per `../scruffy/paths/README.md`, park with a `repair path file` handoff — not a re-record. Except when the reason is that the file already exists: then nothing is flipped, because the file on disk is healthy; the item parks with the handoff `path exists: repair or rename <path>`. `BUILD MISMATCH` → process failure, reinstall, dispatch again; never a retry loop.
+Agent statuses and what they mean here: `CAPTURED` → continue. At the gate (record runs): `GATE FAILED` or `NO PATH` → Amel retries the navigation while still at the gate. After the gate: `GATE FAILED`, `NO PATH` or `PATH STALE` → flip the path file to stale per `../scruffy/paths/README.md` (except when the reason is that the file already exists — then nothing is flipped, the file on disk is healthy), record the gap as above, and list `repair path file <path>` or `path exists: repair or rename <path>` in `summary.md` for next time. `BUILD MISMATCH` → process failure, reinstall, dispatch again once; never a retry loop, never a question.
 
 **Where the build identity comes from.** Whoever installs the app writes `evidence/build-identity-<label>.txt` per `references/platforms/<platform>.md`, "Build identity", right after install. The agent re-hashes at capture. Without that file the agent returns `PACKET INCOMPLETE`, which is correct: a screenshot of an unknown build is not evidence. Response: supply the missing field and dispatch again; it is never guessed.
 

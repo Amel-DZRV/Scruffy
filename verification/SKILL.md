@@ -62,6 +62,10 @@ Record which it is in `state.md`. A module that assumes expensive on a Jest repo
 
 **The build slot, when expensive.** Everything before the build runs unbounded parallel — reading, grepping, chaining, writing the test. Builds and device work pass through a semaphore of N, sized from the machine and not from the repo. Two concurrent full builds contend on CPU, RAM and disk regardless of which repos they belong to, and the failures look like bugs. N is 1 on a laptop unless a remote build cache exists.
 
+## Nothing here asks for anything
+
+The lane's intake gate is the only point in a run that asks a human for input. Verification never pauses for a device, a screenshot, a path or a missing field. What cannot be produced is a named gap: the row reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict table decides the tier.
+
 ## The two failure modes
 
 They demand opposite responses, and conflating them is how a run either gives up too early or loops forever.
