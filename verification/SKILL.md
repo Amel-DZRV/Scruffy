@@ -179,11 +179,13 @@ The repo's suite, not the changed file's tests, compared against `evidence/basel
 
 - `evidence/capture-before.md` and `capture-after.md` exist, each with the three-line header, `build_identity: match`, and the same gate element.
 - The before header's SHA is `parent`; the after header's SHA is `head`.
-- `pair-diff.py capture-before.png capture-after.png --mask <mask from the after report, or none>` exits 0. The script treats `none` as no mask, and it always masks the status bar, so `masked=1` with `mask: none` is expected.
+- **Stage one:** `pair-diff.py capture-before.png capture-after.png --mask <mask from the after report, or none>` exits 0. The script treats `none` as no mask, and it always masks the status bar, so `masked=1` with `mask: none` is expected. **Exit 3 — nothing changed inside the mask, including a byte-identical pair — fails the claim**: a fix that changed nothing visible is not a fix, and the row reads `FAILED: nothing visibly changed (inside=0.00000)`.
+- **Stage two:** a model judges whether the *right* thing changed — the change inside the gate element's frame is the one the symptom describes, in the direction the expected-behaviour sentence states, with nothing else visibly altered. The auditor does this itself from the two images, the symptom and the mask frame, never from the implementer's reasoning, and defaults to fail when unsure. It writes one sentence into the row.
+- **Accessibility tree:** `tree-diff.py` on the two tree dumps. **Reported on its own row, never gating** — it does not change the verdict in either direction. A tree can look correct while the UI is visibly broken (off-screen, clipped, overlapping, wrong colour), so it cannot stand in for stages one and two; it exists to surface accessibility regressions a screenshot cannot show.
 - **The mask must be the gate element's frame**, in screenshot pixels. `mask: none` is valid only for a pair expected to be pixel-identical; a UI fix passes the gate element's frame, because a change outside every mask is what exits 1 — a pass with no mask over the fix is the fix going unexamined. The auditor rejects a mask covering more than half the screenshot, which is what exit 2 reports.
 - **Exit 2 is a process failure, not a diff result and never a pass.** The row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>`, taken from the script's contract line, and repeats on the `Not proven` line.
 
-A pair cannot fail in the sense the red test can — it does not assert the symptom — and it is still not proof. It is what gets the PR approved, which is a different and equally real goal. But a *missing* pair on a UI diff is a gap the reviewer will hit first, so it is `Not proven` material and demotes the verdict.
+A pair can now fail — stage one rejects an unchanged screen and stage two rejects the wrong change — but it still does not assert the symptom the way the red test does, so it is not proof of the diagnosis. It is what gets the PR approved, which is a different and equally real goal. But a *missing* pair on a UI diff is a gap the reviewer will hit first, so it is `Not proven` material and demotes the verdict.
 
 ## 1d. The revert check
 
@@ -253,7 +255,7 @@ Log it: date, PR, radius, whether the independent test confirmed the claim. Sepa
 
 # The proof block
 
-Everything above is discipline; this is the artifact it exists to produce. **One block, fixed shape, pasted into the PR body verbatim.** The dossier is for resumption; the proof block is for the reviewer, and the whole point of a fixed shape is that Amel learns to read it in ten seconds. A lane's PR body carries it; Mode 2 puts it in the dossier verdict; Mode 3 puts it in the review.
+Everything above is discipline; this is the artifact it exists to produce. **One block, fixed shape, pasted verbatim as the PR's first comment — the body carries only the verdict tier and a pointer to it.** The dossier is for resumption; the proof block is for the reviewer, and the whole point of a fixed shape is that Amel learns to read it in ten seconds. A lane's PR body carries it; Mode 2 puts it in the dossier verdict; Mode 3 puts it in the review.
 
 ```markdown
 ## Proof
@@ -267,7 +269,8 @@ Everything above is discipline; this is the artifact it exists to produce. **One
 | Test unchanged since red | test-only commit `<sha>`, untouched since — `git log --follow -p <file>` |
 | Suite | <N> passed at head; baseline at parent: <N> passed (or: same <k> pre-existing failures, named) |
 | Revert check | done / skipped — expensive loop, the red commit stands in |
-| Reviewer evidence | `capture-before.png` @ `<parent sha>`, `capture-after.png` @ `<head sha>`, gate `<label role>`, pair-diff `changed=<f>` exit 0 — or `not applicable — NON-UI` — or `not applicable — external PR, no build identity available` (Mode 3) — or `MISSING: <status the agent returned>` / `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>` / `MISSING: mask invalid <value>` / `MISSING: mask too large <value>` |
+| Accessibility check (informational — never changes the verdict) | `tree-diff.py` — `a11y: UNCHANGED / CHANGED / ATTENTION` and its findings, or `not applicable` / `UNAVAILABLE <why>` |
+| Reviewer evidence | `capture-before.png` @ `<parent sha>`, `capture-after.png` @ `<head sha>`, gate `<label role>`, pair-diff `changed=<f> inside=<f>` exit 0, right-change: "<one sentence>" — or `not applicable — NON-UI` — or `not applicable — external PR, no build identity available` (Mode 3) — or `MISSING: <status the agent returned>` / `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>` / `MISSING: mask invalid <value>` / `MISSING: mask too large <value>` |
 
 **Replay:** `git checkout <test-commit> && <command>`  (expect red) `&& git checkout <head> && <command>`  (expect green)
 **Not proven:** what could not be checked and why — or "nothing".
