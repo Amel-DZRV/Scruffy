@@ -39,8 +39,15 @@ for (const dossier of dossiers) {
   const ledger = json(join(ev, 'ledger.json'));
   if (!ledger) { unmet.push(`[${key}]`, '  - evidence/ledger.json missing or not JSON'); continue; }
   let now; try { now = fingerprint(ledger.repo); } catch (e) { unmet.push(`[${key}]`, `  - cannot fingerprint ${ledger.repo}: ${e.message.split('\n')[0]}`); continue; }
-  const waived = new Set((read(join(ev, 'accepted.md')) || '').split('\n').map(l => l.match(/^- `?([\w.-]+)`?/)?.[1]).filter(Boolean));
-  const budget = ledger.budget || 3; const miss = [];
+  // accepted.md: `- <key>` waives the whole row (prose after the key is a comment); `- <key> :: <prop substring>`
+  // waives one property of that row (case-insensitive substring of the measurement or of the judge's failing[].prop).
+  const waived = new Set(); const propWaivers = new Map();
+  for (const l of (read(join(ev, 'accepted.md')) || '').split('\n')) {
+    const m = l.match(/^- `?([\w.-]+)`?\s*::\s*(.+?)\s*$/);
+    if (m) { propWaivers.set(m[1], [...(propWaivers.get(m[1]) || []), m[2].replace(/`/g, '').trim().toLowerCase()]); continue; }
+    const k = l.match(/^- `?([\w.-]+)`?/)?.[1]; if (k) waived.add(k);
+  }
+  const budget = ledger.budget || 3; const miss = []; const waivedOpen = [];
   const frameDir = (round, platform, frame) => join(ev, 'rounds', String(round), platform, `f${frame}`);
   const fresh = dir => (read(join(dir, 'fingerprint.txt')) || '').trim() === now;
 
@@ -60,27 +67,54 @@ for (const dossier of dossiers) {
     // visual
     const v = r.visual || {}; const vt = terminal(v.status);
     if (vt !== null) { if (vt !== true) miss.push(vt); }
-    else if (v.status === 'PASS' || v.status === 'DATA') {
+    else if (v.status === 'PASS' || v.status === 'DATA' || v.status === 'FAIL') {
       const dir = frameDir(v.round, r.platform, r.frame);
       const findings = json(join(dir, 'findings.json')), judge = json(join(dir, 'judge.json'));
-      const j = judge?.components?.[String(r.mockId)];
-      if (!fresh(dir)) miss.push(`${label}: visual ${v.status} is from round ${v.round}, before the latest code change — recapture`);
-      else if (!findings || !j) miss.push(`${label}: round ${v.round} has no findings.json or no judge.json entry`);
-      else if (j.verdict !== v.status) miss.push(`${label}: ledger says ${v.status}, judge said ${j.verdict}`);
-      else {
-        const comp = findings.components.find(c => c.mockId === r.mockId) || { checks: [] };
-        if (comp.matched === false && v.status === 'PASS') { miss.push(`${label}: PASS on a component the comparison could not find in the app`); continue; }
-        const rows = [comp, ...findings.texts.filter(t => t.component === r.mockId)];
-        const excused = new Set(j.data_checks || []);
-        const failing = rows.flatMap(x => x.checks.filter(c => c.pass === false).map(c => `${x.text ? `"${x.text}" ` : ''}${c.prop}`));
-        const open = failing.filter(f => !excused.has(f));
-        if (open.length) miss.push(`${label}: visual ${v.status} with failing measurements the judge did not attribute to data: ${open.join('; ')}`);
+      if (r.mockId === undefined) {
+        // An app-only control (type "extra", key <platform>.f<n>.x<slug>): no component to measure. DATA when the
+        // judge listed it with data:true; WAIVED needs accepted.md; it cannot PASS, and a FAIL stays a FAIL.
+        const e = (judge?.extra || []).find(x => x.text === r.text);
+        if (v.status === 'PASS') miss.push(`${label}: an extra (app-only) row cannot PASS: DATA, WAIVED, FAIL or BLOCKED`);
+        else if (v.status === 'FAIL') miss.push(`${label}: extra control is a difference to fix or waive`);
+        else if (!fresh(dir)) miss.push(`${label}: visual DATA is from round ${v.round}, before the latest code change — recapture`);
+        else if (!e || e.data !== true) miss.push(`${label}: judge.json has no extra entry for "${r.text}" marked data:true`);
+      } else {
+        const j = judge?.components?.[String(r.mockId)];
+        if (!fresh(dir)) miss.push(`${label}: visual ${v.status} is from round ${v.round}, before the latest code change — recapture`);
+        else if (!findings || !j) miss.push(`${label}: round ${v.round} has no findings.json or no judge.json entry`);
+        else if (j.verdict !== v.status) miss.push(`${label}: ledger says ${v.status}, judge said ${j.verdict}`);
+        else {
+          const comp = findings.components.find(c => c.mockId === r.mockId) || { checks: [] };
+          if (comp.matched === false && v.status === 'PASS') miss.push(`${label}: PASS on a component the comparison could not find in the app`);
+          const rows = [comp, ...findings.texts.filter(t => t.component === r.mockId)];
+          const excused = new Set((j.data_checks || []).map(x => String(x).trim()));
+          const pw = propWaivers.get(id) || [];
+          const hit = item => pw.some(w => item.toLowerCase().includes(w));
+          // a structural cause (failing[].prop) that is waived also waives every measurement it `covers`
+          const covered = (j.failing || []).filter(f => hit(f.prop || '')).flatMap(f => f.covers || []).map(x => String(x).toLowerCase());
+          const isWaived = item => hit(item) || covered.some(c => item.toLowerCase().includes(c));
+          const measured = rows.flatMap(x => x.checks.filter(c => c.pass === false).map(c => `${x.text ? `"${x.text}" ` : ''}${c.prop}`)).filter(f => !excused.has(f));
+          const named = (j.failing || []).map(f => f.prop || '(unnamed)');
+          const suspect = (j.suspect_measurement || []).map(x => x.prop || '(unnamed)');
+          const everything = [...new Set([...measured, ...named])];
+          const openItems = everything.filter(f => !isWaived(f)), openSuspect = suspect.filter(f => !isWaived(f));
+          if (openSuspect.length) miss.push(`${label}: judge flagged suspect_measurement (the crop contradicts the number): ${openSuspect.join('; ')} — unresolved until a human waives it ("- ${id} :: <prop>" in accepted.md) or the measurement is fixed`);
+          if (v.status === 'FAIL') {
+            if (!everything.length && !suspect.length) miss.push(`${label}: FAIL with no failing property named in judge.json`);
+            else if (openItems.length) miss.push(`${label}: FAIL, not covered by property waivers in accepted.md: ${openItems.join('; ')}`);
+            else if (everything.length) waivedOpen.push(`${label}: ${everything.join('; ')}`);
+          } else {
+            const unattributed = openItems.filter(f => measured.includes(f) && !suspect.includes(f));
+            if (unattributed.length) miss.push(`${label}: visual ${v.status} with failing measurements the judge did not attribute to data: ${unattributed.join('; ')}`);
+          }
+        }
       }
     } else miss.push(`${label}: visual ${v.status || 'not checked'}`);
 
     // functional
     const fn = r.functional || {}; const ft = terminal(fn.status);
     if (fn.status === 'NA') continue;
+    if (fn.status === 'DATA') { if (!fn.reason && !r.reason) miss.push(`${label}: functional DATA (not probeable on this device state) needs a reason`); continue; }
     if (ft !== null) { if (ft !== true) miss.push(ft); continue; }
     if (fn.status !== 'PASS') { miss.push(`${label}: functional ${fn.status || 'not probed'}`); continue; }
     const probe = json(join(ev, fn.probe || '-'));
@@ -89,7 +123,7 @@ for (const dossier of dossiers) {
     else if (probe.fingerprint !== now) miss.push(`${label}: probe ran before the latest code change — re-probe`);
   }
 
-  if (!miss.length) { writeFileSync(join(ev, 'audit.met'), new Date().toISOString() + '\n'); rmSync(join(ev, 'audit.active')); }
+  if (!miss.length) { writeFileSync(join(ev, 'audit.met'), [new Date().toISOString(), ...(waivedOpen.length ? ['WAIVED with open items (property waivers):', ...waivedOpen.map(w => '  - ' + w)] : [])].join('\n') + '\n'); rmSync(join(ev, 'audit.active')); }
   else { unmet.push(`[${key}] ${miss.length} unmet`); for (const m of miss.slice(0, 25)) unmet.push('  - ' + m); if (miss.length > 25) unmet.push(`  - … ${miss.length - 25} more`); }
 }
 

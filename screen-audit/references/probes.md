@@ -13,9 +13,15 @@ Before the first tap of a run, every interactive element in scope has a written 
 
 Never the component's own `onPress`: reading what the code does and calling it the expectation makes every probe pass. No source → the intake gate.
 
+**Elements with no counterpart because of device state.** An expectation can be written and still not be probeable: a Recent-sessions accordion on a device with no sessions. Write it in the `## Expect` block as `· expected-DATA: not probeable — <the state that removes it> · source: …`. The ledger row's functional status is `DATA` with that reason; it is not a PASS and the hook accepts it without a probe file.
+
+**App-only controls** (the app has a "See all" the frame does not draw): the expectation's source is the sibling frame that shows that state (the populated frame says what "See all" opens), never the app's own code. The control gets an `extra` ledger row, key `<platform>.f<n>.x<slug>` (`android.f4.xseeall`; see SKILL.md → ledger), and its probe file is named by that key. A control no frame shows in any state goes to the intake gate.
+
 ## Which elements
 
-Every element in `app.tree.json` that is a `Button`, is `clickable`, `checkable`, or a text field, and sits inside a component the comparison matched. Plus anything the mock draws as a control (a chevron, a `⋯`, a toggle) that the tree does **not** list as interactive — that absence is itself a finding (`not exposed as a control`), usually a missing `accessibilityRole`.
+Every element with an entry in the frame's `## Expect` block, plus every `Button` (and field) in the tree inside a component the comparison matched. The tree cannot say what is interactive: mobile-mcp lists no `clickable` flag, and a tab item is a plain `View` with `selected` on the active one. So **"not exposed as a control" cannot be proved from the tree** and is not a finding; a mock-drawn chevron, `⋯` or toggle is probed by tapping it, and the result (nothing happened, or the expected thing) is the finding.
+
+**Tabs and destinations the spec leaves unspecified.** The default expectation is: the tapped item's `selected` flips on and the previous one's off, and the screen's heading changes. Write that down as the expectation (`source: default — spec silent`) and record it; a tap that changes neither is a FAIL.
 
 ## Probe by role
 
@@ -30,6 +36,12 @@ Every element in `app.tree.json` that is a `Button`, is `clickable`, `checkable`
 | disabled control | tap | nothing changes, and the mock also shows it disabled |
 
 Tap by the element's label, resolved from a fresh tree — mobile-mcp `mobile_click_on_screen_at_coordinates` at the element's centre, or `adb shell input tap`. Never a coordinate copied from an earlier tree.
+
+**mobile-mcp rules** (each one cost a run something):
+
+- Always tap from a **fresh** `mobile_list_elements_on_screen`. Never tap by an old `@e` ref after any navigation: refs are positional, and the old one lands on whatever is now there (a program preview opened this way).
+- Do not use `mobile_batch_commands` for probes. A batch cannot contain a screenshot step, and one that fails may already have executed the steps before the failing one.
+- After BACK, wait for the screen to settle (re-list until the heading is back, or ~1 s) before the next tap: a tap during the back animation is silently ignored.
 
 After every probe: the crash check from the platform file. A crash, a red error screen, or an `ERROR` in the Metro log fails the probe whatever the screen shows.
 

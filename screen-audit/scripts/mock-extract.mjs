@@ -3,6 +3,8 @@
 // every visible node with its frame and computed style. The mock is HTML, so its values are
 // read, not estimated.
 //
+// style.backgroundImage records a gradient / url() fill: compare.mjs measures it as a `backdrop`.
+//
 //   mock-extract.mjs <export.html> --list
 //   mock-extract.mjs <export.html> --frame <n|label> --scale <device px per dp> --out <dir>
 //
@@ -120,7 +122,7 @@ const nodes = await phone.evaluate(root => {
           return x2 > x1 ? [x1 - r0.x, y1 - r0.y, x2 - x1, y2 - y1].map(v => Math.round(v * 10) / 10) : null; })() : null,
         anchoredBottom: Math.abs(r.y + r.height - (r0.y + root.clientHeight)) < 1,
         style: {
-          color: cs.color, background: cs.backgroundColor, opacity: cs.opacity,
+          color: cs.color, background: cs.backgroundColor, backgroundImage: cs.backgroundImage.slice(0, 240), opacity: cs.opacity,
           fontFamily: cs.fontFamily, fontSize: cs.fontSize, fontWeight: cs.fontWeight,
           letterSpacing: cs.letterSpacing, lineHeight: cs.lineHeight, textTransform: cs.textTransform, textAlign: cs.textAlign,
           radius: cs.borderTopLeftRadius, border: `${cs.borderTopWidth} ${cs.borderTopStyle} ${cs.borderTopColor}`,

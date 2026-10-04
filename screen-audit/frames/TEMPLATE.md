@@ -19,4 +19,6 @@ state: <what data the frame assumes, and how this device gets it: already there 
 status: fresh | stale: <the step or label that failed>
 
 ### Expect
-- <element label> · <role from probes.md> · <expected outcome, observable in the tree> · source: <spec section | frame n | frame note | route table> · mutates: yes | no
+- <element label> · <role from probes.md> · <expected outcome, observable in the tree> · source: <spec section | frame n | frame note | route table | default — spec silent> · mutates: yes | no
+- <element label> · <role> · expected-DATA: not probeable — <the device state that removes it> · source: <…>      (functional status DATA)
+- <app-only control> · <role> · <outcome> · source: <the sibling frame showing that state> · extra: yes      (ledger key <platform>.f<n>.x<slug>)

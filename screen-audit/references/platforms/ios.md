@@ -4,7 +4,7 @@ Facts only. **Needs a Mac**: the iOS Simulator does not run on Windows. Untested
 
 ## Pin to the mock
 
-A simulator's point width cannot be changed, so pick a device that already is the mock's width. For a 375-wide mock: **iPhone SE (3rd generation)** or **iPhone 13 mini** (375 pt). A wider device (iPhone 17, 402 pt) makes `compare.mjs` stop on the width check — by design; comparing a 375 mock to a 402 screen measures the device, not the code.
+A simulator's point width cannot be changed, so pick a device that already is the mock's width. For a 375-wide mock: **iPhone SE (3rd generation)** or **iPhone 13 mini** (375 pt). The mock is 375 wide (`mock-extract --list` prints 377: the phone's border is counted). A wider device (iPhone 17, 402 pt) makes `compare.mjs` stop on the width check (more than 0.5 dp apart) — by design; comparing a 375 mock to a 402 screen measures the device, not the code.
 
 ```bash
 xcrun simctl list devices available | grep -E "iPhone SE|13 mini"
@@ -15,7 +15,7 @@ xcrun simctl status_bar <UDID> override --time 9:41 --batteryState charged --bat
 
 `--scale` is the screenshot's px per pt: 2 for SE (3rd gen), 3 for 13 mini — read it as `app.png` width ÷ 375.
 
-Restore: `xcrun simctl status_bar <UDID> clear`, appearance back to what `state.md` recorded.
+Before the pin, record the current appearance (`xcrun simctl ui <UDID> appearance`) in `state.md`. Restore: `xcrun simctl status_bar <UDID> clear`, appearance back to the recorded value. (Untested.)
 
 ## Reach a screen
 
@@ -25,7 +25,7 @@ xcrun simctl openurl <UDID> "relentless://training/programs"
 
 ## Tree
 
-mobile-mcp `mobile_list_elements_on_screen` (`format: json`) → `app.tree.json`. Its iOS coordinates are **points**: pass `--tree-units dp` to `compare.mjs`. Without mobile-mcp: `axe describe-ui --udid <UDID>` gives points too.
+mobile-mcp `mobile_list_elements_on_screen` → its text output pasted verbatim into `app.tree.txt` (no save-to-file; `compare.mjs` reads the text format, `format: json`, and XML; the same as Android, untested on iOS — the first iOS run confirms the line format). Its iOS coordinates are **points**: pass `--tree-units dp` to `compare.mjs`. Without mobile-mcp: `axe describe-ui --udid <UDID>` gives points too.
 
 ## Screenshot
 
