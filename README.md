@@ -2,7 +2,7 @@
 
 A modular skillset for handling bugs and features across repos you don't own.
 
-Four independent skills. Scruffy routes; the others do the work.
+Five independent skills. Scruffy routes; the others do the work.
 
 | Skill | Owns |
 |---|---|
@@ -10,13 +10,15 @@ Four independent skills. Scruffy routes; the others do the work.
 | `bug-eater` | The bug lane. Gather → chain → propose → fix → draft PR |
 | `verification` | Proof. Red tests, the four claims, reviewing someone else's PR |
 | `feature-dev` | The feature lane. Requirements → design → acceptance tests → draft PR |
+| `screen-audit` | Design fidelity. A running app against Claude Design mocks, component by component — measured, judged, tapped — and fixed until it matches |
 
-Plus three agents the skills dispatch — you never call them directly:
+Plus four agents the skills dispatch — you never call them directly:
 
 | Agent | Does |
 |---|---|
 | `proof-auditor` | Runs the four claims and awards the verdict, in a fresh context with no write tools. The model that wrote a fix never grades it |
 | `step-reviewer` | Reviews one implementation step from its two SHAs, with none of the implementer's reasoning |
+| `design-judge` | Decides per component whether the app matches the mock, from screen-audit's measurements and crops, in a fresh context. Writes the verdict the fix loop reads and the Stop hook re-checks |
 | `evidence-capturer` | Takes the before/after pair from a simulator or emulator by a recorded path, gated on the accessibility tree and the installed binary's hash. You navigate a new screen once; it replays forever after |
 
 ## Install
@@ -25,7 +27,7 @@ Symlink, so recorded path files are written straight into the repo:
 
 ```bash
 mkdir -p ~/.claude/skills ~/.claude/agents
-for s in scruffy bug-eater verification feature-dev; do ln -sfn "$PWD/$s" ~/.claude/skills/$s; done
+for s in scruffy bug-eater verification feature-dev screen-audit; do ln -sfn "$PWD/$s" ~/.claude/skills/$s; done
 cp agents/*.md ~/.claude/agents/
 chmod +x bug-eater/scripts/*.sh bug-eater/scripts/*.py
 ```
@@ -35,7 +37,7 @@ The capture agent records new path files under `~/.claude/skills/scruffy/paths/`
 Copying works too:
 
 ```bash
-cp -r scruffy bug-eater verification feature-dev ~/.claude/skills/
+cp -r scruffy bug-eater verification feature-dev screen-audit ~/.claude/skills/
 mkdir -p ~/.claude/agents && cp agents/*.md ~/.claude/agents/
 chmod +x ~/.claude/skills/bug-eater/scripts/*.sh ~/.claude/skills/bug-eater/scripts/*.py
 ```
@@ -47,6 +49,10 @@ Flat, one level under `skills/` — that's where Claude Code discovers them. Nes
 `brew install cameroncooke/axe/axe` for iOS captures; without it the pair is `ungated` and the verdict caps at REVIEW NEEDED on UI diffs.
 
 Bug-eater registers a Stop hook (`bug-eater/scripts/goal-check.sh`) from its frontmatter; it drives the autonomous phase and needs hooks enabled and the folder trusted. With hooks off the lane prints a `/goal` line to paste instead.
+
+Screen-audit's scripts are Node and drive the system Chrome (no browser download): `npm install` once in `screen-audit/`. It registers its own Stop hook (`screen-audit/scripts/audit-check.mjs`), same requirements as bug-eater's.
+
+On Windows, Git Bash's `ln -s` copies instead of linking unless Developer Mode is on; a directory junction needs no admin: `cmd //c mklink /J "%USERPROFILE%.claudeskillsscreen-audit" "C:devScruffyscreen-audit"`.
 
 Without the agents everything still runs, but verification grades in-context and caps the verdict at REVIEW NEEDED.
 
@@ -69,6 +75,7 @@ The other three are separately invocable as a fallback, useful when you want to 
 bug-eater MOSAIC-3559
 feature-dev "add offline caching to the feed"
 verification https://github.com/org/repo/pull/1234
+screen-audit C:/dev/Relentless_V2 "docs/Design/training-flow/Relentless - Training tab flow.html" dashboard --audit-only
 ```
 
 ## The idea

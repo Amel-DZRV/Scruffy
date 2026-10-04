@@ -204,7 +204,7 @@ The failure mode here is different from a bug's and worth naming: on a bug, a te
 
 All criteria red, all recorded with their hashes, before a line of implementation. **Commit the acceptance tests on their own, before any implementation commit** — the branch history `parent → tests → implementation` is the reviewer-facing proof that the tests were not written to fit the code, and it falls out of the one-commit-per-step flow in step 6 for free.
 
-Criteria that genuinely cannot be tested — a visual judgement, a performance target with no harness — are named in the PR body as unverified. **Do not quietly drop them, and do not build a harness that was not asked for.** An unverifiable criterion is a finding.
+**A visual criterion with a Claude Design mock behind it is testable**: it goes to `screen-audit` at step 7, on the frames it names, and its ledger rows are the criterion's evidence. Criteria that genuinely cannot be tested — a visual judgement with no mock, a performance target with no harness — are named in the PR body as unverified. **Do not quietly drop them, and do not build a harness that was not asked for.** An unverifiable criterion is a finding.
 
 For a visual criterion, dispatch `evidence-capturer` with `label: before` at this point, on the parent commit — the same packet bug-eater's step 3 describes.
 

@@ -31,6 +31,7 @@ Print a `▶ Step N/8 — <name>: <what is happening>` line before each router s
 | `bug-eater` | Something is broken. Gather → chain → propose → fix → PR. |
 | `verification` | Proof. Red tests, the four claims, reviewing someone else's PR. Called by the lanes, or standalone. |
 | `feature-dev` | Something is wanted, or wants removing. Requirements → design → acceptance tests → PR. Cleanup runs here too. |
+| `screen-audit` | A screen exists and should match its Claude Design mock — "make this match the design", "audit the dashboard against the mocks". Measured, judged, tapped, fixed until it matches. |
 
 This file owns what no module can: classification, repo routing, the dossier, the run-wide budget, clustering, and the final report.
 
