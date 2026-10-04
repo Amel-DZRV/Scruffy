@@ -15,7 +15,7 @@ Never the component's own `onPress`: reading what the code does and calling it t
 
 **Elements with no counterpart because of device state.** An expectation can be written and still not be probeable: a Recent-sessions accordion on a device with no sessions. Write it in the `## Expect` block as `· expected-DATA: not probeable — <the state that removes it> · source: …`. The ledger row's functional status is `DATA` with that reason; it is not a PASS and the hook accepts it without a probe file.
 
-**App-only controls** (the app has a "See all" the frame does not draw): the expectation's source is the sibling frame that shows that state (the populated frame says what "See all" opens), never the app's own code. The control gets an `extra` ledger row, key `<platform>.f<n>.x<slug>` (`android.f4.xseeall`; see SKILL.md → ledger), and its probe file is named by that key. A control no frame shows in any state goes to the intake gate.
+**App-only controls** (the app has a "See all" the frame does not draw): the expectation's source is the sibling frame that shows that state (the populated frame says what "See all" opens), never the app's own code. The control gets an `extra` ledger row, key `<platform>.f<n>.x-<slug>`, slug in kebab-case (`android.f4.x-see-all`; see SKILL.md → ledger), and its probe file is named by that key. A control no frame shows in any state goes to the intake gate.
 
 ## Which elements
 
@@ -49,7 +49,11 @@ After every probe: the crash check from the platform file. A crash, a red error 
 
 ## Probes that change data
 
-Starting a workout, finishing a set, deleting, archiving, reverting a change. Marked `mutates` in `## Expect`. They run only if the intake gate allowed them on this device, after every non-mutating probe of the round, and never on a device holding data Amel cares about.
+Starting a workout, finishing a set, deleting, archiving, reverting a change. Marked `mutates` in `## Expect`. They run only if the intake gate allowed them on this device, after every non-mutating probe of the round, and never on a device holding data Amel cares about. A probe the gate skipped is a ledger `functional: WAIVED`, satisfied in `accepted.md` by `- <key> :: functional` (or the whole-row key); no other property line satisfies it.
+
+## When to probe
+
+Probes are valid only on the code fingerprint they ran under. Run them in the round you expect to be the last: the first round in audit-only mode, the round after the last fix in fix mode. Earlier rounds record the functional status as `NA` with reason `"not re-probed; probed in the final round"`, never a carried-forward PASS; the hook requires a fresh probe file for any functional PASS.
 
 ## The probe file
 

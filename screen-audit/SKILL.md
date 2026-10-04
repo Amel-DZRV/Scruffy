@@ -63,7 +63,7 @@ One directory per audit, created by the run, not found: `$SCRUFFY_TICKETS/<key>/
 ```
 <key>/
   evidence/   rounds/<n>/<platform>/f<frame>/  mock.png, app.png, app.tree.*, findings.json|md, judge.json, fingerprint.txt, crops/
-              probes/<n>/<platform>/<row key>.json, ledger.json, accepted.md, audit.active | audit.met | audit.blocked
+              probes/<n>/<platform>/<row key>.json, ledger.json, accepted.md, audit.active | audit.met | audit.blocked, audit.fixing (marker, step 5)
   state.md    device ids, pre-pin values, pin values, repo sha, cost class, tolerances
   report.md   the run's product
   skill-test-notes.md   optional: faults found in this skill while running it
@@ -110,8 +110,8 @@ A round covers every frame in scope, on every platform in scope. One directory e
 3. **App:** run the frame's recipe; wait for a stable tree; then `app.png` (screencap) and the tree. The tree is mobile-mcp's `mobile_list_elements_on_screen` output pasted **verbatim** into `app.tree.txt` — a Write of the text it returned; mobile-mcp has no save-to-file, and nothing is converted or retyped as JSON. `compare.mjs` reads that text format, mobile-mcp's JSON and uiautomator XML. Commands in the platform file.
 4. **Compare:** `compare.mjs --mock <dir> --app-png <dir>/app.png --app-tree <dir>/app.tree.txt --scale <s> --out <dir>` → `findings.json`, `findings.md`, `crops/`.
 5. **Judge:** dispatch `design-judge` per frame with the packet its file lists — `accepted` included: a waived row is still listed in full by the judge (`waived_seen`); it only skips deciding it, so a waiver never hides a finding. It writes `judge.json`. Not your notes, not the diff, not the previous round's verdict. Read every `suspect_measurement` against its crop before anything else: a number the crop contradicts is a measurement bug to report (and fix in `compare.mjs`), never something for the fixer to chase.
-6. **Probe** each interactive component per `references/probes.md`; each writes `evidence/probes/<n>/<platform>/<key>.json` with the fingerprint it ran under. Data-changing probes run last, and only if the gate allowed them.
-7. **Ledger:** update `evidence/ledger.json` — one row per component the comparison found, per platform. Status comes from `judge.json` and the probe files; you copy it, you do not decide it.
+6. **Probe** each interactive component per `references/probes.md`; each writes `evidence/probes/<n>/<platform>/<key>.json` with the fingerprint it ran under. Data-changing probes run last, and only if the gate allowed them. **Probe in the round you expect to be the last:** a probe is only valid on the code fingerprint it ran under, so a probe from an earlier round is stale the moment a fix lands. That round is the first one in audit-only mode and the round after the last fix in fix mode. Earlier rounds do not re-probe; they carry the functional status forward as `NA` with the reason `"not re-probed; probed in the final round"`, never as PASS. The hook then demands a fresh probe file before it lets the run end.
+7. **Ledger:** update `evidence/ledger.json` — one row per component the comparison found, per platform. Status comes from `judge.json` and the probe files; you copy it, you do not decide it. A functional PASS carried forward from an earlier round without a probe file on the current fingerprint is invalid, and the hook rejects it.
 
 The ledger's shape, which the hook reads:
 
@@ -126,7 +126,7 @@ The ledger's shape, which the hook reads:
 
 `visual`: `PASS | FAIL | DATA | WAIVED | BLOCKED`. `functional`: the same, or `NA` for a component with nothing to press; `DATA` there means the element cannot be probed on this device's state (needs a `reason`). Visual `DATA` means every difference is the app's content, not its code — the judge must name each such measurement.
 
-**Rows with no `mockId`** are app-only controls the judge listed under `extra` (a "See all" the frame does not draw): `{ "key": "android.f4.xseeall", "type": "extra", "text": "See all", … }`, key `<platform>.f<n>.x<slug>`. Their visual status is `DATA` (the judge marked `data:true`), `WAIVED`, `FAIL` or `BLOCKED`, never `PASS`; their functional probe takes its expectation from the sibling frame that shows that state (`references/probes.md`).
+**Rows with no `mockId`** are app-only controls the judge listed under `extra` (a "See all" the frame does not draw): `{ "key": "android.f4.x-see-all", "type": "extra", "text": "See all", … }`, key `<platform>.f<n>.x-<slug>` with the slug in kebab-case, always (the one format in the ledger, the probe file name, `accepted.md` and the judge's notes). Their visual status is `DATA` (the judge marked `data:true`), `WAIVED`, `FAIL` or `BLOCKED`, never `PASS`; their functional probe takes its expectation from the sibling frame that shows that state (`references/probes.md`).
 
 A `backdrop` component (a gradient or photo behind text) is numbered `1000 + <mock node id>`: `android.f4.c1001`.
 
@@ -137,13 +137,13 @@ In `--audit-only` mode, stop here: write `report.md` from the ledger, one sectio
 In fix mode, write `evidence/audit.active` as the last act of the first round. From then until the hook lets the turn end, nothing stops on its own judgement that it is done. After every turn `scripts/audit-check.mjs` re-reads the ledger and the files behind it, and blocks the stop until every row is:
 
 - **PASS or DATA** from a round whose fingerprint equals the code *now*, with `judge.json` agreeing and no failing measurement the judge did not attribute to data — or
-- **WAIVED**, its key in `accepted.md`, which only Amel's answers at the gate write — or
+- **WAIVED**, its key in `accepted.md`, which only Amel's answers at the gate write. A `functional` WAIVED (a probe the gate skipped, e.g. it mutates data) is satisfied by the whole-row key or by `- <key> :: functional`, and by no other property line — or
 - **FAIL with every failing property waived** (WAIVED-with-open-items): each failing measurement and each `failing[].prop` in `judge.json` is covered by a `- <key> :: <prop substring>` line in `accepted.md`, or by the `covers` of a cause that is. One uncovered property keeps the row unmet, and the hook's message lists it — or
 - **BLOCKED**, with `attempts` at the budget and a reason.
 
 Any edit to the repo changes the fingerprint and makes every earlier PASS stale. That is deliberate: the round after the last fix re-verifies everything, so a fix that moved a neighbour shows up as that neighbour failing.
 
-**`accepted.md`** is one line per waiver, Amel's decisions only: `- <key>` waives the whole row (anything after the key is a comment); `- <key> :: <prop substring>` waives one property — a case-insensitive substring of the measurement as `findings.md` prints it, or of the judge's `failing[].prop` (`- android.f4.c24 :: icons`). A property waiver never hides the rest of the row. Prefer property waivers: decisions are per property (fix the fill, waive the icons), and a whole-row waiver on a row that also holds a fix hides the fix.
+**`accepted.md`** is one line per waiver, Amel's decisions only: `- <key>` waives the whole row (anything after the key is a comment); `- <key> :: <prop substring>` waives one property — a case-insensitive substring of the measurement as `findings.md` prints it, or of the judge's `failing[].prop` (`- android.f4.c24 :: icons`). `- <key> :: functional` waives the row's functional probe (skipped by the gate, e.g. because it mutates data) and nothing visual; it is the only property line that satisfies a `functional` WAIVED. A property waiver never hides the rest of the row. Prefer property waivers: decisions are per property (fix the fill, waive the icons), and a whole-row waiver on a row that also holds a fix hides the fix.
 
 **Structural causes.** A measurement can be a consequence of a difference the judge names: a tab bar's `inset top` is unreliable when icons are present. The judge lists `{ "prop": "icons", …, "covers": ["inset top"] }`; waiving `:: icons` then waives the covered measurements, while the fill, which it did not list under `covers`, stays failing. What a cause covers is the judge's call, written down; the fixer cannot widen it.
 
@@ -160,6 +160,8 @@ Take the FAIL rows that still have an unwaived property (the hook's message list
 - **One component per commit.** The commit message names the row key.
 - **Shared code is shared.** On React Native one edit changes both platforms. With `--platform both`, a fix is not done until both platforms' rows pass; a platform-only fix goes behind `Platform.select`, and says why.
 - **Do not fix a measurement the judge called data**, one it flagged `suspect_measurement`, or a property covered by a waiver in `accepted.md`. A row that is `FAIL` with only waived properties left is done. Do not edit the mock. Do not loosen a tolerance mid-run — `tolerances` (defaults in `compare.mjs`: position 3 dp, gap 3, size ratio 8% or 1 dp, text ΔE 6, **fill ΔE 2**, edge 3, backdrop ΔE 8, width 0.5 dp) are fixed at round 1 and recorded in `state.md`.
+
+**Keep the hook quiet while fixers work.** The hook blocks the stop whenever a row is unmet, which is every turn while developers are still running. Before dispatching fixers, write `evidence/audit.fixing` (an empty file); while it is under 30 minutes old (mtime) the hook exits 0 silently for this dossier. Remove it when the fixers have reported, before the next round's capture, so the hook is live again for the verification. A marker older than 30 minutes is ignored, so a crashed run cannot silence the hook for good. **Never leave the marker in place at hand-off**: it hides every unmet row, so delete it before the last round and before step 6.
 
 Then the next round, all frames. A row that fails three rounds after an edit aimed at it → `BLOCKED` with what was tried. The others carry on.
 

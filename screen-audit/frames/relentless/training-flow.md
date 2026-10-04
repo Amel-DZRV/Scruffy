@@ -5,7 +5,7 @@ platform: android
 device: sdk_gphone64_x86_64 (mobile-mcp Pixel_API36 / adb emulator-5554)
 os: Android 16
 scale: 2.88 (1080 px / 375 dp; density pinned 420 → 461, ≈374.9 dp)
-verified: 2026-10-04 @ b7039ab (first run; not yet replayed by a second run)
+verified: 2026-10-04 @ 88a6945 (the Relentless sha after the run-2 fixes)
 ---
 
 ## f4 · No active program
@@ -18,6 +18,8 @@ state: no active program, no logged sessions, no data seeded — already there o
 status: fresh
 
 ### Expect
+Verified 2026-10-04 @ 88a6945: See all opens heading "Sessions" with the empty-state title "Your sessions land here" (PASS). Nutrition, Stats and Settings tabs: selection flips and the screen changes (Nutrition shows the food log; Stats and Settings show "coming soon" placeholders; Settings shows toggles in the accent). The fourth tab is "Settings" (Amel's decision; the mock's "You" is superseded). The Recent sessions accordion is expected-DATA on a device with no sessions.
+
 Sources: S = docs/Design/Training_Screens_Prompt.md; mock frames = docs/Design/training-flow (screens-*.jsx are the mock's own source, not the app's).
 
 - Start a workout · navigation · opens a live session (mock frame 34/36 "Live session": exercise list with sets, a finish control); back/finish returns to the dashboard · source: S §13 "Start new workout … valid in every state, so the app is never a dead end" + frame 4's band note "Start is valid in every state" · mutates: yes (starts a session; SKIPPED this run per Amel)

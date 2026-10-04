@@ -7,7 +7,11 @@
 // when they were produced against the code as it is now — the fingerprint of HEAD plus the working
 // tree. One edit anywhere in the repo makes every earlier PASS stale, which is what forces the last
 // round to re-verify everything and catches a fix that broke a neighbour.
-import { readFileSync, existsSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
+//
+// Quiet while fixers work: evidence/audit.fixing (written by the coordinator when it dispatches fixers, removed
+// when they report) silences the hook for that dossier while its mtime is under 30 minutes old. A stale marker is
+// ignored, so a crashed run cannot silence the hook for good.
+import { readFileSync, existsSync, readdirSync, writeFileSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -36,11 +40,13 @@ const unmet = [];
 for (const dossier of dossiers) {
   const ev = join(dossier, 'evidence'); const key = dossier.split(/[\\/]/).pop();
   if (existsSync(join(ev, 'audit.blocked'))) { rmSync(join(ev, 'audit.active')); continue; }
+  try { if (Date.now() - statSync(join(ev, 'audit.fixing')).mtimeMs < 30 * 60 * 1000) continue; } catch { /* no marker */ }
   const ledger = json(join(ev, 'ledger.json'));
   if (!ledger) { unmet.push(`[${key}]`, '  - evidence/ledger.json missing or not JSON'); continue; }
   let now; try { now = fingerprint(ledger.repo); } catch (e) { unmet.push(`[${key}]`, `  - cannot fingerprint ${ledger.repo}: ${e.message.split('\n')[0]}`); continue; }
   // accepted.md: `- <key>` waives the whole row (prose after the key is a comment); `- <key> :: <prop substring>`
   // waives one property of that row (case-insensitive substring of the measurement or of the judge's failing[].prop).
+  // `- <key> :: functional` waives the row's functional probe (skipped by the gate, e.g. it mutates data).
   const waived = new Set(); const propWaivers = new Map();
   for (const l of (read(join(ev, 'accepted.md')) || '').split('\n')) {
     const m = l.match(/^- `?([\w.-]+)`?\s*::\s*(.+?)\s*$/);
@@ -61,7 +67,8 @@ for (const dossier of dossiers) {
 
   for (const r of ledger.rows) {
     const id = r.key || `${r.platform}.f${r.frame}.c${r.mockId}`; const label = `${id} (${r.name})`;
-    const terminal = s => s === 'WAIVED' ? (waived.has(id) || `${label}: WAIVED but not in accepted.md`)
+    const terminal = (s, prop) => s === 'WAIVED' ? (waived.has(id) || (prop === 'functional' && (propWaivers.get(id) || []).includes('functional'))
+        || `${label}: ${prop ? prop + ' ' : ''}WAIVED but not in accepted.md${prop === 'functional' ? ` (needs "- ${id} :: functional" or the whole-row "- ${id}")` : ''}`)
       : s === 'BLOCKED' ? ((r.attempts >= budget && r.reason) || `${label}: BLOCKED needs ${budget} attempts and a reason`) : null;
 
     // visual
@@ -84,6 +91,9 @@ for (const dossier of dossiers) {
         else if (!findings || !j) miss.push(`${label}: round ${v.round} has no findings.json or no judge.json entry`);
         else if (j.verdict !== v.status) miss.push(`${label}: ledger says ${v.status}, judge said ${j.verdict}`);
         else {
+          // a judge.json that records crops_opened must tie every failing entry to what its crop shows
+          if (judge.crops_opened) for (const f of j.failing || []) if (!f.evidence || typeof f.crop_agrees !== 'boolean')
+            miss.push(`judge entry for ${label} lacks crop evidence: ${f.prop || '(unnamed)'} needs "evidence" (what the crop shows) and crop_agrees true|false`);
           const comp = findings.components.find(c => c.mockId === r.mockId) || { checks: [] };
           if (comp.matched === false && v.status === 'PASS') miss.push(`${label}: PASS on a component the comparison could not find in the app`);
           const rows = [comp, ...findings.texts.filter(t => t.component === r.mockId)];
@@ -112,13 +122,13 @@ for (const dossier of dossiers) {
     } else miss.push(`${label}: visual ${v.status || 'not checked'}`);
 
     // functional
-    const fn = r.functional || {}; const ft = terminal(fn.status);
+    const fn = r.functional || {}; const ft = terminal(fn.status, 'functional');
     if (fn.status === 'NA') continue;
     if (fn.status === 'DATA') { if (!fn.reason && !r.reason) miss.push(`${label}: functional DATA (not probeable on this device state) needs a reason`); continue; }
     if (ft !== null) { if (ft !== true) miss.push(ft); continue; }
     if (fn.status !== 'PASS') { miss.push(`${label}: functional ${fn.status || 'not probed'}`); continue; }
     const probe = json(join(ev, fn.probe || '-'));
-    if (!probe) miss.push(`${label}: functional PASS with no probe file`);
+    if (!probe) miss.push(`${label}: functional PASS with no probe file — probe on the current fingerprint (a carried-forward PASS is invalid; use NA "not re-probed; probed in the final round" in earlier rounds)`);
     else if (probe.result !== 'PASS') miss.push(`${label}: probe file says ${probe.result}`);
     else if (probe.fingerprint !== now) miss.push(`${label}: probe ran before the latest code change — re-probe`);
   }
