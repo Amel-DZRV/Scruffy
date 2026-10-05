@@ -69,7 +69,7 @@ for (const dossier of dossiers) {
     const id = r.key || `${r.platform}.f${r.frame}.c${r.mockId}`; const label = `${id} (${r.name})`;
     const terminal = (s, prop) => s === 'WAIVED' ? (waived.has(id) || (prop === 'functional' && (propWaivers.get(id) || []).includes('functional'))
         || `${label}: ${prop ? prop + ' ' : ''}WAIVED but not in accepted.md${prop === 'functional' ? ` (needs "- ${id} :: functional" or the whole-row "- ${id}")` : ''}`)
-      : s === 'BLOCKED' ? ((r.attempts >= budget && r.reason) || `${label}: BLOCKED needs ${budget} attempts and a reason`) : null;
+      : s === 'BLOCKED' ? ((r.attempts >= budget && !!r.reason) || `${label}: BLOCKED needs ${budget} attempts and a reason`) : null;
 
     // visual
     const v = r.visual || {}; const vt = terminal(v.status);

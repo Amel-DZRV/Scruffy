@@ -128,5 +128,12 @@ delete judgeNoAgree.crops_opened; W(join(dir, 'judge.json'), judgeNoAgree); rear
 expect('7c old judge.json (no crops_opened) stays readable: exit 0', r.status === 0, r.stderr);
 W(join(dir, 'judge.json'), judgeDoc);
 
+// 8. BLOCKED: met at the budget with a reason, unmet below it
+setRow('android.f1.c3', { visual: { status: 'BLOCKED', round: 1 }, attempts: 3, reason: 'tried a, b, c' }); rearm(['- android.f1.c2', '- android.f1.c4 :: nearest edge left']); r = run();
+expect('8a BLOCKED at budget with a reason passes', r.status === 0, r.stderr);
+setRow('android.f1.c3', { visual: { status: 'BLOCKED', round: 1 }, attempts: 1, reason: 'tried a' }); rearm(['- android.f1.c2', '- android.f1.c4 :: nearest edge left']); r = run();
+expect('8b BLOCKED under budget blocks', r.status === 2 && /c3 \(Tab bar\): BLOCKED needs 3 attempts and a reason/.test(r.stderr), r.stderr);
+W(join(ev, 'ledger.json'), ledger);
+
 console.log(failures ? `${failures} expectation(s) failed` : 'all expectations held');
 process.exit(failures ? 1 : 0);
