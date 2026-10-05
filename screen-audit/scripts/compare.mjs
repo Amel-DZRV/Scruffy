@@ -175,26 +175,45 @@ function sim(a, b) { // 1 - normalised Levenshtein
   for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
   return 1 - prev[n] / Math.max(m, n);
 }
+const inside = (f, g) => g[0] >= f[0] - 0.5 && g[1] >= f[1] - 0.5 && g[0] + g[2] <= f[0] + f[2] + 0.5 && g[1] + g[3] <= f[1] + f[3] + 0.5;
 const chromeTop = Number(opt('--mock-chrome-top') || 28); // the mock's own drawn status bar
 const mTexts = mock.nodes.filter(n => n.kind === 'text' && n.frame[1] + n.frame[3] > chromeTop && n.frame[1] < mock.frame.height);
-const aTexts = app.filter(e => e.text && /TextView|Text$/.test(e.type));
+// Label carriers: axe exposes a Pressable as ONE element (Button, AXLabel = its text, no StaticText child), so an element with no text,
+// a label and a non-Text type carries text too — unless some Text element already has that text (a TextView child on Android).
+// iOS appends ", tab, 1 of 4" to a tab's label; it is not part of the copy.
+const isTextType = t => /TextView|Text$/.test(t), a11y = s => s.replace(/,\s*tab,\s*\d+ of \d+$/i, '');
+const realTexts = app.filter(e => e.text && isTextType(e.type)), realNorms = new Set(realTexts.map(e => norm(e.text)));
+const carriers = app.filter(e => !e.text && e.label && !isTextType(e.type) && !realNorms.has(norm(e.label)) && !realNorms.has(norm(a11y(e.label))))
+  .map(e => ({ ...e, text: a11y(e.label), fromLabel: true }));
+const aTexts = [...realTexts, ...carriers];
 const pairs = []; const usedA = new Set(), usedM = new Set();
 const cands = [];
 for (const m of mTexts) for (const [ai, a] of aTexts.entries()) { const s = sim(m.text, a.text); if (s >= 0.6) cands.push({ m, ai, s }); }
 cands.sort((p, q) => q.s - p.s || Math.abs(p.m.frame[1] - aTexts[p.ai].frame[1]) - Math.abs(q.m.frame[1] - aTexts[q.ai].frame[1]));
 for (const c of cands) if (!usedM.has(c.m.id) && !usedA.has(c.ai)) { usedM.add(c.m.id); usedA.add(c.ai); pairs.push({ m: c.m, a: aTexts[c.ai], s: c.s }); }
 pairs.sort((p, q) => p.m.frame[1] - q.m.frame[1] || p.m.frame[0] - q.m.frame[0]);
+// A label carrier's frame is the whole control (icon too), so its mock→app displacement is centre to centre against the mock box that is the
+// control: of the mock nodes holding the text, the one whose size is closest to the element's (the dial box, not the label inside it).
+const ctr = f => [f[0] + f[2] / 2, f[1] + f[3] / 2];
+for (const p of pairs) if (p.a.fromLabel) {
+  const af = p.a.frame; p.ref = mock.nodes.filter(n => n.kind !== 'icon' && inside(n.frame, p.m.frame))
+    .sort((u, v) => Math.abs(u.frame[2] - af[2]) + Math.abs(u.frame[3] - af[3]) - Math.abs(v.frame[2] - af[2]) - Math.abs(v.frame[3] - af[3]))[0] || p.m;
+  p.d = [ctr(af)[0] - ctr(p.ref.frame)[0], ctr(af)[1] - ctr(p.ref.frame)[1]];
+}
+// Where to measure a pair's app ink: the element's frame, or for a carrier the mock's text area carried over by that displacement.
+const appArea = p => p.a.fromLabel ? textArea(p.m).map((v, i) => i < 2 ? v + p.d[i] : v) : p.a.frame;
+const CARRIER_NOTE = 'text carried by the control\'s label (axe Button/Tab): its frame is the whole control, so left / ink height / ink width / pitch are not measured; colour is';
 
 // Vertical offset: the median of matched pairs, so a taller status bar is not a defect everywhere.
-const dys = pairs.map(p => p.a.frame[1] - p.m.frame[1]).sort((a, b) => a - b);
+const dys = (pairs.some(p => !p.a.fromLabel) ? pairs.filter(p => !p.a.fromLabel) : pairs).map(p => p.a.fromLabel ? p.d[1] : p.a.frame[1] - p.m.frame[1]).sort((a, b) => a - b);
 const yOffset = dys.length ? dys[Math.floor(dys.length / 2)] : 0;
 
 const r1 = v => Math.round(v * 10) / 10;
 const check = (prop, mv, av, delta, tol, unit = '') => ({ prop, mock: mv, app: av, delta: unit === 'ratio' ? Math.round(delta * 100) / 100 : r1(delta), tol, unit, pass: Math.abs(delta) <= tol });
 
 const textRows = pairs.map((p, i) => {
-  const mi = ink(mImg, textArea(p.m), parseRgb(p.m.style.color)), ai = appInk(aImg, p.a.frame);
-  const row = { mockId: p.m.id, text: p.m.text, appText: p.a.text, copy: p.s === 1 ? 'same' : 'differs', checks: [] };
+  const mi = ink(mImg, textArea(p.m), parseRgb(p.m.style.color)), ai = appInk(aImg, appArea(p));
+  const row = { mockId: p.m.id, text: p.m.text, appText: p.a.text, copy: p.s === 1 ? 'same' : 'differs', ...(p.a.fromLabel ? { fromLabel: true, note: CARRIER_NOTE } : {}), checks: [] };
   if (row.copy === 'differs') {
     const [nm, na] = [norm(p.m.text), norm(p.a.text)];
     const rel = na && nm.startsWith(na) ? 'app text is a prefix of the mock text' : na && nm.endsWith(na) ? 'app text is a suffix of the mock text'
@@ -203,30 +222,30 @@ const textRows = pairs.map((p, i) => {
   }
   if (!mi || !ai) { row.checks.push({ prop: 'ink', pass: false, note: `no ink found in ${!mi ? 'mock' : 'app'}` }); return row; }
   row.mockInk = mi.box.map(r1); row.appInk = ai.box.map(r1);
+  const spec = parseRgb(p.m.style.color);
+  const geometry = !p.a.fromLabel; // a carrier's frame is the whole control: no per-text geometry
   const align = p.m.style && /center/.test(p.m.style.textAlign || '') ? 'center' : null;
   const mCx = mi.box[0] + mi.box[2] / 2, aCx = ai.box[0] + ai.box[2] / 2;
   // Horizontal: left edge, or centre when both inks are centred in near-identical boxes.
   const centred = Math.abs(mCx - (p.m.frame[0] + p.m.frame[2] / 2)) < 2 && Math.abs(aCx - (p.a.frame[0] + p.a.frame[2] / 2)) < 2 && p.m.frame[2] - mi.box[2] > 8;
-  row.checks.push(centred || align
+  if (geometry) row.checks.push(centred || align
     ? check('center-x', r1(mCx), r1(aCx), aCx - mCx, TOL.position_dp, 'dp')
     : check('left', r1(mi.box[0]), r1(ai.box[0]), ai.box[0] - mi.box[0], TOL.position_dp, 'dp'));
   // Ink height of a single line tracks font size; skip multi-line and changed copy.
   const lines = Math.round(p.m.frame[3] / (parseFloat(p.m.style.lineHeight) || parseFloat(p.m.style.fontSize) * 1.2));
-  if (row.copy === 'same' && lines <= 1) {
+  if (geometry && row.copy === 'same' && lines <= 1) {
     // passes on either a relative or an absolute tolerance: 2px of antialiasing on 11px text is not a font-size change
     const hc = check('ink height (font size)', r1(mi.box[3]), r1(ai.box[3]), (ai.box[3] / mi.box[3]) - 1, TOL.size_ratio, 'ratio');
     const absd = r1(ai.box[3] - mi.box[3]);
     row.checks.push({ ...hc, pass: hc.pass || Math.abs(ai.box[3] - mi.box[3]) <= TOL.size_dp, rule: `Δ ${Math.round(hc.delta * 1000) / 10}% / ${absd}dp, tol ${TOL.size_ratio * 100}% or ${TOL.size_dp}dp (passes on either)` });
     row.checks.push(check('ink width (family/weight/tracking)', r1(mi.box[2]), r1(ai.box[2]), (ai.box[2] / mi.box[2]) - 1, TOL.size_ratio, 'ratio'));
   }
-  const spec = parseRgb(p.m.style.color);
   row.checks.push({ ...check('text colour ΔE', hex(mi.color), hex(ai.color), dE(mi.color, ai.color), TOL.text_color_de), spec: hex(spec) });
   row.spec = { fontSize: p.m.style.fontSize, fontWeight: p.m.style.fontWeight, fontFamily: p.m.style.fontFamily.split(',')[0], letterSpacing: p.m.style.letterSpacing, color: hex(spec) };
   return row;
 });
 
 // ---------- components: painting boxes that hold text ----------
-const inside = (f, g) => g[0] >= f[0] - 0.5 && g[1] >= f[1] - 0.5 && g[0] + g[2] <= f[0] + f[2] + 0.5 && g[1] + g[3] <= f[1] + f[3] + 0.5;
 const pairByMock = new Map(pairs.map(p => [p.m.id, p]));
 const boxes = mock.nodes.filter(n => n.frame[2] * n.frame[3] >= 400 && n.frame[1] >= 0 && n.frame[0] >= 0 && n.frame[0] + n.frame[2] <= mock.frame.width + 1
   && (n.kind === 'box' || n.style.background !== 'rgba(0, 0, 0, 0)'));
@@ -246,8 +265,9 @@ for (const b of boxes) {
   const comp = { mockId: b.id, name, mockFrame: b.frame, anchoredBottom: !!b.anchoredBottom, matched: !!anchor, texts: all.map(t => t.text), textIds: all.map(t => t.id), filled: b.style.background !== 'rgba(0, 0, 0, 0)' || parseFloat(b.style.border) > 0, checks: [] };
   if (anchor) {
     // Place the mock box on the app by its anchor text's displacement.
-    const mi = ink(mImg, textArea(anchor.m), parseRgb(anchor.m.style.color)), ai = appInk(aImg, anchor.a.frame);
-    const dx = mi && ai ? ai.box[0] - mi.box[0] : 0, dy = mi && ai ? ai.box[1] - mi.box[1] : anchor.a.frame[1] - anchor.m.frame[1];
+    const mi = ink(mImg, textArea(anchor.m), parseRgb(anchor.m.style.color)), ai = appInk(aImg, appArea(anchor));
+    // a carrier's displacement is the control's frame against the mock box, not ink (the ink would include an icon)
+    const [dx, dy] = anchor.a.fromLabel ? anchor.d : [mi && ai ? ai.box[0] - mi.box[0] : 0, mi && ai ? ai.box[1] - mi.box[1] : anchor.a.frame[1] - anchor.m.frame[1]];
     const est = [b.frame[0] + dx, b.frame[1] + dy, b.frame[2], b.frame[3]];
     comp.appFrameEstimate = est.map(r1);
     const fillSpec = parseRgb(b.style.background);
@@ -274,7 +294,7 @@ for (const b of boxes) {
   const union = (f, g) => { const x = Math.min(f[0], g[0]), y = Math.min(f[1], g[1]); return [x, y, Math.max(f[0] + f[2], g[0] + g[2]) - x, Math.max(f[1] + f[3], g[1] + g[3]) - y]; };
   let f = comp.appFrameEstimate || b.frame;
   const names = new Set(comp.texts.map(norm));
-  for (const e of app) if ((names.has(norm(e.text)) || names.has(norm(e.label))) && e.frame[2] < mock.frame.width + 2) f = union(f, e.frame);
+  for (const e of app) if ((names.has(norm(e.text)) || names.has(norm(e.label)) || names.has(norm(a11y(e.label)))) && e.frame[2] < mock.frame.width + 2) f = union(f, e.frame);
   comp.appFrame = f.map(r1);
   const pad = r => [r[0] - 8, r[1] - 8, r[2] + 16, r[3] + 16].map(v => v * scale);
   const mc = clampBox(mImg, pad(b.frame)), ac = clampBox(aImg, pad(f));
@@ -299,13 +319,14 @@ for (const t of textRows) {
 // Absolute y is useless across platforms (status bar heights differ), so spacing is checked as
 // gaps: between texts inside one component, from a filled component's edge to its first and last
 // text, and between consecutive top-level components.
-const inkOf = new Map(pairs.map(p => [p.m.id, { m: ink(mImg, textArea(p.m), parseRgb(p.m.style.color)), a: appInk(aImg, p.a.frame) }]));
+const inkOf = new Map(pairs.map(p => [p.m.id, { m: ink(mImg, textArea(p.m), parseRgb(p.m.style.color)), a: appInk(aImg, appArea(p)) }]));
 for (const c of components) {
   const rows = textRows.filter(t => t.component === c.mockId && inkOf.get(t.mockId)?.m && inkOf.get(t.mockId)?.a)
     .sort((p, q) => inkOf.get(p.mockId).m.box[1] - inkOf.get(q.mockId).m.box[1]);
   for (let i = 1; i < rows.length; i++) {
     const [p, q] = [inkOf.get(rows[i - 1].mockId), inkOf.get(rows[i].mockId)];
     if (Math.abs(q.m.box[1] - p.m.box[1]) < 2) continue; // same line: a row, not a stack
+    if (rows[i].fromLabel || rows[i - 1].fromLabel) continue; // a carrier's ink is placed from its control, not measured
     // top to top: a descender ("," "g") moves a glyph bottom without moving the layout
     const gm = q.m.box[1] - p.m.box[1], ga = q.a.box[1] - p.a.box[1];
     rows[i].checks.push({ ...check('pitch from text above', r1(gm), r1(ga), ga - gm, TOL.gap_dp, 'dp'), after: rows[i - 1].text });
@@ -345,8 +366,8 @@ for (const b of bdTop) {
   const comp = { mockId: 1000 + b.id, name: `${texts[0].text.slice(0, 40)} backdrop`, mockFrame: b.frame, anchoredBottom: false, matched: !!anchor, texts: [], textIds: [], filled: false, checks: [],
     spec: { backgroundImage: b.style.backgroundImage ?? '(not recorded; inferred)', box: b.id } };
   if (anchor) {
-    const mi = ink(mImg, textArea(anchor.m), parseRgb(anchor.m.style.color)), ai = appInk(aImg, anchor.a.frame);
-    const dx = mi && ai ? ai.box[0] - mi.box[0] : 0, dy = mi && ai ? ai.box[1] - mi.box[1] : anchor.a.frame[1] - anchor.m.frame[1];
+    const mi = ink(mImg, textArea(anchor.m), parseRgb(anchor.m.style.color)), ai = appInk(aImg, appArea(anchor));
+    const [dx, dy] = anchor.a.fromLabel ? anchor.d : [mi && ai ? ai.box[0] - mi.box[0] : 0, mi && ai ? ai.box[1] - mi.box[1] : anchor.a.frame[1] - anchor.m.frame[1]];
     const y0 = Math.max(b.frame[1], chromeTop); // the mock's own drawn status bar is not backdrop
     const reg = [b.frame[0], y0, b.frame[2], b.frame[1] + b.frame[3] - y0];
     const masks = mock.nodes.filter(n => n !== b && inside(b.frame, n.frame) && (n.kind !== 'box' || n.style.background !== 'rgba(0, 0, 0, 0)' || parseFloat(n.style.border) > 0)
@@ -400,11 +421,11 @@ const L = [`# ${mock.frame.label}`, '', `Matched ${pairs.length} texts; ${compon
 const fmt = c => `${c.pass === false ? '✘' : '✔'} ${c.prop}: mock ${c.mock ?? ''} · app ${c.app ?? ''}${c.rule ? ` (${c.rule})` : c.delta !== undefined ? ` (Δ ${c.delta}${c.unit === 'ratio' ? '' : c.unit || ''}, tol ${c.tol})` : ''}${c.spec ? ` · spec ${c.spec}` : ''}${c.note ? ` — ${c.note}` : ''}`;
 for (const c of components) {
   L.push(`## c${c.mockId} · ${c.name}${c.matched ? '' : ' — NOT FOUND in app'}`, c.crop ? `crop: ${c.crop}` : '', ...c.checks.map(fmt));
-  for (const t of textRows.filter(t => t.component === c.mockId)) L.push(`- "${t.text}"${t.copy === 'differs' ? ` → app "${t.appText}"` : ''}`, ...t.checks.map(x => '  ' + fmt(x)));
+  for (const t of textRows.filter(t => t.component === c.mockId)) L.push(`- "${t.text}"${t.copy === 'differs' ? ` → app "${t.appText}"` : ''}`, ...(t.note ? ['  note: ' + t.note] : []), ...t.checks.map(x => '  ' + fmt(x)));
   L.push('');
 }
 const loose = textRows.filter(t => t.component == null);
-if (loose.length) { L.push('## Not inside a component'); for (const t of loose) L.push(`- "${t.text}"`, ...t.checks.map(x => '  ' + fmt(x))); L.push(''); }
+if (loose.length) { L.push('## Not inside a component'); for (const t of loose) L.push(`- "${t.text}"`, ...(t.note ? ['  note: ' + t.note] : []), ...t.checks.map(x => '  ' + fmt(x))); L.push(''); }
 L.push('## In the mock, not found in the app', ...mockOnly.map(m => `- "${m.text}"`), '', '## In the app, not in the mock', ...appOnly.map(a => `- "${a.text}"`));
 writeFileSync(join(out, 'findings.md'), L.join('\n'));
 console.log(`compare: ${pairs.length} texts matched, ${components.length} components, ${failing} with failing checks, ${mockOnly.length} mock-only, ${appOnly.length} app-only → ${join(out, 'findings.md')}`);
