@@ -5,6 +5,9 @@
 //               --scale <device px per dp> --out <dir> [--tolerances <json>] [--tree-units px|dp]
 //               [--mock-chrome-top <dp>]
 //
+// The app tree is mobile-mcp text lines or JSON, uiautomator XML, or raw `axe describe-ui` JSON (iOS: nested,
+// frames in points — read natively, --tree-units is ignored for it).
+//
 // Joins mock text to app text, measures each pair from pixels (ink box, ink height, ink colour),
 // measures each mock component (a painting box holding text) against its counterpart, and writes
 // findings.json, findings.md and one mock|app crop per component under crops/.
@@ -33,7 +36,7 @@ const aImg = PNG.sync.read(readFileSync(appPng));
 // images are rounded to whole px. Accepts TOL.width_dp (0.5 dp) of difference.
 if (Math.abs(mImg.width - aImg.width) / scale > TOL.width_dp) fail(`width mismatch: mock ${mImg.width}px (${(mImg.width / scale).toFixed(1)}dp), app ${aImg.width}px (${(aImg.width / scale).toFixed(1)}dp) at scale ${scale}; more than ${TOL.width_dp}dp apart — pin the device to the mock's dp width (see platforms/<platform>.md)`);
 
-// ---------- app tree: mobile-mcp JSON / mobile-mcp text / uiautomator XML → {text,label,type,frame(dp)} ----------
+// ---------- app tree: axe JSON / mobile-mcp JSON / mobile-mcp text / uiautomator XML → {text,label,type,frame(dp)} ----------
 // Android trees are in device pixels; mobile-mcp on iOS reports points — pass --tree-units dp.
 const treeUnits = opt('--tree-units') || 'px';
 // mobile-mcp text format, one element per line, optional header line(s) that do not start with a ref:
@@ -50,15 +53,28 @@ function parseTextTree(raw) {
   }
   return els;
 }
+// axe describe-ui: nested array; StaticText → text = AXLabel, every other node → label = AXLabel (else AXValue). axe emits each StaticText twice: exact duplicates (type, label, frame) are dropped.
+function flattenAxe(nodes, acc = [], seen = new Set()) {
+  for (const n of nodes) {
+    const type = n.type || n.role || '', isText = type === 'StaticText', s = n.AXLabel || n.AXValue || '', f = n.frame;
+    if (s && f && !seen.has([type, s, f.x, f.y, f.width, f.height].join('|'))) {
+      seen.add([type, s, f.x, f.y, f.width, f.height].join('|'));
+      acc.push({ text: isText ? s : '', label: isText ? '' : s, type, id: n.AXUniqueId || '', px: [f.x, f.y, f.width, f.height], dp: true });
+    }
+    flattenAxe(n.children || [], acc, seen);
+  }
+  return acc;
+}
+const isAxe = j => Array.isArray(j) && j.some(n => n && typeof n.frame === 'object' && n.frame && ('AXLabel' in n || 'children' in n));
 function loadTree(path) {
   const raw = readFileSync(path, 'utf8').trim();
   let els = [];
   if (!raw.startsWith('[') && !raw.startsWith('{') && !raw.startsWith('<')) {
     els = parseTextTree(raw);
-    if (!els.length) fail(`${path}: no elements found (expected mobile-mcp JSON, mobile-mcp text lines "@e1 Type text=... at=x,y size=WxH", or uiautomator XML)`);
+    if (!els.length) fail(`${path}: no elements found (expected axe describe-ui JSON, mobile-mcp JSON, mobile-mcp text lines "@e1 Type text=... at=x,y size=WxH", or uiautomator XML)`);
   } else if (raw.startsWith('[') || raw.startsWith('{')) {
     const j = JSON.parse(raw); const list = Array.isArray(j) ? j : j.elements || [];
-    els = list.map(e => ({ text: e.text || '', label: e.label || '', type: e.type || '', id: e.identifier || '',
+    if (isAxe(j)) els = flattenAxe(j); else els = list.map(e => ({ text: e.text || '', label: e.label || '', type: e.type || '', id: e.identifier || '',
       px: [e.coordinates.x, e.coordinates.y, e.coordinates.width, e.coordinates.height] }));
   } else {
     for (const m of raw.matchAll(/<node [^>]*>/g)) {
@@ -68,7 +84,7 @@ function loadTree(path) {
     }
   }
   return els.filter(e => !e.id.startsWith('com.android.systemui') && e.px[2] > 0 && e.px[3] > 0)
-    .map(e => ({ ...e, frame: e.px.map(v => treeUnits === 'dp' ? v : v / scale) }));
+    .map(e => ({ ...e, frame: e.px.map(v => e.dp || treeUnits === 'dp' ? v : v / scale) })); // axe frames are always points
 }
 const app = loadTree(appTree);
 
