@@ -210,14 +210,28 @@ for (const c of cands) if (!usedM.has(c.m.id) && !usedA.has(c.ai)) { usedM.add(c
 pairs.sort((p, q) => p.m.frame[1] - q.m.frame[1] || p.m.frame[0] - q.m.frame[0]);
 // A label carrier's frame is the whole control (icon too), so its mock→app displacement is centre to centre against the mock box that is the
 // control: of the mock nodes holding the text, the one whose size is closest to the element's (the dial box, not the label inside it).
+const CPAD = 4; // dp within which a control and its mock node count as the same size on an axis (textArea's own 2dp margin is the search tolerance)
 const ctr = f => [f[0] + f[2] / 2, f[1] + f[3] / 2];
 for (const p of pairs) if (p.a.fromLabel) {
   const af = p.a.frame; p.ref = mock.nodes.filter(n => n.kind !== 'icon' && inside(n.frame, p.m.frame))
     .sort((u, v) => Math.abs(u.frame[2] - af[2]) + Math.abs(u.frame[3] - af[3]) - Math.abs(v.frame[2] - af[2]) - Math.abs(v.frame[3] - af[3]))[0] || p.m;
-  p.d = [ctr(af)[0] - ctr(p.ref.frame)[0], ctr(af)[1] - ctr(p.ref.frame)[1]];
+  // per axis: centre to centre when the control and its mock node are the same size there, or the mock text sits centred in its node (a dial's
+  // label, a tab's); otherwise content flows from the start (a card grown by a line, a button wider than the mock's), so align the starts:
+  // a centre shift would put the text off by half the size difference
+  const ta = textArea(p.m), rf = p.ref.frame;
+  p.d = [0, 1].map(i => { const m0 = ta[i] - rf[i], m1 = rf[i] + rf[2 + i] - ta[i] - ta[2 + i];
+    return Math.abs(af[2 + i] - rf[2 + i]) <= 2 * CPAD || (Math.min(m0, m1) > 2 && Math.abs(m0 - m1) <= 2 * CPAD) ? ctr(af)[i] - ctr(rf)[i] : af[i] - rf[i]; });
 }
 // Where to measure a pair's app ink: the element's frame, or for a carrier the mock's text area carried over by that displacement.
 const appArea = p => p.a.fromLabel ? textArea(p.m).map((v, i) => i < 2 ? v + p.d[i] : v) : p.a.frame;
+// A tight mock node (a text link's own box) inside a padded hit target puts the start-aligned area off the text: when that finds no ink of the
+// mock's size, the centre-aligned displacement is the one; if neither finds it the row says so (ink is never searched over the whole frame).
+for (const p of pairs) if (p.a.fromLabel) {
+  const mi = ink(mImg, textArea(p.m), parseRgb(p.m.style.color)), fits = ai => ai && mi && Math.abs(ai.box[2] / mi.box[2] - 1) <= 0.25 && Math.abs(ai.box[3] - mi.box[3]) <= 3;
+  if (fits(appInk(aImg, appArea(p)))) continue;
+  const d0 = p.d; p.d = [0, 1].map(i => ctr(p.a.frame)[i] - ctr(p.ref.frame)[i]);
+  if (!fits(appInk(aImg, appArea(p)))) p.d = d0;
+}
 const CARRIER_NOTE = 'text carried by the control\'s label (axe Button/Tab): its frame is the whole control, so left / ink height / ink width / pitch are not measured; colour is';
 
 // Vertical offset: the median of matched pairs, so a taller status bar is not a defect everywhere.
@@ -237,7 +251,7 @@ const textRows = pairs.map((p, i) => {
     if (rel) row.checks.push({ prop: 'copy differs', mock: p.m.text, app: p.a.text, pass: false, note: rel });
   }
   if (below(p.a.frame)) { row.offscreen = true; row.checks.push({ prop: 'on screen', pass: false, note: OFFSCREEN }); return row; }
-  if (!mi || !ai) { row.checks.push({ prop: 'ink', pass: false, note: `no ink found in ${!mi ? 'mock' : 'app'}` }); return row; }
+  if (!mi || !ai) { row.checks.push({ prop: 'ink', pass: false, note: `no ink found in ${!mi ? 'mock' : p.a.fromLabel ? 'app, in the mock text area carried over by the control\'s displacement' : 'app'}` }); return row; }
   row.mockInk = mi.box.map(r1); row.appInk = ai.box.map(r1);
   const spec = parseRgb(p.m.style.color);
   const geometry = !p.a.fromLabel; // a carrier's frame is the whole control: no per-text geometry
