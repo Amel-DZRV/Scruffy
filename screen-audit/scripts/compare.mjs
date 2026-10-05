@@ -54,15 +54,25 @@ function parseTextTree(raw) {
   return els;
 }
 // axe describe-ui: nested array; StaticText → text = AXLabel, every other node → label = AXLabel (else AXValue). axe emits each StaticText twice: exact duplicates (type, label, frame) are dropped.
-function flattenAxe(nodes, acc = [], seen = new Set()) {
-  for (const n of nodes) {
+// The AXApplication root is not an element. axe also lists the screen behind a modal, so within one parent a LATER sibling occludes the earlier
+// siblings' subtrees when it covers the whole screen (the Application frame), holds a labelled node, and holds a backdrop (a node covering the
+// screen and larger than it: a modal's dimming layer). The backdrop test keeps the keyboard window (full-screen frame, labelled keys, content below
+// the fold, no backdrop) and empty overlay/portal hosts (no label) from hiding the visible screen. `stats.dropped` counts the nodes removed.
+const axeCovers = (f, s) => f && s && f.x <= s.x + .5 && f.y <= s.y + .5 && f.x + f.width >= s.x + s.width - .5 && f.y + f.height >= s.y + s.height - .5;
+const axeLabelled = n => !!(n.AXLabel || n.AXValue) || (n.children || []).some(axeLabelled);
+const axeBackdrop = (n, s) => (axeCovers(n.frame, s) && n.frame.width * n.frame.height > s.width * s.height) || (n.children || []).some(c => axeBackdrop(c, s));
+const axeCount = n => ((n.AXLabel || n.AXValue) && n.frame ? 1 : 0) + (n.children || []).reduce((t, c) => t + axeCount(c), 0);
+function flattenAxe(nodes, acc = [], seen = new Set(), screen = null, stats = { dropped: 0 }) {
+  const occ = nodes.map((n, i) => axeCovers(n.frame, screen) && axeLabelled(n) && axeBackdrop(n, screen) ? i : -1).reduce((m, i) => Math.max(m, i), -1);
+  nodes.forEach((n, i) => {
+    if (i < occ) { stats.dropped += axeCount(n); return; }
     const type = n.type || n.role || '', isText = type === 'StaticText', s = n.AXLabel || n.AXValue || '', f = n.frame;
-    if (s && f && !seen.has([type, s, f.x, f.y, f.width, f.height].join('|'))) {
+    if (s && f && type !== 'Application' && !seen.has([type, s, f.x, f.y, f.width, f.height].join('|'))) {
       seen.add([type, s, f.x, f.y, f.width, f.height].join('|'));
       acc.push({ text: isText ? s : '', label: isText ? '' : s, type, id: n.AXUniqueId || '', px: [f.x, f.y, f.width, f.height], dp: true });
     }
-    flattenAxe(n.children || [], acc, seen);
-  }
+    flattenAxe(n.children || [], acc, seen, screen || (type === 'Application' ? f : null), stats);
+  });
   return acc;
 }
 const isAxe = j => Array.isArray(j) && j.some(n => n && typeof n.frame === 'object' && n.frame && ('AXLabel' in n || 'children' in n));
@@ -74,7 +84,7 @@ function loadTree(path) {
     if (!els.length) fail(`${path}: no elements found (expected axe describe-ui JSON, mobile-mcp JSON, mobile-mcp text lines "@e1 Type text=... at=x,y size=WxH", or uiautomator XML)`);
   } else if (raw.startsWith('[') || raw.startsWith('{')) {
     const j = JSON.parse(raw); const list = Array.isArray(j) ? j : j.elements || [];
-    if (isAxe(j)) els = flattenAxe(j); else els = list.map(e => ({ text: e.text || '', label: e.label || '', type: e.type || '', id: e.identifier || '',
+    if (isAxe(j)) { const st = { dropped: 0 }; els = flattenAxe(j, [], new Set(), null, st); console.error(`compare: dropped ${st.dropped} app-tree nodes occluded by a later full-screen modal sibling`); } else els = list.map(e => ({ text: e.text || '', label: e.label || '', type: e.type || '', id: e.identifier || '',
       px: [e.coordinates.x, e.coordinates.y, e.coordinates.width, e.coordinates.height] }));
   } else {
     for (const m of raw.matchAll(/<node [^>]*>/g)) {
