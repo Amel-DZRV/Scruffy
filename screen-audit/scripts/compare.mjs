@@ -104,9 +104,15 @@ const parseRgb = s => (s.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
 // Where to look for a mock text's glyphs: its Range rect padded 2dp, else its content box.
 const textArea = n => n.glyphs ? [n.glyphs[0] - 2, n.glyphs[1] - 2, n.glyphs[2] + 4, n.glyphs[3] + 4] : (n.content || n.frame);
 const clampBox = (img, [x, y, w, h]) => {
-  const x0 = Math.max(0, Math.floor(x)), y0 = Math.max(0, Math.floor(y));
+  const x0 = Math.min(img.width, Math.max(0, Math.floor(x))), y0 = Math.min(img.height, Math.max(0, Math.floor(y)));
   return [x0, y0, Math.max(0, Math.min(img.width, Math.ceil(x + w)) - x0), Math.max(0, Math.min(img.height, Math.ceil(y + h)) - y0)];
 };
+// bitblt throws on any source rectangle outside the image (even an empty one): clamp, and skip what is left empty.
+const blit = (src, dst, box, dx, dy) => { const [x, y, w, h] = clampBox(src, box); if (w > 0 && h > 0) PNG.bitblt(src, dst, x, y, w, h, dx, dy); };
+const inImg = (img, x, y) => x >= 0 && y >= 0 && x < img.width && y < img.height;
+// An app-mapped box below the image's last row is not on screen (the device is shorter than the frame): nothing to measure there.
+const below = f => (f[1] + f[3]) * scale > aImg.height + scale; // 1dp of slack for rounding
+const OFFSCREEN = 'below the viewport; capture a scrolled screenshot';
 
 // Background a text sits on: median of the box's perimeter, 2px outside it. A gradient has no
 // mode and a big glyph does, so the mode would pick the text.
@@ -150,7 +156,7 @@ const appInk = (img, boxDp) => ink(img, boxDp, undefined, true);
 
 // Edge of a filled container: walk outward from a point until the colour departs from the fill.
 function edge(img, xDp, yDp, dx, dy, limitDp = 80) {
-  let x = Math.round(xDp * scale), y = Math.round(yDp * scale); const fill = px(img, x, y);
+  let x = Math.round(xDp * scale), y = Math.round(yDp * scale); if (!inImg(img, x, y)) return null; const fill = px(img, x, y);
   for (let s = 0; s < limitDp * scale; s++) {
     x += dx; y += dy; if (x < 0 || y < 0 || x >= img.width || y >= img.height) return null;
     if (dist(px(img, x, y), fill) > 24) return (dx ? x : y) / scale;
@@ -220,6 +226,7 @@ const textRows = pairs.map((p, i) => {
       : na && nm.includes(na) ? 'app text is a substring of the mock text' : nm && na.includes(nm) ? 'mock text is a substring of the app text' : null;
     if (rel) row.checks.push({ prop: 'copy differs', mock: p.m.text, app: p.a.text, pass: false, note: rel });
   }
+  if (below(p.a.frame)) { row.offscreen = true; row.checks.push({ prop: 'on screen', pass: false, note: OFFSCREEN }); return row; }
   if (!mi || !ai) { row.checks.push({ prop: 'ink', pass: false, note: `no ink found in ${!mi ? 'mock' : 'app'}` }); return row; }
   row.mockInk = mi.box.map(r1); row.appInk = ai.box.map(r1);
   const spec = parseRgb(p.m.style.color);
@@ -270,13 +277,14 @@ for (const b of boxes) {
     const [dx, dy] = anchor.a.fromLabel ? anchor.d : [mi && ai ? ai.box[0] - mi.box[0] : 0, mi && ai ? ai.box[1] - mi.box[1] : anchor.a.frame[1] - anchor.m.frame[1]];
     const est = [b.frame[0] + dx, b.frame[1] + dy, b.frame[2], b.frame[3]];
     comp.appFrameEstimate = est.map(r1);
+    if (below(est)) comp.offscreen = true;
     const fillSpec = parseRgb(b.style.background);
-    if (b.style.background !== 'rgba(0, 0, 0, 0)' && fillSpec.length === 3) {
+    if (!comp.offscreen && b.style.background !== 'rgba(0, 0, 0, 0)' && fillSpec.length === 3) {
       // Sample just inside the top-left, clear of the radius and of any text.
       const r = Math.min(parseFloat(b.style.radius) || 0, b.frame[3] / 2);
       const sx = b.frame[0] + Math.max(4, r * 0.6), sy = b.frame[1] + Math.max(4, r * 0.6);
-      const mf = px(mImg, Math.round(sx * scale), Math.round(sy * scale)), af = px(aImg, Math.round((sx + dx) * scale), Math.round((sy + dy) * scale));
-      comp.checks.push({ ...check('fill ΔE', hex(mf), hex(af), dE(mf, af), TOL.fill_de), spec: hex(fillSpec) });
+      const mf = px(mImg, Math.round(sx * scale), Math.round(sy * scale)), [ax, ay] = [Math.round((sx + dx) * scale), Math.round((sy + dy) * scale)];
+      if (inImg(aImg, ax, ay)) { const af = px(aImg, ax, ay); comp.checks.push({ ...check('fill ΔE', hex(mf), hex(af), dE(mf, af), TOL.fill_de), spec: hex(fillSpec) }); }
       // Container edges, walked outward from the anchor text's ink, left and right.
       if (mi && ai) {
         const my = mi.box[1] + mi.box[3] / 2, ay = ai.box[1] + ai.box[3] / 2;
@@ -287,7 +295,8 @@ for (const b of boxes) {
       }
     }
     comp.spec = { background: b.style.background, radius: b.style.radius, border: b.style.border, padding: b.style.padding };
-  }
+  } else if (below([b.frame[0], b.frame[1] + yOffset, b.frame[2], b.frame[3]])) comp.offscreen = true; // no counterpart: place it by the median offset
+  if (comp.offscreen) comp.checks.push({ prop: 'on screen', pass: false, note: OFFSCREEN });
   // Crop pair: mock box | app region, side by side, 8dp margin. The app region is the estimate
   // widened to every app element carrying one of the component's texts, so an icon above a label
   // is not cut off.
@@ -301,8 +310,7 @@ for (const b of boxes) {
   const w = Math.max(mc[2], ac[2]), h = Math.max(mc[3], ac[3]); const gap = 12;
   if (w > 0 && h > 0) {
     const pair = new PNG({ width: w * 2 + gap, height: h }); pair.data.fill(255);
-    PNG.bitblt(mImg, pair, mc[0], mc[1], mc[2], mc[3], 0, 0);
-    PNG.bitblt(aImg, pair, ac[0], ac[1], Math.min(ac[2], aImg.width - ac[0]), Math.min(ac[3], aImg.height - ac[1]), w + gap, 0);
+    blit(mImg, pair, mc, 0, 0); blit(aImg, pair, ac, w + gap, 0);
     comp.crop = `crops/c${b.id}.png`; writeFileSync(join(out, comp.crop), PNG.sync.write(pair));
   }
   components.push(comp);
@@ -321,7 +329,8 @@ for (const t of textRows) {
 // text, and between consecutive top-level components.
 const inkOf = new Map(pairs.map(p => [p.m.id, { m: ink(mImg, textArea(p.m), parseRgb(p.m.style.color)), a: appInk(aImg, appArea(p)) }]));
 for (const c of components) {
-  const rows = textRows.filter(t => t.component === c.mockId && inkOf.get(t.mockId)?.m && inkOf.get(t.mockId)?.a)
+  if (c.offscreen) continue;
+  const rows = textRows.filter(t => t.component === c.mockId && !t.offscreen && inkOf.get(t.mockId)?.m && inkOf.get(t.mockId)?.a)
     .sort((p, q) => inkOf.get(p.mockId).m.box[1] - inkOf.get(q.mockId).m.box[1]);
   for (let i = 1; i < rows.length; i++) {
     const [p, q] = [inkOf.get(rows[i - 1].mockId), inkOf.get(rows[i].mockId)];
@@ -373,8 +382,10 @@ for (const b of bdTop) {
     const masks = mock.nodes.filter(n => n !== b && inside(b.frame, n.frame) && (n.kind !== 'box' || n.style.background !== 'rgba(0, 0, 0, 0)' || parseFloat(n.style.border) > 0)
       && !bdCands.includes(n)).map(n => n.kind === 'text' ? textArea(n) : n.frame);
     const masked = (x, y) => masks.some(m => x >= m[0] - 1 && x <= m[0] + m[2] + 1 && y >= m[1] - 1 && y <= m[1] + m[3] + 1);
+    const f = [reg[0] + dx, reg[1] + dy, reg[2], reg[3]];
+    if (below(f)) { comp.offscreen = true; comp.checks.push({ prop: 'on screen', pass: false, note: OFFSCREEN }); }
     const cells = []; const step = 2 / scale; // every 2nd device px
-    for (let gy = 0; gy < GRID[1]; gy++) for (let gx = 0; gx < GRID[0]; gx++) {
+    if (!comp.offscreen) for (let gy = 0; gy < GRID[1]; gy++) for (let gx = 0; gx < GRID[0]; gx++) {
       const cx0 = reg[0] + reg[2] * gx / GRID[0], cy0 = reg[1] + reg[3] * gy / GRID[1], cw = reg[2] / GRID[0], ch = reg[3] / GRID[1];
       const mS = [0, 0, 0], aS = [0, 0, 0]; let n = 0;
       for (let y = cy0; y < cy0 + ch; y += step) for (let x = cx0; x < cx0 + cw; x += step) {
@@ -397,13 +408,12 @@ for (const b of bdTop) {
       comp.checks.push({ ...check('backdrop ΔE (mean over grid)', comp.backdrop.meanColor.mock, comp.backdrop.meanColor.app, de, TOL.backdrop_de, ''),
         note: `${cells.length} cells of ${GRID.join('x')}; mean Lab shift ΔL ${r1(dL)}, Δa* ${r1(dA)}, Δb* ${r1(dB)}, chroma ${r1(dC)}, hue ${Math.round(hueDeg(ml))}° → ${Math.round(hueDeg(al))}°` });
     }
-    const f = [reg[0] + dx, reg[1] + dy, reg[2], reg[3]];
     comp.appFrame = f.map(r1); comp.appFrameEstimate = comp.appFrame;
     const pad = r => [r[0] - 8, r[1] - 8, r[2] + 16, r[3] + 16].map(v => v * scale);
     const mc = clampBox(mImg, pad(reg)), ac = clampBox(aImg, pad(f)); const w = Math.max(mc[2], ac[2]), h = Math.max(mc[3], ac[3]);
     if (w > 0 && h > 0) {
       const pair = new PNG({ width: w * 2 + 12, height: h }); pair.data.fill(255);
-      PNG.bitblt(mImg, pair, mc[0], mc[1], mc[2], mc[3], 0, 0); PNG.bitblt(aImg, pair, ac[0], ac[1], ac[2], ac[3], w + 12, 0);
+      blit(mImg, pair, mc, 0, 0); blit(aImg, pair, ac, w + 12, 0);
       comp.crop = `crops/c${comp.mockId}.png`; writeFileSync(join(out, comp.crop), PNG.sync.write(pair));
     }
   }
@@ -412,15 +422,15 @@ for (const b of bdTop) {
 
 const mockOnly = mTexts.filter(t => !usedM.has(t.id)).map(t => ({ mockId: t.id, text: t.text, frame: t.frame }));
 const appOnly = aTexts.filter((_, i) => !usedA.has(i)).map(a => ({ text: a.text, frame: a.frame.map(r1) }));
-const failing = [...textRows, ...components].filter(r => r.checks.some(c => c.pass === false)).length;
-const report = { frame: mock.frame, scale, yOffset: r1(yOffset), tolerances: TOL, summary: { pairs: pairs.length, components: components.length, failing, mockOnly: mockOnly.length, appOnly: appOnly.length }, components, texts: textRows, mockOnly, appOnly };
+const failing = [...textRows, ...components].filter(r => r.checks.some(c => c.pass === false)).length, offscreen = components.filter(c => c.offscreen).length;
+const report = { frame: mock.frame, scale, yOffset: r1(yOffset), tolerances: TOL, summary: { pairs: pairs.length, components: components.length, failing, offscreen, mockOnly: mockOnly.length, appOnly: appOnly.length }, components, texts: textRows, mockOnly, appOnly };
 writeFileSync(join(out, 'findings.json'), JSON.stringify(report, null, 1));
 
 // ---------- markdown ----------
 const L = [`# ${mock.frame.label}`, '', `Matched ${pairs.length} texts; ${components.length} components; vertical offset ${r1(yOffset)}dp (status bar, ignored).`, ''];
 const fmt = c => `${c.pass === false ? '✘' : '✔'} ${c.prop}: mock ${c.mock ?? ''} · app ${c.app ?? ''}${c.rule ? ` (${c.rule})` : c.delta !== undefined ? ` (Δ ${c.delta}${c.unit === 'ratio' ? '' : c.unit || ''}, tol ${c.tol})` : ''}${c.spec ? ` · spec ${c.spec}` : ''}${c.note ? ` — ${c.note}` : ''}`;
 for (const c of components) {
-  L.push(`## c${c.mockId} · ${c.name}${c.matched ? '' : ' — NOT FOUND in app'}`, c.crop ? `crop: ${c.crop}` : '', ...c.checks.map(fmt));
+  L.push(`## c${c.mockId} · ${c.name}${c.offscreen ? ` — OFF SCREEN in app (${OFFSCREEN})` : c.matched ? '' : ' — NOT FOUND in app'}`, c.crop ? `crop: ${c.crop}` : '', ...c.checks.map(fmt));
   for (const t of textRows.filter(t => t.component === c.mockId)) L.push(`- "${t.text}"${t.copy === 'differs' ? ` → app "${t.appText}"` : ''}`, ...(t.note ? ['  note: ' + t.note] : []), ...t.checks.map(x => '  ' + fmt(x)));
   L.push('');
 }
@@ -428,4 +438,4 @@ const loose = textRows.filter(t => t.component == null);
 if (loose.length) { L.push('## Not inside a component'); for (const t of loose) L.push(`- "${t.text}"`, ...(t.note ? ['  note: ' + t.note] : []), ...t.checks.map(x => '  ' + fmt(x))); L.push(''); }
 L.push('## In the mock, not found in the app', ...mockOnly.map(m => `- "${m.text}"`), '', '## In the app, not in the mock', ...appOnly.map(a => `- "${a.text}"`));
 writeFileSync(join(out, 'findings.md'), L.join('\n'));
-console.log(`compare: ${pairs.length} texts matched, ${components.length} components, ${failing} with failing checks, ${mockOnly.length} mock-only, ${appOnly.length} app-only → ${join(out, 'findings.md')}`);
+console.log(`compare: ${pairs.length} texts matched, ${components.length} components, ${failing} with failing checks${offscreen ? ` (${offscreen} off screen)` : ''}, ${mockOnly.length} mock-only, ${appOnly.length} app-only → ${join(out, 'findings.md')}`);
