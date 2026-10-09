@@ -4,7 +4,7 @@ One file per screen, `<repo>/<screen>.md`, in the shape of `TEMPLATE.md`. A path
 
 ## Lookup
 
-Scruffy's step 1 (gather) derives `<screen>` from the ticket's component or template name, kebab-cased, and look for a path file under `paths/<repo>/`. `<screen>@<os>.md` for the current runtime is preferred over `<screen>.md`; if neither exists, it is not found. Not found → `record` mode, done at the intake gate with Amel present — never mid-run. Found and `status: fresh` → `capture` mode. Found and `status: stale` → a `repair path file <path>` ask at the intake gate, never an automatic re-record — except a `stale_reason` naming `os`, which records `<screen>@<os>.md`.
+Scruffy's step 1 (gather) derives `<screen>` from the ticket's component or template name, kebab-cased, and looks for a path file under `paths/<repo>/`. `<screen>@<os>.md` for the current runtime is preferred over `<screen>.md`; if neither exists, it is not found. Not found → `record` mode, done at the intake gate with Amel present — never mid-run. Found and `status: fresh` → `capture` mode. Found and `status: stale` → a `repair path file <path>` ask at the intake gate, never an automatic re-record — except a `stale_reason` naming `os`, which records `<screen>@<os>.md`.
 
 ## Who writes what
 
