@@ -134,7 +134,7 @@ There is no point-to-element command; resolve a point by searching the last tree
 ## Pair diff
 
 ```bash
-python3 <skill dir>/bug-eater/scripts/pair-diff.py before.png after.png --mask <x,y,w,h in screenshot pixels of the changed component> --threshold 0.005
+python3 <skill dir>/scruffy/scripts/pair-diff.py before.png after.png --mask <x,y,w,h in screenshot pixels of the changed component> --threshold 0.005
 ```
 
 Status bar rows are masked by default. Exit 1 means the pair differs outside the fix, and is not shipped. Exit 3 means nothing changed inside the mask — an identical pair — which fails the proof. Exit 2 is a process failure — `size_mismatch=<bw>x<bh>-vs-<aw>x<ah>`, `mask_invalid=<value>`, or `mask_too_large=<value>` on the contract line.
@@ -151,7 +151,7 @@ python3 -c 'import json; t=json.load(open("before.tree.json")); n=t[0] if isinst
 ## Tree diff
 
 ```bash
-python3 <skill dir>/bug-eater/scripts/tree-diff.py before.tree.json after.tree.json
+python3 <skill dir>/scruffy/scripts/tree-diff.py before.tree.json after.tree.json
 ```
 
 Prints `a11y: UNCHANGED | CHANGED | ATTENTION` and one line per finding. Exit 0 always (2 when a tree cannot be read, reported as `UNAVAILABLE`). A secondary signal: it never gates and never changes the verdict.

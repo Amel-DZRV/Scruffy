@@ -95,7 +95,7 @@ Exit 1 means the pair differs outside the fix, and is not shipped. Exit 3 means 
 ## Tree diff
 
 ```bash
-python3 <skill dir>/bug-eater/scripts/tree-diff.py before.tree.xml after.tree.xml
+python3 <skill dir>/scruffy/scripts/tree-diff.py before.tree.xml after.tree.xml
 ```
 
 Prints `a11y: UNCHANGED | CHANGED | ATTENTION` and one line per finding. Exit 0 always (2 when a tree cannot be read, reported as `UNAVAILABLE`). A secondary signal: it never gates and never changes the verdict.
