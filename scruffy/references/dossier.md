@@ -8,10 +8,10 @@ One per work item, at `~/Projects/tickets/<KEY>/`.
 
 | File | Holds |
 |---|---|
-| `state.md` | machine state — step, lane, repo, cost class, device id, red-test command and hash, attempt counters, every stop answer |
+| `state.md` | machine state — step, repo, cost class, device id, red-test command and hash, attempt counters, every stop answer |
 | `summary.md` | the one file written for Amel rather than for you |
 | `chain.md` | every hypothesis, ranked, with the rejected ones and why they lost |
-| `plan.md` | only when the change earned a plan — every step with its four fields: what, files, criteria delivered, depends on |
+| `plan.md` | only when the change earned a plan — one entry per step |
 | `evidence/` | every command and its output — including the red test's failure, which is proof and not a log |
 | one terminal artifact | `verdict.md`, `memo.md`, `questions.md`, or `blocked.md` |
 
@@ -21,14 +21,13 @@ Rewritten after every step, so a fresh session resumes instead of re-deriving. *
 
 Carries at minimum:
 
-- step, lane, repo, terminal state if reached
+- step, repo, terminal state if reached
 - cost class — cheap or expensive — and the test command that established it
 - the suite baseline from the parent commit — pass count, any pre-existing failures by name
 - claimed device identifier
 - the red-test command, its file hash from the moment it was observed red, and the SHA of its test-only commit
 - the proof verdict — MERGE-READY / REVIEW NEEDED / PROOF INCOMPLETE — once verification produced one
 - **two separate attempt counters** — chain attempts and fix attempts. They do not share a budget
-- on an orchestrated feature: per-track state — current step and fix-attempt counter for each track, so a crashed orchestration resumes track by track rather than restarting the fan-out
 - every stop, its answer, and every assumption made in place of one
 - the path file used for captures and its status at dispatch, the mask, and the agent's last status per label
 
@@ -63,10 +62,10 @@ Run `unslop-prose` over it before printing. It is written for a human to read la
 
 | Column | Why |
 |---|---|
-| date, key, lane, repo, cost class | Lets rates be sliced — trust is rarely uniform across lanes |
+| date, key, lane, repo, cost class | Lets rates be sliced — trust is rarely uniform across repos. `lane` is always `bug`; the column stays so new rows line up with the existing `LEDGER.md` header |
 | terminal state | The distribution across the states *is* the health metric |
-| stops fired | Stop 2 firing on most items means classification is too weak; stop 3 never firing means its trigger is mis-specified |
-| **what the fix touched** | same file / same component / another team's code / a shared contract. Pairs with the stop-3 column to tune its trigger from real rows rather than guesses |
+| stops fired | Stop 1 (the intake gate) firing on most items means intake is too weak; stop 2 never firing means its trigger is mis-specified |
+| **what the fix touched** | same file / same component / another team's code / a shared contract. Pairs with the stop-2 column to tune its trigger from real rows rather than guesses |
 | opus escalated, and why | The honest read on whether sonnet is sufficient |
 | chain correct? | Filled in after the fact. The most important column |
 | **proof verdict** | `MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`, from the PR's proof block |

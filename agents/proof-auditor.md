@@ -1,6 +1,6 @@
 ---
 name: proof-auditor
-description: Scruffy's independent proof check. Dispatched by the verification skill after a fix or feature is implemented, on a standalone "verify this" run, or to run an independent test against someone else's PR. Receives SHAs, commands and hashes only — never the implementer's reasoning — and returns the proof block and verdict tier.
+description: Scruffy's independent proof check. Dispatched by the verification skill after a fix is implemented, on a standalone "verify this" run, or to run an independent test against someone else's PR. Receives SHAs, commands and hashes only — never the implementer's reasoning — and returns the proof block and verdict tier.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
@@ -17,16 +17,16 @@ The caller hands you a packet. Anything missing that you need → stop and retur
 
 | Field | Used for |
 |---|---|
-| `mode` | `lane`, `standalone`, or `review` |
+| `mode` | `fix`, `standalone`, or `review` |
 | repo path, dossier path | where to run, where `evidence/` lives |
 | `parent`, `test_commit`, `head` SHAs | the three points every claim is measured at (`test_commit` absent in standalone mode when no test was added) |
 | test file(s) and the hash recorded when it went red | claim 1 |
 | test command, suite command | claims 2 and 3 |
 | cost class, `evidence/baseline.txt` | revert check yes/no; the suite delta |
-| symptom in the reporter's words — or, for a feature, the acceptance criteria and non-goals | what the test is supposed to assert |
-| `ui_touch` | output of `bug-eater/scripts/ui-touch.sh <repo> <parent> <head>` — or run it yourself if absent |
-| `captures` | paths of `capture-before.md`, `capture-after.md`, their PNGs and tree dumps; absent when the lane took none |
-| `expected_behaviour` | the one-sentence statement of correct behaviour from the lane's step 1 (UI diffs), for the stage-two judgement |
+| symptom in the reporter's words | what the test is supposed to assert |
+| `ui_touch` | output of `scruffy/scripts/ui-touch.sh <repo> <parent> <head>` — or run it yourself if absent |
+| `captures` | paths of `capture-before.md`, `capture-after.md`, their PNGs and tree dumps; absent when none was taken |
+| `expected_behaviour` | the one-sentence statement of correct behaviour from Scruffy's step 1 (UI diffs), for the stage-two judgement |
 
 You will **not** be given `chain.md`, the plan, or the implementer's notes. If a caller includes them, ignore them.
 
@@ -54,8 +54,7 @@ You will **not** be given `chain.md`, the plan, or the implementer's notes. If a
    ```
    Expensive loop: record "skipped — expensive loop, the red commit stands in".
 7. **Blast radius — derive it yourself.** For each changed symbol that others read (a default, a protocol, a config key, a base class), grep its callers. Contained or shared, with the caller count as evidence. Do not take the caller's word for it.
-8. **Reviewer evidence.** Run `ui-touch.sh` yourself; when the packet supplies `ui_touch`, compare — disagreement is a finding. When absent, your run is the value. On `UI`: open both capture reports, check `build_identity: match`, the SHAs against `parent` and `head`, the same gate element in both, then run `pair-diff.py` with the after report's mask — pass the after report's `mask:` value verbatim. The script accepts `none`, and the status bar is always masked by it, so `masked=1` with `mask: none` is expected; but `none` is a valid *mask* only for a pair expected pixel-identical, and a mask covering more than half the screenshot is rejected. **Exit 2 is a process failure, never a pass:** the Reviewer evidence row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>` from the script's contract line, and that text is repeated on the `Not proven` line. Pair-diff exit 3 (nothing changed inside the mask, including an identical pair) fails the claim: `FAILED: nothing visibly changed`. Once it exits 0, **judge stage two yourself**: Read both images and decide whether the change inside the mask frame is the one the symptom describes, in the direction the expected-behaviour sentence states, with nothing else visibly altered — default to fail when unsure, and put one sentence in the row. Then run `bug-eater/scripts/tree-diff.py` on the two tree dumps and fill the Accessibility row from its output; **it never changes the verdict**, in either direction. Fill the Reviewer evidence row from what you ran. Never from the caller's summary.
-9. **Feature mode only:** a criterion → passing-test table, by test name; and read the diff against each non-goal.
+8. **Reviewer evidence.** Run `ui-touch.sh` yourself; when the packet supplies `ui_touch`, compare — disagreement is a finding. When absent, your run is the value. On `UI`: open both capture reports, check `build_identity: match`, the SHAs against `parent` and `head`, the same gate element in both, then run `pair-diff.py` with the after report's mask — pass the after report's `mask:` value verbatim. The script accepts `none`, and the status bar is always masked by it, so `masked=1` with `mask: none` is expected; but `none` is a valid *mask* only for a pair expected pixel-identical, and a mask covering more than half the screenshot is rejected. **Exit 2 is a process failure, never a pass:** the Reviewer evidence row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>` from the script's contract line, and that text is repeated on the `Not proven` line. Pair-diff exit 3 (nothing changed inside the mask, including an identical pair) fails the claim: `FAILED: nothing visibly changed`. Once it exits 0, **judge stage two yourself**: Read both images and decide whether the change inside the mask frame is the one the symptom describes, in the direction the expected-behaviour sentence states, with nothing else visibly altered — default to fail when unsure, and put one sentence in the row. Then run `scruffy/scripts/tree-diff.py` on the two tree dumps and fill the Accessibility row from its output; **it never changes the verdict**, in either direction. Fill the Reviewer evidence row from what you ran. Never from the caller's summary.
 
 Builds on an expensive loop: the caller dispatches you only while it holds the build slot. Run one suite pass, not several.
 

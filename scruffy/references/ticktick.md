@@ -11,7 +11,7 @@ A TickTick task is an intake source like a Jira key or a GitHub issue, with one 
 
 **No repo-routing signal of its own.** A TickTick task is a personal or team list, not a project field naming an SDUI system or codebase. `references/repo-routing.md` still needs a signal — component name, template name, platform — somewhere in the task's text or a linked Jira/GitHub item. Neither present → `needs info`, not a guess.
 
-**Not a linked-ticket destination.** "Linked tickets, one hop" in the lanes still means Jira/GitHub. Adjacent breakage found mid-fix still gets its own Jira or GitHub issue filed — a TickTick checklist item is invisible to a reviewer on another team.
+**Not a linked-ticket destination.** "Linked tickets, one hop" in gather (step 1) still means Jira/GitHub. Adjacent breakage found mid-fix still gets its own Jira or GitHub issue filed — a TickTick checklist item is invisible to a reviewer on another team.
 
 ## Writing the status back
 
@@ -20,8 +20,8 @@ A TickTick task is an intake source like a Jira key or a GitHub issue, with one 
 1. `list_columns(project_id)`. Find the column titled `In Review`, case-insensitive exact match.
 2. Found it → `update_task(task_id, {columnId: <that column's id>})`. Moves the card; nothing else on the task changes.
 3. Not found → **do not invent one and do not fuzzy-match a close name** (`Review`, `In review`, `Needs Review` are not the same column as far as this rule is concerned). Say so in `summary.md` — "no `In Review` column on this board; task left in place" — and move on. A wrong guess here is a card silently misplaced on a board nobody is re-checking.
-4. Either way, `add_comment(project_id, task_id, <PR url>)`. The comment is what survives even when the column move can't happen, and it is the same "paste the link" step the lanes already do for Jira and GitHub — TickTick is not a special case there.
+4. Either way, `add_comment(project_id, task_id, <PR url>)`. The comment is what survives even when the column move can't happen, and it is the same "paste the link" step 10 already does for Jira and GitHub — TickTick is not a special case there.
 
-## Cross-platform note
+## At the PR step
 
-Two lanes both end at their PR step with "comment on the ticket." For a TickTick-sourced item this step is: add the PR-link comment (always), then attempt the column move (step above). Neither substitutes for the other.
+Step 10 ends with "comment on the ticket." For a TickTick-sourced item this step is: add the PR-link comment (always), then attempt the column move (step above). Neither substitutes for the other.

@@ -4,7 +4,7 @@ One file per screen, `<repo>/<screen>.md`, in the shape of `TEMPLATE.md`. A path
 
 ## Lookup
 
-Bug-eater step 3 and feature-dev step 5 derive `<screen>` from the ticket's component or template name, kebab-cased, and look for a path file under `paths/<repo>/`. `<screen>@<os>.md` for the current runtime is preferred over `<screen>.md`; if neither exists, it is not found. Not found → `record` mode, done at the lane's intake gate with Amel present — never mid-run. Found and `status: fresh` → `capture` mode. Found and `status: stale` → a `repair path file <path>` ask at the intake gate, never an automatic re-record — except a `stale_reason` naming `os`, which records `<screen>@<os>.md`.
+Scruffy's step 1 (gather) derives `<screen>` from the ticket's component or template name, kebab-cased, and look for a path file under `paths/<repo>/`. `<screen>@<os>.md` for the current runtime is preferred over `<screen>.md`; if neither exists, it is not found. Not found → `record` mode, done at the intake gate with Amel present — never mid-run. Found and `status: fresh` → `capture` mode. Found and `status: stale` → a `repair path file <path>` ask at the intake gate, never an automatic re-record — except a `stale_reason` naming `os`, which records `<screen>@<os>.md`.
 
 ## Who writes what
 
@@ -16,7 +16,7 @@ Bug-eater step 3 and feature-dev step 5 derive `<screen>` from the ticket's comp
 | Successful replay of a stale path after a fix to it | the caller sets `fresh`, updates `verified` | none |
 | Editing steps by hand | Amel | he is the approval |
 
-Recorded files are committed to Scruffy at the end of the run — bug-eater step 10 does it alongside the ticket comment.
+Recorded files are committed to Scruffy at the end of the run — step 10 does it alongside the ticket comment.
 
 Recipes append without approval because a wrong recipe fails its own replay and is marked stale. That is the whole difference between this library and `LEARNED.md`: a rule cannot be replayed, a path can.
 
@@ -36,4 +36,4 @@ A `@<os>` suffix — `care-home-carousel@27.0.md` — marks a path recorded for 
 
 ## What is not here
 
-Commands. Those live in `bug-eater/references/platforms/`. Repo launch skills. Those live in the repos and are named by `references/repo-routing.md`. A path names a skill; it does not copy it.
+Commands. Those live in `scruffy/references/platforms/`. Repo launch skills. Those live in the repos and are named by `references/repo-routing.md`. A path names a skill; it does not copy it.

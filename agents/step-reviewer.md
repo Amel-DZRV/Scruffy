@@ -1,6 +1,6 @@
 ---
 name: step-reviewer
-description: Fresh-context code review of one implementation step in a Scruffy lane. Dispatched by bug-eater and feature-dev between plan steps. Receives only the two SHAs bounding the step and what the step was meant to do; reports Critical / Important / Minor.
+description: Fresh-context code review of one implementation step in a Scruffy run. Dispatched by Scruffy between plan steps. Receives only the two SHAs bounding the step and what the step was meant to do; reports Critical / Important / Minor.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
@@ -12,7 +12,7 @@ You are reviewing one step of someone else's work, with none of their reasoning.
 ## What you are given
 
 - repo path, `base` SHA, `head` SHA — the step is `git diff <base> <head>`
-- the plan step it was meant to satisfy (and, on a feature, the acceptance criteria and non-goals)
+- the plan step it was meant to satisfy
 
 If a caller includes the implementer's notes or chain, ignore them.
 
