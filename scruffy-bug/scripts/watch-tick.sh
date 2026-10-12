@@ -16,7 +16,7 @@ slug=$(printf '%s' "$url" | sed -E 's#^https?://[^/]+/([^/]+/[^/]+)/pull/.*#\1#'
 inline=$(gh api "repos/$slug/pulls/$num/comments" --paginate 2>/dev/null) || exit 2
 
 read -r -d '' prog <<'PY'
-import json, sys
+import json, os, sys
 state_path, inline_path = sys.argv[1], sys.argv[2]
 d = json.load(sys.stdin)
 raw = open(inline_path).read().strip()
@@ -27,8 +27,13 @@ while pos < len(raw):
     inline += v if isinstance(v, list) else [v]
     pos = end
     while pos < len(raw) and raw[pos].isspace(): pos += 1
-state = json.load(open(state_path))
-seen = set(state.get("seen", []))
+try:
+    state = json.load(open(state_path))
+except Exception:
+    state = {}
+if not isinstance(state, dict): state = {}
+seen = state.get("seen", [])
+seen = set(x for x in seen if isinstance(x, str)) if isinstance(seen, list) else set()
 out = []
 def bot(login): return login.endswith("[bot]") or login.lower() in {"devbot", "flux", "danger", "github-actions"}
 def login(a): return (a or {}).get("login", "")
@@ -48,16 +53,22 @@ for c in inline:
         u = c.get("user") or {}
         a = u.get("login", "")
         out.append({"kind": "comment", "id": i, "author": a, "is_bot": u.get("type") == "Bot" or bot(a), "body": c.get("body", ""), "url": c.get("html_url", d["url"])})
+failing = set()
 for ch in d.get("statusCheckRollup") or []:
     name = ch.get("name") or ch.get("context", "")
     concl = str(ch.get("conclusion") or ch.get("state") or "")
     i = "k:" + name + ":" + concl
-    if i not in seen and concl.upper() in {"FAILURE", "ERROR", "CANCELLED", "TIMED_OUT"}:
+    if concl.upper() not in {"FAILURE", "ERROR", "CANCELLED", "TIMED_OUT"}: continue
+    failing.add(i)
+    if i not in seen:
         out.append({"kind": "check", "id": i, "author": "ci", "is_bot": True, "body": name, "url": ch.get("detailsUrl") or ch.get("targetUrl", "")})
 for o in out:
     print(json.dumps(o)); seen.add(o["id"])
+# a check that stopped failing is forgotten, so a later failure is reported again
+seen = {x for x in seen if not x.startswith("k:") or x in failing}
 state["seen"] = sorted(seen); state["pr_state"] = d.get("state"); state["review_decision"] = d.get("reviewDecision")
-json.dump(state, open(state_path, "w"), indent=1)
+with open(state_path + ".tmp", "w") as f: json.dump(state, f, indent=1)
+os.replace(state_path + ".tmp", state_path)
 PY
 tmp=$(mktemp); printf '%s' "${inline:-[]}" > "$tmp"
 printf '%s' "$json" | python3 -c "$prog" "$state" "$tmp"; rc=$?
