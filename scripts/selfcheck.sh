@@ -115,5 +115,17 @@ check "ledger has recipe columns"        bash -c 'grep -q "recipe_hits" scruffy-
 check "bug lane cites shared learning"   grep -q "shared/learning.md" scruffy-bug/SKILL.md
 check "retro step defined"               grep -qi "retro" shared/learning.md
 
+# --- Task 11: install
+check "install.sh executable"            test -x scripts/install.sh
+check "install.sh parses"                bash -n scripts/install.sh
+check "install links four skills"        bash -c 'for s in scruffy scruffy-bug scruffy-feature verification; do grep -q "for s in .*$s" scripts/install.sh || exit 1; done'
+check "install removes old skills"       bash -c 'grep -q "bug-eater" scripts/install.sh && grep -q "taimi" scripts/install.sh'
+check "install links shared and memory"  bash -c 'grep -q "skills/shared" scripts/install.sh && grep -q "skills/memory" scripts/install.sh'
+check "README names four skills"         bash -c 'for s in scruffy scruffy-bug scruffy-feature verification; do grep -q "\`$s\`" README.md || exit 1; done'
+check "README has no copy install"       bash -c '! grep -qi "copying works too" README.md'
+check "no stale repo-wide refs"          bash -c '! grep -rniE "feature-dev|bug-eater|screen-audit|LEARNED\.md" README.md scruffy scruffy-bug shared agents verification memory | grep -q .'
+check "no intake gate leftovers"         bash -c '! grep -rniE "intake gate" README.md scruffy scruffy-bug scruffy-feature shared agents verification memory | grep -q .'
+check "relative ../ paths resolve"       python3 scripts/check-paths.py
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

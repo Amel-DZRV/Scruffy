@@ -64,7 +64,7 @@ Record which it is in `state.md`. A module that assumes expensive on a Jest repo
 
 ## Nothing here asks for anything
 
-Scruffy's intake gate is the only point in a run that asks a human for input. Verification never pauses for a device, a screenshot, a path or a missing field. What cannot be produced is a named gap: the row reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict table decides the tier.
+The dispatcher's interview (`../scruffy/references/interview.md`) is the only point in a run that asks a human for input. Verification never pauses for a device, a screenshot, a path or a missing field. What cannot be produced is a named gap: the row reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict table decides the tier.
 
 ## The two failure modes
 

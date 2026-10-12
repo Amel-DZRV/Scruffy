@@ -64,7 +64,7 @@ Run `unslop-prose` over it before printing. It is written for a human to read la
 |---|---|
 | date, key, lane, repo, cost class | Lets rates be sliced — trust is rarely uniform across repos. `lane` is `bug` or `feature`; the column stays so new rows line up with the existing `LEDGER.md` header |
 | terminal state | The distribution across the states *is* the health metric |
-| stops fired | Stop 1 (the intake gate) firing on most items means intake is too weak; stop 2 never firing means its trigger is mis-specified |
+| stops fired | the dispatcher's interview (`../scruffy/references/interview.md`) having to ask on most items means intake is too weak; stop 2 never firing means its trigger is mis-specified |
 | **what the fix touched** | same file / same component / another team's code / a shared contract. Pairs with the stop-2 column to tune its trigger from real rows rather than guesses |
 | opus escalated, and why | The honest read on whether sonnet is sufficient |
 | chain correct? | Filled in after the fact. The most important column |

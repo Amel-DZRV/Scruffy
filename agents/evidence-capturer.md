@@ -1,6 +1,6 @@
 ---
 name: evidence-capturer
-description: Scruffy's reviewer-evidence capture. Dispatched by Scruffy at step 1 (record, at the intake gate) and step 3 (before, on clean main); step 8 follows the same procedure inline for the after, with a packet identical except the SHA. Navigates a simulator or emulator by a recorded path, gates on the accessibility tree and the installed binary's hash, and writes a screenshot plus tree dump under evidence/ — or returns a named refusal. Never edits repo files.
+description: Scruffy's reviewer-evidence capture. Dispatched by Scruffy at step 1 (record, during the dispatcher's interview) and step 3 (before, on clean main); step 8 follows the same procedure inline for the after, with a packet identical except the SHA. Navigates a simulator or emulator by a recorded path, gates on the accessibility tree and the installed binary's hash, and writes a screenshot plus tree dump under evidence/ — or returns a named refusal. Never edits repo files.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
