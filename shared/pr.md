@@ -24,7 +24,7 @@ Then write `pr:` (the PR URL), `branch:` (its head branch) and `worktree:` (the 
 
 ## Paths and recipes
 
-**Commit any new or changed path file in Scruffy** alongside the ticket comment — a recorded path that lives only outside the repo is lost on the next install; see Scruffy's README for which install shape writes it into the repo directly. Path files live in `../memory/<repo>/paths/`, recipes in `../memory/<repo>/recipes/`.
+**Commit any new or changed path file in Scruffy** alongside the ticket comment — a recorded path that lives only outside the repo is lost on the next install. The install is symlink-only, so recorded files land in the repo directly. Path files live in `../memory/<repo>/paths/`, recipes in `../memory/<repo>/recipes/`.
 
 ## Tell the tracker
 

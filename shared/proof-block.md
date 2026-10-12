@@ -68,8 +68,10 @@ The feature lane's rows, as written in its own block:
 
 | Claim | Evidence |
 |---|---|
-| Fails without feature | `<command>` at `<test-commit sha>` — exit 1, "<one-line failure excerpt per criterion>" |
-| Passes with feature | same command at `<head sha>` — pass |
+| Fails without feature — `<criterion 1>` | `<command>` at `<test-commit sha>` — exit 1, "<one-line failure excerpt>" |
+| Passes with feature — `<criterion 1>` | same command at `<head sha>` — pass |
+| Fails without feature — `<criterion 2>` | … one pair per criterion, named … |
+| Passes with feature — `<criterion 2>` | … |
 | Tests unchanged since red | test-only commit `<sha>`, untouched since — `git log --follow -p <file>` |
 | Scope drift / non-goals | touched components listed; each non-goal checked |
 

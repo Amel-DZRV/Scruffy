@@ -158,6 +158,17 @@ check "watch.md says own comments skipped" grep -qi "authored by.*own\|own login
 check "no harness worktree isolation"    bash -c '! grep -qiE "isolation: \"worktree\"|worktree isolation" shared/orchestration.md'
 check "Team Lead adds track worktrees"   grep -q "git -C <repo_path> worktree add <path> -b <branch> <test-sha>" shared/orchestration.md
 check "bug-lane track naming"            grep -q "<KEY>-track-<n>" shared/orchestration.md
+check "interview record has its inputs"  bash -c 'grep -q "record_worktree:" scruffy/references/interview.md && grep -q "build-identity-before.txt" scruffy/references/interview.md'
+check "bug step 3 reuses the record install" grep -q "record_sha" scruffy-bug/SKILL.md
+check "feature commands use installed paths" grep_empty '\.\./scruffy-bug/scripts/' scruffy-feature/mechanisms scruffy-feature/roles
+check "bug lane takes no \$ARGUMENTS"   bash -c '! grep -q "ARGUMENTS" scruffy-bug/SKILL.md'
+check "goal budget is per track"         bash -c '! grep -q "stop after 3 fix attempts" scruffy-bug/SKILL.md'
+check "no feature-redirect row"          bash -c '! grep -q "not a bug — feature lane" scruffy-bug/SKILL.md'
+check "plan.md always"                   bash -c '! grep -q "only when the change earned a plan" scruffy-bug/references/dossier.md'
+check "path lookup is dispatcher Setup 6" grep -q "Setup 6" memory/README-paths.md
+check "capturer not dispatched at step 1" bash -c '! grep -q "at step 1" agents/evidence-capturer.md'
+check "pr.md: symlink install only"      bash -c '! grep -q "install shape" shared/pr.md'
+check "feature proof rows per criterion" bash -c '[ "$(grep -c "^| Fails without feature" shared/proof-block.md)" -ge 2 ]'
 
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

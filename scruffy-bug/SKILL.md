@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Scruffy
 
-**Input:** $ARGUMENTS — one or many items, mixed sources. If empty, take them from the conversation above.
+**Input:** the dossiers the dispatcher wrote — `~/Projects/tickets/<KEY>/state.md` per item, one or many. This lane is read from `/scruffy`, never invoked, so it takes no arguments of its own.
 
 Amel is a cross-platform triage owner on SDUI renderers — Mosaic (DoorDash) and Codeless Components / RooBlocks (Deliveroo) — across repos he does not own. He approves and comments; he does not type code.
 
@@ -184,6 +184,7 @@ Pin the conditions before you build:
 
 - **Latest main, always.** Never a release branch, never the reporter's version.
 - **Claim a device.** Take one that is not running an app under test, record its identifier in `state.md`, pin the rest of the run to it. All busy → boot a fresh one rather than queue. Commands per platform in `references/platforms/`.
+- **Reuse the interview's install** when `state.md` has `device:`, `record_sha:` and `build_identity:` from a `record`: same device, and that install is the before build while `record_sha` is the commit the fix branches from. Otherwise build as below.
 - **Missing device or config is assumed, and the assumption is stated** — in the PR body. "Reported without a device; reproduced on iPhone 17, iOS 26.5" narrows the bug for whoever reads it next. The interview already asked; this is for what the reporter could not say. It is never a new question.
 
 The red test itself is written by `verification` — but **against the surviving chain, which does not exist until step 4.** This step pins the conditions, claims the device, and captures the before-state; the handoff happens at step 5, once step 4 has a top-ranked chain. What this skill owes `verification` then: the symptom in the reporter's words, the suspect area, the conditions pinned here, and the top chain.
@@ -326,7 +327,7 @@ Step 5 produced a confirmed-red test, and Stop 2 (if it fired) is answered. From
 
 **The condition**, which you also write into `state.md` and print in chat verbatim:
 
-> The red test `<name>` passes with its original failing assertion and an unchanged file hash; the full suite shows no new failures against baseline; for a UI bug, an after-screenshot has been captured and judged to show the right change against the before-screenshot; or stop after 3 fix attempts.
+> The red test `<name>` passes with its original failing assertion and an unchanged file hash; the full suite shows no new failures against baseline; for a UI bug, an after-screenshot has been captured and judged to show the right change against the before-screenshot; or every track has spent its 3 fix attempts.
 
 **What counts is output in this conversation.** Every run that satisfies the condition happens inline, in the main thread, so the real output lands in the transcript — never a subagent's "tests passed". The inline runs for step 8 use this shape, and the script reads the files it writes:
 
@@ -442,6 +443,6 @@ Once, after every item has reached a terminal state.
 
 Then append one row per item to `~/Projects/tickets/LEDGER.md`. **Leave the PR-outcome column blank** — a workflow grading its own output is exactly the bias this design exists to remove. The next run's dispatcher backfills it (`../scruffy/SKILL.md` Setup 1).
 
-Finish with one table: every input, one row, terminal state, **proof verdict** (`MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`), evidence, PR link. The verdict column is the triage: MERGE-READY rows are the PRs Amel can approve on the proof block alone. Anything deferred or capped is named individually. Silent truncation reads as "covered everything" when it did not. An item redirected as a feature request has a row too, reading `not a bug — feature lane`.
+Finish with one table: every input, one row, terminal state, **proof verdict** (`MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`), evidence, PR link. The verdict column is the triage: MERGE-READY rows are the PRs Amel can approve on the proof block alone. Anything deferred or capped is named individually. Silent truncation reads as "covered everything" when it did not.
 
 The retro is the dispatcher's close-out (`../scruffy/SKILL.md`), once per batch. Every comment he leaves on a PR is a defect in this skill, not just in that fix: it becomes a candidate rule per `references/learning.md`, proposed to him and written only once he approves.

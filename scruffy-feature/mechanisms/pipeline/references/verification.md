@@ -105,14 +105,14 @@ Each is independently able to fail.
 
 **9. Process-death and backgrounding**, for stateful features: kill and background the app mid-flow and show the state survives as the criteria say. Not applicable to stateless changes (say so in the row).
 
-**10. Reviewer evidence, where the diff touches UI.** `../scruffy-bug/scripts/ui-touch.sh <repo> <parent> <head>` decides, mechanically, whether it is owed.
+**10. Reviewer evidence, where the diff touches UI.** `~/.claude/skills/scruffy-bug/scripts/ui-touch.sh <repo> <parent> <head>` decides, mechanically, whether it is owed.
 - `NON-UI` → `not applicable — NON-UI` and nothing else.
-- `UI` → all of: before and after captures with matching build identity at `parent` and `head`; the screenshot compared against the design mock; the accessibility tree dumped; and `../scruffy-bug/scripts/pair-diff.py before after --mask <the gate element's frame, in screenshot pixels>` exiting 0.
+- `UI` → all of: before and after captures with matching build identity at `parent` and `head`; the screenshot compared against the design mock; the accessibility tree dumped; and `~/.claude/skills/scruffy-bug/scripts/pair-diff.py before after --mask <the gate element's frame, in screenshot pixels>` exiting 0.
   - Exit 1: the pair differs outside the mask. Not shipped; re-capture once, then `decision needed` with both images.
   - Exit 2: process failure, never a pass. Row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>`.
   - Exit 3: nothing changed inside the mask. `FAILED: nothing visibly changed`.
   - After exit 0, judge from the two images and the mock whether the *right* thing changed, with nothing else visibly altered. Default to fail when unsure. One sentence in the row.
-- `../scruffy-bug/scripts/tree-diff.py` on the two tree dumps is reported on its own row and **never changes the verdict**, in either direction. A tree can look correct while the UI is visibly broken, so it cannot stand in for the pair.
+- `~/.claude/skills/scruffy-bug/scripts/tree-diff.py` on the two tree dumps is reported on its own row and **never changes the verdict**, in either direction. A tree can look correct while the UI is visibly broken, so it cannot stand in for the pair.
 - `UI` with no verified pair is `PROOF INCOMPLETE`, named on the `Not proven` line.
 
 **11. Revert check, cheap loop only.** In a scratch worktree at `head`, reverse the implementation while keeping the tests, and expect red:

@@ -11,7 +11,7 @@ One per work item, at `~/Projects/tickets/<KEY>/`.
 | `state.md` | machine state — step, repo, cost class, device id, red-test command and hash, attempt counters, every stop answer |
 | `summary.md` | the one file written for Amel rather than for you |
 | `chain.md` | every hypothesis, ranked, with the rejected ones and why they lost |
-| `plan.md` | only when the change earned a plan — one entry per step |
+| `plan.md` | always — the Team Lead's plan, `what / files / criteria / depends on` per step; one step for a one-line fix |
 | `evidence/` | every command and its output — including the red test's failure, which is proof and not a log |
 | one terminal artifact | `verdict.md`, `memo.md`, `questions.md`, or `blocked.md` |
 
