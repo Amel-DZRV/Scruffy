@@ -105,5 +105,15 @@ check "watch batches on expensive"       grep -qi "expensive loop" scruffy/refer
 check "watch-tick.sh executable"         test -x scruffy-bug/scripts/watch-tick.sh
 check "watch-tick usage"                 bash -c 'scruffy-bug/scripts/watch-tick.sh 2>&1 | grep -q "usage"'
 
+# --- Task 10: learning layer
+check "shared/learning.md exists"        test -f shared/learning.md
+check "three memory kinds"               bash -c 'grep -q "Recipe" shared/learning.md && grep -q "Path" shared/learning.md && grep -q "Rule" shared/learning.md'
+check "precedence: skill wins"           grep -qi "skill wins" shared/learning.md
+check "recipe template exists"           test -f memory/TEMPLATE-recipe.md
+check "recipe template frontmatter"      bash -c 'for k in name repo app derived_from last_run runs median_minutes; do grep -q "^$k:" memory/TEMPLATE-recipe.md || exit 1; done'
+check "ledger has recipe columns"        bash -c 'grep -q "recipe_hits" scruffy-bug/references/dossier.md && grep -q "minutes_saved" scruffy-bug/references/dossier.md'
+check "bug lane cites shared learning"   grep -q "shared/learning.md" scruffy-bug/SKILL.md
+check "retro step defined"               grep -qi "retro" shared/learning.md
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

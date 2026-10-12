@@ -2,9 +2,7 @@
 
 Correcting a run fixes one run. Writing it down fixes every run after it.
 
-## Read first
-
-`../memory/rules.md`, at step 1, before anything else. If it does not exist yet, carry on.
+The contract — what is read, what is written, who approves — is `../shared/learning.md`. This file holds what is specific to the bug lane.
 
 ## The trigger problem, and the fix
 
@@ -41,26 +39,9 @@ Two ways to get this wrong:
 
 **The test: could a future run be judged on whether it followed this rule?** "Assert the expected occurrence count before writing" passes. "Be careful" does not. If the draft rule fails the test, keep generalizing — or keep the specific case in the repo's `CLAUDE.md` instead, where narrow facts belong.
 
-## Propose, do not self-append
+## Where it goes, and approval
 
-Entries drafted from PR comments are **shown to Amel for approval**, at the start of the run that fetched them. "Three comments since the last run — here is what I would write down." He approves, edits, or discards.
-
-A file that fills automatically fills with noise, and a `../memory/rules.md` nobody trusts is worse than a short one. Self-observed defects, where the run has direct evidence of its own mistake, are appended without asking.
-
-## Path recipes are the exception
-
-`../memory/<repo>/paths/<screen>.md` files append without approval. A recipe is verified by its own replay — a wrong one fails the gate and is marked stale — so the noise argument above does not apply. Lessons *about* captures ("crop to the component", "the sample app hides the real padding") are rules, not recipes: they come in through the PR-comment backfill and go through the propose step like everything else. See `../memory/README-paths.md`.
-
-## Where it goes
-
-| The correction is about | Write it to |
-|---|---|
-| How this repo's code works, or a convention | that repo's `CLAUDE.md` |
-| How this skill should behave | `../memory/rules.md` |
-| A missing or wrong routing fact | `references/repo-routing.md` |
-| A toolchain path or version that moved | `references/preflight.md` |
-
-Prefer the specific file over `../memory/rules.md`. `../memory/rules.md` is for behaviour that has no better home.
+See `../shared/learning.md`. Entries drafted from PR comments are shown to Amel before they are written. A narrow fact about one repo's code belongs in that repo's `CLAUDE.md`, a routing fact in `references/repo-routing.md`, a toolchain move in `references/preflight.md` — prefer them over `../memory/rules.md`.
 
 ## Format
 

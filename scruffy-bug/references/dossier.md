@@ -71,6 +71,8 @@ Run `unslop-prose` over it before printing. It is written for a human to read la
 | **proof verdict** | `MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`, from the PR's proof block |
 | **PR outcome** | `approved as-is` / `approved with comments` / `changes requested` / `closed unmerged` |
 | **pair outcome** | `accepted` / `replaced` (reviewer or Amel attached a different image) / `requested` (a reviewer asked for a screenshot the PR lacked) / `n/a` (NON-UI). Backfilled with `PR outcome` from the PR's comments and attachments. `requested` on a row whose proof block said `not applicable` is a defect in `ui-touch.sh`'s patterns; `replaced` is a framing lesson for `../memory/rules.md` |
+| **recipe_hits** | steps that followed a recipe |
+| **minutes_saved** | Σ (recipe median − actual) over those steps |
 
 **A run never writes its own PR outcome.** Preflight of the *next* run backfills it: for every row with a PR link and a blank outcome, `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Four lines of bash, no model. A column that never fills makes the whole ledger decorative.
 

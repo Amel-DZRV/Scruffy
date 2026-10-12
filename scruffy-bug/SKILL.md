@@ -78,7 +78,7 @@ Forcing a PR onto a policy question or an already-fixed ticket is worse than say
 
 ## Setup 1 — Read what was learned
 
-`references/learning.md`, then `../memory/rules.md`. Past corrections apply before you do anything else.
+`../shared/learning.md` first, then `references/learning.md` and `../memory/rules.md`. Past corrections apply before you do anything else.
 
 Preflight's ledger backfill (Setup 4) also pulls **new PR comments since the last run.** Generalize each into a candidate rule and show them to Amel before the items start: *"three comments since the last run — here is what I would write down."* He approves, edits, or discards.
 
@@ -446,6 +446,8 @@ Once, after every item has reached a terminal state.
 **Print `summary.md` in full**, per item. It is the last thing Amel reads, so it goes before the table, not after it.
 
 Then append one row per item to `~/Projects/tickets/LEDGER.md`. **Leave the PR-outcome column blank** — a workflow grading its own output is exactly the bias this design exists to remove. The next run's preflight backfills it.
+
+Run the retro per `../shared/learning.md` §Write.
 
 Finish with one table: every input, one row, terminal state, **proof verdict** (`MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`), evidence, PR link. The verdict column is the triage: MERGE-READY rows are the PRs Amel can approve on the proof block alone. Anything deferred or capped is named individually. Silent truncation reads as "covered everything" when it did not. An item redirected as a feature request has a row too, reading `not a bug — feature lane`.
 

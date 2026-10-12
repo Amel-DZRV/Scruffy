@@ -18,11 +18,11 @@ Scruffy's step 1 (gather) derives `<screen>` from the ticket's component or temp
 
 Recorded files are committed to Scruffy at the end of the run — step 10 does it alongside the ticket comment.
 
-Recipes append without approval because a wrong recipe fails its own replay and is marked stale. That is the whole difference between this library and `rules.md`: a rule cannot be replayed, a path can.
+Paths (navigation, this file), recipes (procedures, `TEMPLATE-recipe.md`) and rules (judgment, which Amel approves) are three kinds of memory; see `../shared/learning.md`. Paths append without approval because a wrong path fails its own replay and is marked stale. That is the whole difference between a path and `rules.md`: a rule cannot be replayed, a path can.
 
 ## Staleness
 
-A stale path is not deleted. It is the best starting point for repairing it — most staleness is one renamed label, not a new flow. The agent refuses a stale path before the first tap so a bad recipe never costs a build's worth of navigation.
+A stale path is not deleted. It is the best starting point for repairing it — most staleness is one renamed label, not a new flow. The agent refuses a stale path before the first tap so a bad path never costs a build's worth of navigation.
 
 Device or OS mismatch is staleness too. A path recorded on iOS 26.5 is not tried on 27.0; it is `PATH STALE` naming `os`. That is the one staleness the retry may record through, and it records into `<screen>@<os>.md` rather than over the old file. Keep both; the old one is correct for its runtime.
 
