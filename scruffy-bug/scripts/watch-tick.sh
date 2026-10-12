@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # watch-tick.sh <pr-url> <state.json>
 # Prints one JSON line per comment, review, inline review comment or failed check run not yet
-# recorded in state.json, then rewrites state.json with everything seen.
+# recorded in state.json, then rewrites state.json with everything seen. Items authored by the
+# gh login itself (Amel's own comments) are marked seen but never printed.
 # Exit 0 normally, 1 on wrong arguments, 2 if gh fails.
 set -u
 [ $# -eq 2 ] || { echo "usage: watch-tick.sh <pr-url> <state.json>" >&2; exit 1; }
@@ -14,10 +15,12 @@ num=$(printf '%s' "$json" | python3 -c 'import json,sys; print(json.load(sys.std
 slug=$(printf '%s' "$url" | sed -E 's#^https?://[^/]+/([^/]+/[^/]+)/pull/.*#\1#')
 [ -n "$slug" ] && [ "$slug" != "$url" ] || exit 2
 inline=$(gh api "repos/$slug/pulls/$num/comments" --paginate 2>/dev/null) || exit 2
+me=$(gh api user --jq .login 2>/dev/null) || exit 2
+[ -n "$me" ] || exit 2
 
 read -r -d '' prog <<'PY'
 import json, os, sys
-state_path, inline_path = sys.argv[1], sys.argv[2]
+state_path, inline_path, me = sys.argv[1], sys.argv[2], sys.argv[3]
 d = json.load(sys.stdin)
 raw = open(inline_path).read().strip()
 # --paginate may emit several concatenated JSON arrays
@@ -63,7 +66,9 @@ for ch in d.get("statusCheckRollup") or []:
     if i not in seen:
         out.append({"kind": "check", "id": i, "author": "ci", "is_bot": True, "body": name, "url": ch.get("detailsUrl") or ch.get("targetUrl", "")})
 for o in out:
-    print(json.dumps(o)); seen.add(o["id"])
+    seen.add(o["id"])
+    if o["kind"] != "check" and o["author"] == me: continue
+    print(json.dumps(o))
 # a check that stopped failing is forgotten, so a later failure is reported again
 seen = {x for x in seen if not x.startswith("k:") or x in failing}
 state["seen"] = sorted(seen); state["pr_state"] = d.get("state"); state["review_decision"] = d.get("reviewDecision")
@@ -71,7 +76,7 @@ with open(state_path + ".tmp", "w") as f: json.dump(state, f, indent=1)
 os.replace(state_path + ".tmp", state_path)
 PY
 tmp=$(mktemp); printf '%s' "${inline:-[]}" > "$tmp"
-printf '%s' "$json" | python3 -c "$prog" "$state" "$tmp"; rc=$?
+printf '%s' "$json" | python3 -c "$prog" "$state" "$tmp" "$me"; rc=$?
 rm -f "$tmp"
 [ $rc -eq 0 ] || exit 2
 exit 0

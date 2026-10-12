@@ -147,6 +147,14 @@ check "no 'no --project flag'"           bash -c '! grep -q "no \`--project\` fl
 check "Setup 5 resumes state.md"         grep -q "Never overwrite \`interview: closed\`" scruffy/SKILL.md
 check "dispatcher loads fresh recipes"   grep -q "status: fresh" scruffy/SKILL.md
 check "mixed batch order stated"         grep -qi "mixed batch" scruffy/SKILL.md
+check "watch red line uses red-test.sha" grep -q "red-test.sha" scruffy/references/watch.md
+check "watch no longer reads test_file"  bash -c '! grep -q "test_file" scruffy/references/watch.md'
+check "watch resolves dossier by pr:"    grep -q "tickets/\*/state.md" scruffy/references/watch.md
+check "pr.md records pr/branch/worktree" bash -c 'grep -q "\`pr:\`" shared/pr.md && grep -q "\`branch:\`" shared/pr.md && grep -q "\`worktree:\`" shared/pr.md'
+check "bug step 10 records worktree"     grep -q "\`worktree:\`" scruffy-bug/SKILL.md
+check "feature step 7 records worktree"  grep -q "\`worktree:\`" scruffy-feature/mechanisms/pipeline/RUNNER.md
+check "watch-tick skips own login"       grep -q "api user" scruffy-bug/scripts/watch-tick.sh
+check "watch.md says own comments skipped" grep -qi "authored by.*own\|own login" scruffy/references/watch.md
 
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

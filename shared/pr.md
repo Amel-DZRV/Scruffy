@@ -6,6 +6,8 @@ Each lane owns its body sections (`../scruffy-bug/SKILL.md` step 10; `../scruffy
 
 `gh pr create --draft` when `owned: no` in the dossier; the feature lane on an owned project opens ready per its own format. Assign no reviewers. Use the repo's own PR template file if it has one; map the lane's sections onto it rather than replacing it.
 
+Then write `pr:` (the PR URL), `branch:` (its head branch) and `worktree:` (the absolute path of the checkout it was pushed from) into `state.md`. `/scruffy watch` finds the dossier and the checkout by them.
+
 ## Attaching the screenshots
 
 **Attaching the screenshots — a step that must be seen to work.** A local PNG cannot be referenced from markdown, and `gh pr create` or the API cannot attach one, so images are published first and the body links them:

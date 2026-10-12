@@ -430,7 +430,7 @@ Push the branch, open a **draft** PR, repo's own template, follow the repo's `at
 
 Run `unslop-prose rewrite --preset crisp` over the body. A PR body taking minutes to read is a defect in the body, not proof of thoroughness.
 
-Opening, image publishing, path/recipe commit and the tracker comment: `../shared/pr.md`.
+Opening, image publishing, path/recipe commit and the tracker comment: `../shared/pr.md`. That includes writing `pr:`, `branch:` and `worktree:` into `state.md` once the PR exists.
 
 ---
 
