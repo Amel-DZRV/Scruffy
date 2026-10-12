@@ -37,5 +37,12 @@ check "no skills/scruffy/ refs"          grep_empty 'skills/scruffy/' agents scr
 check "three scripts present once"       bash -c 'test -f scruffy-bug/scripts/pair-diff.py && test -f scruffy-bug/scripts/tree-diff.py && test -f scruffy-bug/scripts/ui-touch.sh && test ! -e scruffy-feature/mechanisms/pipeline/scripts'
 check "shared/ exists"                   test -d shared
 
+# --- Task 2: one proof block
+check "proof-block.md exists"            test -f shared/proof-block.md
+check "proof-block has tiers"            grep -q "^## Verdict tiers" shared/proof-block.md
+check "bug engine cites it"              grep -q "shared/proof-block.md" verification/SKILL.md
+check "feature engine cites it"         grep -q "shared/proof-block.md" scruffy-feature/mechanisms/pipeline/references/verification.md
+check "block not duplicated in bug engine" bash -c '[ "$(grep -c "^| Fails without fix" verification/SKILL.md)" = 0 ]'
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

@@ -127,54 +127,7 @@ Expensive loop: record `skipped — expensive loop, the red commit stands in`.
 
 ## The proof block
 
-One block, fixed shape, pasted verbatim into the PR body (in a collapsible section headed by the verdict tier). A fixed shape is the point: Amel learns to read it in ten seconds.
-
-```markdown
-## Proof
-
-**Verdict: MERGE-READY**   (or REVIEW NEEDED / PROOF INCOMPLETE — with the reason, one line)
-
-| Claim | Evidence |
-|---|---|
-| Fails without feature | `<command>` at `<test-commit sha>` — exit 1, "<one-line failure excerpt per criterion>" |
-| Passes with feature | same command at `<head sha>` — pass |
-| Tests unchanged since red | test-only commit `<sha>`, untouched since — `git log --follow -p <file>` |
-| Suite | <N> passed at head; baseline at parent: <N> passed (or: same <k> pre-existing failures, named) |
-| Scope drift / non-goals | touched components listed; each non-goal checked |
-| Revert check | done / skipped — expensive loop, the red commit stands in |
-| Accessibility check (informational — never changes the verdict) | `tree-diff.py` — `a11y: UNCHANGED / CHANGED / ATTENTION` and its findings, or `not applicable` / `UNAVAILABLE <why>` |
-| Reviewer evidence | `capture-before.png` @ `<parent sha>`, `capture-after.png` @ `<head sha>`, gate `<label role>`, pair-diff `changed=<f> inside=<f>` exit 0, right-change: "<one sentence>" — or `not applicable — NON-UI` — or `MISSING: <status>` |
-
-**Replay:** `git checkout <test-commit> && <command>`  (expect red) `&& git checkout <head> && <command>`  (expect green)
-**Not proven:** what could not be checked and why — or "nothing".
-```
-
-For a cross-platform feature the block also carries each platform's verdict and the Chief of Engineering's reconciled verdict.
-
-Rules:
-
-- **Every cell is a command, a SHA, or a count.** A cell that reads "verified ✓" is the self-attestation this block replaces.
-- **Replay is generated on cheap loops, always.** On expensive loops state the cost instead ("replay is a 35-minute build; red output archived below") and fold the raw red failure output into a `<details>` block under the table. Trust-me is acceptable only with the receipt attached.
-- **The `Not proven` line is mandatory**, even when it says "nothing". Its absence is indistinguishable from silence about a gap.
-- A `MISSING` cell in the Reviewer evidence row is repeated on the `Not proven` line. A `not applicable` cell never is.
-
-## The verdict
-
-Three tiers, so "can this merge on its own" is mechanical rather than a feeling.
-
-| Verdict | Means | Criteria — all of them |
-|---|---|---|
-| **MERGE-READY** | eligible for auto-merge on the proof alone | contained blast radius, claims 1–8 proven, claim 9 proven or not applicable, revert check done or expensive-loop exemption, suite delta against baseline is zero, nothing in `Not proven`, Reviewer evidence row is a verified pair or `not applicable` |
-| **REVIEW NEEDED** | the proof holds but the judgement is Amel's | shared blast radius, a design or trade-off embedded in the diff, or any earned exception: no seam, an unverifiable criterion |
-| **PROOF INCOMPLETE** | do not merge on this | any process failure, any claim that could not run, a `UI` diff with a `MISSING` Reviewer evidence row, an independent audit that could not be dispatched and was not demoted |
-
-**A UI diff without a verified pair cannot be MERGE-READY.** This is a gate, not a reminder.
-
-**Radius trumps greenness.** A shared-radius change self-demotes to REVIEW NEEDED however green it is: the tests prove the criteria, not the blast radius.
-
-**A new contract at a seam is not, by itself, shared radius.** A cross-platform feature that introduces its own contract (an endpoint, a data shape nothing else reads) and has the Chief of Engineering's seam sign-off is contained. A change that alters a contract other code already reads is shared.
-
-For a cross-platform feature, the **Chief of Engineering reconciles** the platforms' verdicts. The feature's verdict is the lowest tier of any platform, unless the Chief records a reason the lower verdict does not apply to the feature as a whole. A reconciliation never raises a tier above what a platform's own proof supports.
+The shape, the rules, and the three verdict tiers are in `../shared/proof-block.md`. Paste the block verbatim into the PR description, inside `<details><summary>Proof — <tier></summary>`. The feature lane uses the lane-specific rows in that file.
 
 Auto-merge is eligible only for `MERGE-READY`. `REVIEW NEEDED` and `PROOF INCOMPLETE` PRs stay open for Amel.
 
