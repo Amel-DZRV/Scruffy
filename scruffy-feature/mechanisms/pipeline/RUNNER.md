@@ -57,7 +57,7 @@ Dispatch `qa-<platform>` in **Author mode** (`references/verification.md`): one 
 
 ## 3. Implement, orchestrated
 
-Dispatch `team-lead-<platform>`. It derives tracks from the plan and runs one `developer` per track, per `../shared/orchestration.md`: one commit per step, `reviewer-<platform>` between steps in a fresh context, the track's acceptance tests after every step, integration smallest-track-first.
+The main thread composes `team-lead-<platform>` and, as it, derives tracks and dispatches one `developer` per track, per `../shared/orchestration.md`: one commit per step, `reviewer-<platform>` between steps in a fresh context, the track's acceptance tests after every step, integration smallest-track-first.
 
 Scope while building. Anything a Developer wants to add:
 
@@ -86,7 +86,7 @@ Any edit beyond comments and prints sends the platform back through the Reviewer
 
 Dispatch `qa-<platform>` in **Audit mode** with the packet from `references/verification.md`: SHAs, test files and hashes, commands, baseline, criteria and non-goals. Not the plan, the seam notes, or the Developers' reports. It returns the proof block, the criterion table, the verdict tier and one line per failed or unrunnable claim.
 
-The Team Lead decides what a failed claim is: a fix attempt (counted against the track's budget of three), a design attempt, or a process failure (no retry loop; the platform ends with proof marked incomplete and the failing check named).
+The Team Lead decides what a failed claim is: a fix attempt (counted against the track's budget of three), a design attempt, or a process failure (no retry loop; the platform ends with proof marked incomplete and the failing check named). It writes the fail memo per `../shared/orchestration.md` §Fail memo first.
 
 Output of Part A: the verified platform branch, its proof block, its verdict, `state.md` updated.
 

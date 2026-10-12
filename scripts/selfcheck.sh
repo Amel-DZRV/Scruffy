@@ -57,5 +57,18 @@ check "missing-button example present"   grep -qi "never built" scruffy/referenc
 check "bug lane has no intake gate"      bash -c '! grep -q "### Stop 1 — the intake gate" scruffy-bug/SKILL.md'
 check "no Taimi in bug lane"             grep_empty 'taimi' scruffy-bug
 
+# --- Task 4: orchestration shared, developer agent
+check "orchestration.md in shared"       test -f shared/orchestration.md
+check "orchestration gone from feature refs" test ! -e scruffy-feature/mechanisms/pipeline/references/orchestration.md
+check "main thread is Team Lead"         grep -q "main thread" shared/orchestration.md
+check "four plan fields"                 grep -q "what / files / criteria / depends on" shared/orchestration.md
+check "fail memo per track"              grep -q "fail-memo-<track>-<n>.md" shared/orchestration.md
+check "scope rule"                       grep -q "non-goals" shared/orchestration.md
+check "developer agent exists"           test -f agents/developer.md
+check "developer is sonnet"              grep -q "^model: sonnet$" agents/developer.md
+check "team-lead tools no longer spawn"  grep_empty 'Spawning Developer agents' scruffy-feature/roles
+check "RUNNER does not dispatch team lead" bash -c '! grep -q "Dispatch \`team-lead-<platform>\`" scruffy-feature/mechanisms/pipeline/RUNNER.md'
+check "runner ladder: Agent first"       grep -qi "plain parallel \`Agent\`" shared/orchestration.md
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))
