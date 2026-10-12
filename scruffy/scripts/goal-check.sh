@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop hook for the autonomous execution phase ("the goal"). Registered by bug-eater's
+# Stop hook for the autonomous execution phase ("the goal"). Registered by scruffy's
 # frontmatter; runs after every turn for the rest of the session, and does nothing unless a
 # dossier holds evidence/goal.active. Exit 0 lets the turn end; exit 2 sends the unmet checks
 # back to the model as its next instruction.

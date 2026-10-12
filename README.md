@@ -1,24 +1,22 @@
 # Scruffy
 
-A modular skillset for handling bugs and features across repos you don't own.
+Scruffy is the bot that solves bugs, in repos you don't own. Hand it a ticket: it finds the cause, writes a test that fails on exactly what was reported, fixes it, proves the fix, and opens a draft PR.
 
-Five independent skills. Scruffy routes; the others do the work.
+Feature development moved to Taimi, a separate repo.
+
+Two skills:
 
 | Skill | Owns |
 |---|---|
-| `scruffy` | Classification, repo routing, preflight, clustering, dispatch, the ledger |
-| `bug-eater` | The bug lane. Gather → chain → propose → fix → draft PR |
-| `verification` | Proof. Red tests, the four claims, reviewing someone else's PR |
-| `feature-dev` | The feature lane. Requirements → design → acceptance tests → draft PR |
-| `screen-audit` | Design fidelity. A running app against Claude Design mocks, component by component — measured, judged, tapped — and fixed until it matches |
+| `scruffy` | Intake, repo routing, preflight, dossier, clustering, the budget, then per bug: gather → already dead? → reproduce → investigate → red test → propose → fix → verify → clean up → draft PR. Then the final report, the ledger, and learning |
+| `verification` | Proof. Red tests, the four claims, the proof block. Called by `scruffy`, or run standalone on a branch, a diff or someone else's PR |
 
-Plus four agents the skills dispatch — you never call them directly:
+Plus three agents the skills dispatch — you never call them directly:
 
 | Agent | Does |
 |---|---|
 | `proof-auditor` | Runs the four claims and awards the verdict, in a fresh context with no write tools. The model that wrote a fix never grades it |
 | `step-reviewer` | Reviews one implementation step from its two SHAs, with none of the implementer's reasoning |
-| `design-judge` | Decides per component whether the app matches the mock, from screen-audit's measurements and crops, in a fresh context. Writes the verdict the fix loop reads and the Stop hook re-checks |
 | `evidence-capturer` | Takes the before/after pair from a simulator or emulator by a recorded path, gated on the accessibility tree and the installed binary's hash. You navigate a new screen once; it replays forever after |
 
 ## Install
@@ -27,9 +25,9 @@ Symlink, so recorded path files are written straight into the repo:
 
 ```bash
 mkdir -p ~/.claude/skills ~/.claude/agents
-for s in scruffy bug-eater verification feature-dev screen-audit; do ln -sfn "$PWD/$s" ~/.claude/skills/$s; done
+for s in scruffy verification; do ln -sfn "$PWD/$s" ~/.claude/skills/$s; done
 cp agents/*.md ~/.claude/agents/
-chmod +x bug-eater/scripts/*.sh bug-eater/scripts/*.py
+chmod +x scruffy/scripts/*.sh scruffy/scripts/*.py
 ```
 
 The capture agent records new path files under `~/.claude/skills/scruffy/paths/`. With symlinks that *is* the repo, so a recorded path is a file you can commit. With a copy install it isn't, and the recording is lost on the next install.
@@ -37,45 +35,49 @@ The capture agent records new path files under `~/.claude/skills/scruffy/paths/`
 Copying works too:
 
 ```bash
-cp -r scruffy bug-eater verification feature-dev screen-audit ~/.claude/skills/
+cp -r scruffy verification ~/.claude/skills/
 mkdir -p ~/.claude/agents && cp agents/*.md ~/.claude/agents/
-chmod +x ~/.claude/skills/bug-eater/scripts/*.sh ~/.claude/skills/bug-eater/scripts/*.py
+chmod +x ~/.claude/skills/scruffy/scripts/*.sh ~/.claude/skills/scruffy/scripts/*.py
 ```
 
 Under a copy install, copy new files from `~/.claude/skills/scruffy/paths/` back into the repo before committing.
 
 Flat, one level under `skills/` — that's where Claude Code discovers them. Nesting them breaks discovery and stops `verification` being invocable on its own. Agents go flat under `~/.claude/agents/`.
 
+Upgrading from the five-skill layout: remove the skills and agent that no longer exist, or the old `bug-eater` skill keeps answering to its name.
+
+```bash
+rm -rf ~/.claude/skills/bug-eater ~/.claude/skills/feature-dev ~/.claude/skills/screen-audit ~/.claude/agents/design-judge.md
+```
+
 `brew install cameroncooke/axe/axe` for iOS captures; without it the pair is `ungated` and the verdict caps at REVIEW NEEDED on UI diffs.
 
-Bug-eater registers a Stop hook (`bug-eater/scripts/goal-check.sh`) from its frontmatter; it drives the autonomous phase and needs hooks enabled and the folder trusted. With hooks off the lane prints a `/goal` line to paste instead.
+`scruffy` registers a Stop hook (`scruffy/scripts/goal-check.sh`) from its frontmatter; it drives the autonomous phase and needs hooks enabled and the folder trusted. With hooks off it prints a `/goal` line to paste instead.
 
-Screen-audit's scripts are Node and drive the system Chrome (no browser download): `npm install` once in `screen-audit/`. It registers its own Stop hook (`screen-audit/scripts/audit-check.mjs`), same requirements as bug-eater's.
+On Windows, Git Bash's `ln -s` copies instead of linking unless Developer Mode is on; a directory junction needs no admin. From `cmd.exe`:
 
-On Windows, Git Bash's `ln -s` copies instead of linking unless Developer Mode is on; a directory junction needs no admin: `cmd //c mklink /J "%USERPROFILE%.claudeskillsscreen-audit" "C:devScruffyscreen-audit"`.
+```bat
+mklink /J "%USERPROFILE%\.claude\skills\scruffy" "C:\dev\Scruffy\scruffy"
+mklink /J "%USERPROFILE%\.claude\skills\verification" "C:\dev\Scruffy\verification"
+```
 
 Without the agents everything still runs, but verification grades in-context and caps the verdict at REVIEW NEEDED.
 
 ## Use
 
-`/scruffy` is the only entry point you need. It reads the phrasing and routes.
-
 ```
 /scruffy fix this bug: MOSAIC-3559
-/scruffy I want to develop this feature, here's the ticket: MOSAIC-3612
-/scruffy verify this solution and review the PR: <url>
 /scruffy here's a TickTick task: <task url or id>
+/scruffy MOSAIC-3559 MOSAIC-3561 MOSAIC-3570
 ```
 
-When you say which it is, the router takes it and doesn't re-litigate. Classification only stops to ask when an item is genuinely ambiguous — a bug report that's really a feature request, a PR that's really a question.
+Several items at once are taken in together, so two tickets with one root cause become one PR. If an item is a feature request, Scruffy says so in one line and points to Taimi instead of working on it.
 
-The other three are separately invocable as a fallback, useful when you want to skip classification:
+`verification` is separately invocable:
 
 ```
-bug-eater MOSAIC-3559
-feature-dev "add offline caching to the feed"
 verification https://github.com/org/repo/pull/1234
-screen-audit C:/dev/Relentless_V2 "docs/Design/training-flow/Relentless - Training tab flow.html" dashboard --audit-only
+verification            # the current worktree
 ```
 
 ## The idea
@@ -90,19 +92,20 @@ Never claim a thing is verified without output you can point at.
 
 - **Discovery over configuration.** Build system, test command, PR conventions, lint rules, and feedback-loop cost are all read from the repo at run time. The only thing configured is which repo a ticket belongs to, because nothing can infer that.
 - **The red test must be watched failing first.** A test written after a fix is the classic way to end up with one that would have passed anyway. Its file is hashed the moment it goes red and re-checked after, so it can't be quietly edited until green.
-- **Three stops, batched.** Classification if genuinely ambiguous, missing facts nobody can look up, and a choice between two equally correct fixes. Nothing else interrupts.
+- **Two stops, batched.** The intake gate — everything only a human can supply, asked once — and a choice between two equally correct fixes. Nothing else interrupts.
 - **A PR is not the only exit.** `recommend close`, `needs info`, `decision needed`, `blocked` and `deferred` are all real outcomes, and forcing a PR onto a policy question is worse than saying so.
 - **The ledger is the health metric.** One row per item, PR outcome backfilled by the *next* run — a workflow grading its own output is the bias this design exists to remove.
 
 ## Structure
 
 ```
-scruffy/          router + shared spine (preflight, dossier, models, learning, routing)
-bug-eater/        the bug lane, with per-platform command references
-feature-dev/      the feature lane, cleanup included
+scruffy/          the skill: SKILL.md, references/ (incl. platforms/), scripts/, paths/, LEARNED.md
 verification/     the proof engine, invocable on its own
 agents/           proof-auditor, step-reviewer and evidence-capturer, dispatched by the skills
+docs/             design plans, kept as history
 ```
+
+`docs/superpowers/plans/` predates the split and still mentions `bug-eater`, `feature-dev` and `screen-audit` by their old names. It is historical and deliberately left as written. The original five-skill state is the `pre-split` tag.
 
 ## Status
 

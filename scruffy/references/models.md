@@ -10,7 +10,7 @@ Two rules: cheapest model that answers reliably, and every loop has a number.
 | Fetching tickets, comments, attachments | haiku | Transcription |
 | Grep, `git log`, PR history, file existence | haiku | Mechanical volume |
 | Locating screen → template → component → file | haiku | A lookup, not an insight |
-| Classification, repo routing | sonnet | haiku mis-routes repos, and that error is expensive downstream |
+| Repo routing | sonnet | haiku mis-routes repos, and that error is expensive downstream |
 | Clustering judgement | sonnet | Deciding one fix closes two bugs needs the causal read |
 | The causal chain — ×3 blind on expensive loops, ×1 on cheap | sonnet | The chain is the deliverable; haiku returns symptom restatement. The count is the cost class in `state.md`, never a read on the bug |
 | Skeptics ×2 — expensive loops only | sonnet | Two at sonnet costs less than one at opus and catches more, because they disagree. On a cheap loop the red test is the skeptic — skip them |
@@ -18,7 +18,6 @@ Two rules: cheapest model that answers reliably, and every loop has a number.
 | `proof-auditor` agent — 1c, 1d, verdict | sonnet, pinned in the agent file | Independence is the point, not horsepower. Fresh context, no write tools |
 | `step-reviewer` agent — between plan steps | sonnet, pinned in the agent file | Same: a reviewer primed with the implementer's reasoning inherits its blind spots |
 | `evidence-capturer` agent — before/after captures | sonnet, pinned in the agent file | Resolving labels to frames and judging a stable tree needs reading, not horsepower. Device work: passes through the build slot on expensive loops |
-| Plan package assembly, track implementers, integration merges | sonnet | Track derivation is mechanical (no model at all); the merge judgement is not |
 
 Cheap agents **locate and transcribe. They do not summarize** — three paragraphs of mush costs a strong model a second read. Give them a strict output contract: fields, sources, claim-vs-verified.
 
@@ -71,6 +70,6 @@ The expensive steps are verification builds and any opus escalation. Everything 
 
 ## Batching
 
-Classify **all** items first, then cluster once, then batch the rest.
+Take in and route **all** items first (Setup 2–3), then cluster once, then batch the rest.
 
-Clustering needs every classification present. Two bugs sharing one root cause, split across two batches, produce two conflicting PRs — the exact failure clustering exists to prevent. Classification is cheap enough that all items fit in one pass.
+Clustering needs every item's intake and repo present. Two bugs sharing one root cause, split across two batches, produce two conflicting PRs — the exact failure clustering exists to prevent. Intake and routing are cheap enough that all items fit in one pass.

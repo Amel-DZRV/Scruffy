@@ -1,6 +1,6 @@
 # Worktrees
 
-Every item gets its own worktree — concurrent items may touch the same repo, and a lane resuming after `needs info` or `decision needed` must find its investigation exactly where it left it.
+Every item gets its own worktree — concurrent items may touch the same repo, and an item resuming after `needs info` or `decision needed` must find its investigation exactly where it left it.
 
 ## Detect before creating
 
@@ -39,7 +39,7 @@ Not every terminal state ends the same way. Cleaning up a worktree that still ho
 | `PR opened` | **Keep.** Amel iterates on review feedback here; this is the same checkout the PR was pushed from. |
 | `blocked` | **Keep, always.** Verification's own rule: a failed run is exactly when Amel may want to dig in. Never discard on your own initiative. |
 | `decision needed` / `needs info` | **Keep.** The chain, the seam map, the questions live nowhere else, and the item resumes from this exact state once he answers. |
-| `recommend close` / `already exists` | **Remove**, once `verdict.md` is copied into the dossier — the only artifact worth keeping outlives the worktree; the checkout that produced it does not. |
+| `recommend close` | **Remove**, once `verdict.md` is copied into the dossier — the only artifact worth keeping outlives the worktree; the checkout that produced it does not. |
 | `deferred` | **Nothing to clean up.** Never started. |
 
 Removal, when it happens:
@@ -53,6 +53,3 @@ git worktree prune
 
 **Only remove what this run created.** A path under `.worktrees/` or `worktrees/` that this item didn't open belongs to another run or to Amel directly — leave it.
 
-## Track worktrees
-
-Feature orchestration (`feature-dev/references/orchestration.md`) opens short-lived worktrees at `.worktrees/<item-key>-track-<n>`, branched from the item branch's test commit. Their lifecycle is simpler than the item's: **removed immediately after successful integration**, kept only when the track ended `blocked`. They never outlive the item's own terminal state, and the "only remove what this run created" rule covers them.

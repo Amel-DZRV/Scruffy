@@ -1,6 +1,6 @@
 ---
 name: verification
-description: The proof engine of Scruffy. Use to prove a fix actually works — invoked by bug-eater and feature-dev, run standalone on a branch or diff, or pointed at someone else's PR to check whether their fix does what it claims. Also on "verify this".
+description: The proof engine of Scruffy. Use to prove a fix actually works — invoked by scruffy, run standalone on a branch or diff, or pointed at someone else's PR to check whether their fix does what it claims. Also on "verify this".
 argument-hint: "<branch | PR url | nothing, for the current worktree>"
 ---
 
@@ -45,7 +45,7 @@ Three properties, all required:
 
 ## Discover the economics first
 
-Before anything else, find out what a test run costs. This governs almost every behavioural choice below, and it is discoverable rather than configured. A lane may already have done it at gather — `state.md` carries the class, the command, and the baseline; when it does, use them rather than re-deriving.
+Before anything else, find out what a test run costs. This governs almost every behavioural choice below, and it is discoverable rather than configured. Scruffy may already have done it at gather — `state.md` carries the class, the command, and the baseline; when it does, use them rather than re-deriving.
 
 - What is the build system — `BUILD.bazel`, `Package.swift`, `build.gradle`, `package.json`, `go.mod`?
 - How does CI run the tests? The CI config is the most reliable source for the real command.
@@ -64,7 +64,7 @@ Record which it is in `state.md`. A module that assumes expensive on a Jest repo
 
 ## Nothing here asks for anything
 
-The lane's intake gate is the only point in a run that asks a human for input. Verification never pauses for a device, a screenshot, a path or a missing field. What cannot be produced is a named gap: the row reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict table decides the tier.
+Scruffy's intake gate is the only point in a run that asks a human for input. Verification never pauses for a device, a screenshot, a path or a missing field. What cannot be produced is a named gap: the row reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict table decides the tier.
 
 ## The two failure modes
 
@@ -100,10 +100,10 @@ The model that wrote a fix does not grade it. Everything that *produces* evidenc
 | 1a skeptics | **dispatched by the main thread** | a subagent cannot start subagents, so the skeptics are never launched from inside another agent |
 | 1b red test | caller, inline | it loops with the chain-attempt budget |
 | 1c, 1d, the verdict, the proof block | **`proof-auditor` agent** | the one step that must not be self-graded |
-| Reviewer evidence (captures) | **`evidence-capturer` agent** for the before, dispatched at the lane's step 3; the after is taken **inline** by the lane (its step 8) so output reaches the transcript, then checked by the auditor at 1c | gated on the tree and the installed binary; identical packets except the SHA, so the pair differs only by the diff |
+| Reviewer evidence (captures) | **`evidence-capturer` agent** for the before, dispatched at Scruffy's step 3; the after is taken **inline** by Scruffy (its step 8) so output reaches the transcript, then checked by the auditor at 1c | gated on the tree and the installed binary; identical packets except the SHA, so the pair differs only by the diff |
 | Pair diff, UI-touch decision | `proof-auditor` | the auditor runs `pair-diff.py` and `ui-touch.sh` itself; a pass reported by the caller is not a pass |
 
-**Dispatching the auditor.** Hand it the packet its file lists — mode, repo and dossier paths, `parent` / `test_commit` / `head` SHAs, test file(s) with their recorded hash, test and suite commands, cost class, `evidence/baseline.txt`, and the symptom in the reporter's words (or the criteria and non-goals on a feature), the two capture reports and images when a pair was taken, and the `ui-touch.sh` output for `parent..head`. **Nothing else.** Pasting `chain.md` or the plan into the packet re-creates the bias the split exists to remove. On an expensive loop, dispatch it only while holding the build slot.
+**Dispatching the auditor.** Hand it the packet its file lists — mode, repo and dossier paths, `parent` / `test_commit` / `head` SHAs, test file(s) with their recorded hash, test and suite commands, cost class, `evidence/baseline.txt`, and the symptom in the reporter's words, the two capture reports and images when a pair was taken, and the `ui-touch.sh` output for `parent..head`. **Nothing else.** Pasting `chain.md` or the plan into the packet re-creates the bias the split exists to remove. On an expensive loop, dispatch it only while holding the build slot.
 
 It returns a proof block, a verdict tier, and one line per failed claim. It counts no budgets and fixes nothing — whether a failure is a fix attempt, a chain attempt, or a process failure is the caller's call, from the auditor's output.
 
@@ -111,17 +111,17 @@ It returns a proof block, a verdict tier, and one line per failed claim. It coun
 
 ---
 
-# Mode 1 — Called by a lane
+# Mode 1 — Called by Scruffy
 
-The lane owes you: the symptom in the reporter's words, the suspect area, the conditions, and its top-ranked chain — whether that chain survives is decided here. You owe it: a red test, a verdict, and the proof block for its PR body.
+Scruffy owes you: the symptom in the reporter's words, the suspect area, the conditions, and its top-ranked chain — whether that chain survives is decided here. You owe it: a red test, a verdict, and the proof block for its PR body.
 
 ## 1a. Refute the diagnosis — expensive loops only
 
 **Cheap loop: skip this step, go straight to 1b.** This step exists to kill a wrong answer before paying for a build; on a cheap loop there is no build to protect, and the red test refutes at the same cost while being stricter — a skeptic argues, a test fails.
 
-Expensive loop: two independent skeptics on the chain, each told to **prove it wrong**, defaulting to refuted when uncertain. Both refute → the lane promotes its next hypothesis. All refuted → `blocked`, with both skeptics' reasoning kept.
+Expensive loop: two independent skeptics on the chain, each told to **prove it wrong**, defaulting to refuted when uncertain. Both refute → Scruffy promotes its next hypothesis. All refuted → `blocked`, with both skeptics' reasoning kept.
 
-Either way, **this is the only skeptic pass in the pipeline.** The lane does not run its own — the same chain refuted twice by four agents buys nothing the first two did not.
+Either way, **this is the only skeptic pass in the pipeline.** Scruffy does not run its own — the same chain refuted twice by four agents buys nothing the first two did not.
 
 Skeptics, not debaters. Do not run a consensus round: models converge on the most confidently argued answer rather than the correct one, and agreement between agents feels like strong evidence while being nearly none. Disagreement is the signal worth having.
 
@@ -129,7 +129,7 @@ Skeptics, not debaters. Do not run a consensus round: models converge on the mos
 
 Against the surviving chain, at a seam, asserting the reporter's symptom.
 
-**When the expected behaviour was inferred rather than stated** — the lane's usual case — the inference is the assertion, **verbatim, not a paraphrase of it.** The PR body's assumption line then names this test, so the riskiest guess in the run gets challenged in the one line of code the reviewer was going to read anyway, instead of in a body sentence nobody connects to the diff.
+**When the expected behaviour was inferred rather than stated** — Scruffy's usual case — the inference is the assertion, **verbatim, not a paraphrase of it.** The PR body's assumption line then names this test, so the riskiest guess in the run gets challenged in the one line of code the reviewer was going to read anyway, instead of in a body sentence nobody connects to the diff.
 
 **Run it. Watch it go red.** Keep the failure output in `evidence/` — it is not a log, it is claim 2's proof, and the revert check below depends on it existing.
 
@@ -143,7 +143,7 @@ shasum -a 256 <test file> | tee -a evidence/red-test.sha
 
 This is the in-run guard behind claim 1 — the commit is for the reviewer, the hash is for you, mid-run, before anything is committed. Comparing the assertion by eye is an instruction a model gives itself and can rationalize its way out of; a hash mismatch cannot be reasoned away. Record it here, check it after the fix.
 
-Does not go red → the chain is wrong, however well it read. Report back to the lane; it drops to the next hypothesis. **Chain-attempt budget**, three, then `blocked`.
+Does not go red → the chain is wrong, however well it read. Report back to Scruffy; it drops to the next hypothesis. **Chain-attempt budget**, three, then `blocked`.
 
 Record the exact command in `state.md`. It becomes the regression test in the PR.
 
@@ -197,7 +197,7 @@ Revert the diff, confirm the test goes red again. Catches the case where somethi
 
 # Mode 2 — Standalone on a branch or diff
 
-No lane, no chain, no ticket. "Verify this."
+No chain, no ticket. "Verify this."
 
 Same four claims, minus the refutation. What changes:
 
@@ -255,7 +255,7 @@ Log it: date, PR, radius, whether the independent test confirmed the claim. Sepa
 
 # The proof block
 
-Everything above is discipline; this is the artifact it exists to produce. **One block, fixed shape, pasted verbatim into the PR description (in a collapsible section headed by the verdict tier).** The dossier is for resumption; the proof block is for the reviewer, and the whole point of a fixed shape is that Amel learns to read it in ten seconds. A lane's PR body carries it; Mode 2 puts it in the dossier verdict; Mode 3 puts it in the review.
+Everything above is discipline; this is the artifact it exists to produce. **One block, fixed shape, pasted verbatim into the PR description (in a collapsible section headed by the verdict tier).** The dossier is for resumption; the proof block is for the reviewer, and the whole point of a fixed shape is that Amel learns to read it in ten seconds. Scruffy's PR body carries it; Mode 2 puts it in the dossier verdict; Mode 3 puts it in the review.
 
 ```markdown
 ## Proof
@@ -290,7 +290,7 @@ Three tiers, so "can I just merge this" is mechanical rather than a feeling:
 | Verdict | Means | Criteria — all of them |
 |---|---|---|
 | **MERGE-READY** | approve on the proof alone | contained blast radius (Mode 3's radius table), all four claims proven, revert check done or expensive-loop exemption, suite delta against baseline is zero, nothing in `Not proven`, Reviewer evidence row is a pair or `not applicable` |
-| **REVIEW NEEDED** | the proof holds but the judgement is his | shared blast radius, a design or trade-off embedded in the diff, or any earned exception — no seam, an unverifiable criterion |
+| **REVIEW NEEDED** | the proof holds but the judgement is his | shared blast radius, a design or trade-off embedded in the diff, or any earned exception — no seam |
 | **PROOF INCOMPLETE** | do not merge on this | any process failure, any claim that could not run, a `UI` diff with a `MISSING` Reviewer evidence row |
 
 **A UI diff without a verified pair cannot be MERGE-READY.** This is a gate, not a reminder — an agent that forgot to capture cannot talk its way past a row that reads `MISSING`. It governs Modes 1 and 2; Mode 3's `not applicable — external PR, no build identity available` is the single named exception, because there no pair was ever obtainable.
