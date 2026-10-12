@@ -179,7 +179,13 @@ Cannot reproduce, and nothing found that would have fixed it → `blocked`, not 
 
 **This is the step that replaced Amel watching a simulator or emulator.** He is not present for it.
 
-The order is deliberate and inverted from how a human works it. A human reproduces by hand first, then writes tests after the fix. Do the opposite: a test written after the fix is the classic way to end up with one that would have passed before it. **Write the failing test first, watch it fail, then fix.** That failure *is* the reproduction.
+**For a UI bug, this step is the gate into step 4. No investigator runs until** `evidence/capture-before.png` exists with a `CAPTURED` report, or this step has named why it cannot (`GATE FAILED`, `NO PATH`, `BUILD MISMATCH`, `PACKET INCOMPLETE`) and the item has gone `blocked`. Investigators fed a description chase the described symptom; fed the actual screen, they chase the real one — and "cannot reproduce" is settled here before a strong model is spent.
+
+**Choose the app first** — `references/apps.md` — and record it in `state.md`. Follow a recipe for that build when `../memory/<repo>/recipes/` has one; otherwise the repo skill, and the retro writes the recipe afterwards.
+
+**Non-UI bugs** (crash, logic, data) substitute the cheapest falsifiable artefact for the screenshot — a crash log at the reporter's conditions, a failing run, a wrong value printed — and it too exists before step 4 starts.
+
+The red test is still written at step 5, against the chain step 4 produces; this step pins conditions, claims the device and captures the before-state.
 
 Pin the conditions before you build:
 
@@ -214,6 +220,8 @@ Agent statuses and what they mean here: `CAPTURED` → continue. In the intervie
 Screenshots are **reviewer evidence, not verification.** They cannot fail. A pair proves nothing to a skeptic — the "before" could be any build, which is exactly why the build-identity check exists. The red test is what proves the fix; the screenshots are what get it approved. Both matter; do not confuse them.
 
 ## Step 4 — Investigate
+
+**Entry condition:** step 3's artefact exists, or the item is already `blocked`.
 
 ### 4a. Locate, mechanically
 

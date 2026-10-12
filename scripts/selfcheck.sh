@@ -70,5 +70,12 @@ check "team-lead tools no longer spawn"  grep_empty 'Spawning Developer agents' 
 check "RUNNER does not dispatch team lead" bash -c '! grep -q "Dispatch \`team-lead-<platform>\`" scruffy-feature/mechanisms/pipeline/RUNNER.md'
 check "runner ladder: Agent first"       grep -qi "plain parallel \`Agent\`" shared/orchestration.md
 
+# --- Task 5: reproduce first
+check "apps.md exists"                   test -f scruffy-bug/references/apps.md
+check "apps.md has DevApp row"           grep -q "DevApp" scruffy-bug/references/apps.md
+check "step 3 gates step 4"              grep -q "No investigator runs until" scruffy-bug/SKILL.md
+check "step 3 cites apps.md"             grep -q "references/apps.md" scruffy-bug/SKILL.md
+check "non-UI artefact rule"             grep -q "cheapest falsifiable artefact" scruffy-bug/SKILL.md
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))
