@@ -129,7 +129,7 @@ Expensive loop: record `skipped — expensive loop, the red commit stands in`.
 
 The shape, the rules, and the three verdict tiers are in `../shared/proof-block.md`. Paste the block verbatim into the PR description, inside `<details><summary>Proof — <tier></summary>`. The feature lane uses the lane-specific rows in that file.
 
-Auto-merge is eligible only for `MERGE-READY`. `REVIEW NEEDED` and `PROOF INCOMPLETE` PRs stay open for Amel.
+Auto-merge is eligible only for `MERGE-READY`, and only on `owned: yes`. `REVIEW NEEDED` and `PROOF INCOMPLETE` PRs stay open for Amel.
 
 ## Dossier
 

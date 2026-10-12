@@ -2,15 +2,17 @@
 
 **Status: drafted, awaiting Amel's confirmation** (`DESIGN.md` sections 8 and 9), including whether the full structure is kept or trimmed. Until he confirms, this is the format the pipeline uses.
 
+On `owned: no` repos sections 3 and 13 read `not applicable — repo not owned`, section 17 is omitted, and the PR opens as a draft.
+
 It is the bug lane's PR body, adapted for the feature lane's situation: no external reviewer, auto-merge on a verdict, and a weekly build that reads a changelog.
 
 The body is read by Amel after the fact and by future-Amel, not by a stranger. It also has one machine-readable job: auto-merge gates on the verdict, so the verdict comes first.
 
 ## Rules
 
-- **Ready for review, not draft.** GitHub auto-merge does not apply to draft PRs, so feature-lane PRs open ready.
+- **Ready for review, not draft, on `owned: yes`.** GitHub auto-merge does not apply to draft PRs, so owned feature-lane PRs open ready. On `owned: no` the PR opens as a draft and never auto-merges.
 - **No reviewers assigned.** There is no external reviewer.
-- **Auto-merge eligibility.** Only a `MERGE-READY` verdict is eligible. `REVIEW NEEDED` and `PROOF INCOMPLETE` PRs stay open for Amel. See `RUNNER.md` step 7.
+- **Auto-merge eligibility** (`owned: yes` only). Only a `MERGE-READY` verdict is eligible. `REVIEW NEEDED` and `PROOF INCOMPLETE` PRs stay open for Amel. See `RUNNER.md` step 7.
 - **One feature per PR, kept small**, so a bad merge is a one-command revert.
 - If the repo has its own PR template, mirror its headings where they do not conflict with the order below.
 - The verdict line is exactly `MERGE-READY`, `REVIEW NEEDED` or `PROOF INCOMPLETE`, alone on the first line of the body.
@@ -19,7 +21,7 @@ The body is read by Amel after the fact and by future-Amel, not by a stranger. I
 
 1. **Verdict.** First line: `MERGE-READY`, `REVIEW NEEDED` or `PROOF INCOMPLETE`.
 2. **What this adds.** One line, in the words of someone who wants it, not someone who built it.
-3. **Why.** The problem it solves, with a link to the Decisions Log row (or council outcome) that approved it.
+3. **Why.** The problem it solves, with a link to the Decisions Log row (or council outcome) that approved it. `owned: no` → `not applicable — repo not owned`.
 4. **Proof block.** Pasted verbatim from QA: verdict tier, claims table with commit hashes, the command to replay it, and the mandatory `Not proven` line. For a cross-platform feature this carries the Chief of Engineering's reconciled verdict.
 5. **Acceptance criteria.** A table of each criterion and the passing test that proves it, by name. For a cross-platform feature, split by platform.
 6. **Non-goals.** What this deliberately does not do. Pre-empts the "shouldn't it also…" question.
@@ -29,13 +31,13 @@ The body is read by Amel after the fact and by future-Amel, not by a stranger. I
 10. **Assumptions.** One line each wherever the spec was inferred rather than stated, naming the test that asserts the inference.
 11. **Unverified criteria.** Named. A PR quiet about what it could not verify is worse than one that admits it.
 12. **Review log.** The count of Reviewer findings resolved, plus any Minor findings carried forward.
-13. **Docs updated.** The Notion pages and Decisions Log rows the Docs-Keeper changed for this feature.
+13. **Docs updated.** The Notion pages and Decisions Log rows the Docs-Keeper changed for this feature. `owned: no` → `not applicable — repo not owned`.
 14. **How to test by hand.** Replaces Scruffy's "how to review". Amel tests manually in the weekly build, so: the screen to open, the device, and what to try.
 15. **How to revert.** The one-command undo: a revert of the merge commit, or the flag or config if the repo already uses one.
 16. **Follow-ups.** Linked tickets for everything deliberately deferred.
-17. **Changelog line.** One user-facing sentence. The weekly build collects these into the changelog.
+17. **Changelog line.** One user-facing sentence. The weekly build collects these into the changelog. Omitted on `owned: no`.
 
-Section 17 is written under the exact heading `## Changelog line` so the release step can collect it mechanically.
+Section 17 (`owned: yes`) is written under the exact heading `## Changelog line` so the release step can collect it mechanically.
 
 ## Template
 

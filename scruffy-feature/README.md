@@ -42,7 +42,7 @@ The visual proof scripts live in `../scruffy-bug/scripts/` and need Python with 
 
 ## Dependencies
 
-Notion (the documentation home and the project's source of truth), GitHub (PRs and auto-merge), and a harness that can run parallel subagents and worktrees. QA's mobile toolchain needs a simulator or emulator and the accessibility-tree tooling.
+Notion — owned projects only (`owned: yes`: the documentation home and the project's source of truth), GitHub (PRs; auto-merge on owned projects only), and a harness that can run parallel subagents and worktrees. QA's mobile toolchain needs a simulator or emulator and the accessibility-tree tooling.
 
 ## Status
 

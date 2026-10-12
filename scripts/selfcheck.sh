@@ -90,5 +90,12 @@ check "bug step 10 cites shared/pr.md"   grep -q "shared/pr.md" scruffy-bug/SKIL
 check "feature RUNNER cites shared/pr.md" grep -q "shared/pr.md" scruffy-feature/mechanisms/pipeline/RUNNER.md
 check "publish block not duplicated"     bash -c '[ "$(grep -l "PUSH REFUSED" scruffy-bug/SKILL.md shared/pr.md | wc -l | tr -d " ")" = 1 ]'
 
+# --- Task 8: owned vs not-owned
+for f in scruffy-feature/SKILL.md scruffy-feature/mechanisms/pipeline/RUNNER.md scruffy-feature/roles/docs-keeper/tools.md scruffy-feature/mechanisms/pipeline/references/pr-format.md scruffy-feature/mechanisms/council/RUNNER.md; do
+  check "owned branch in $f" grep -q "owned: no" "$f"
+done
+check "draft when not owned"             grep -q "draft" scruffy-feature/mechanisms/pipeline/RUNNER.md
+check "no unconditional init-project"    bash -c '! grep -q "Missing → \`scripts/init-project.sh" scruffy-feature/SKILL.md'
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

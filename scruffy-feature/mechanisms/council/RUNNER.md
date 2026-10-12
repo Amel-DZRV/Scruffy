@@ -11,7 +11,7 @@ Amel is the CEO and the final authority. Nothing here lets a council, a synthesi
 | `kind` | `product-business` or `design-architecture`. Names the council in the Decisions Log; changes nothing else in the mechanism. |
 | `members` | List of role folders under `roles/`. The persona set. |
 | `brief` | What the council is deciding: the idea, the vision to design against, or the question. |
-| `project` | Path to the project repo (its `memory/projects/` files) and its Notion hub page. |
+| `project` | Path to the project repo (`repo:` in `state.md`). `owned: yes` → its `memory/projects/` files and Notion hub page. `owned: no` → `../memory/<repo>/` and the repo's own docs. |
 | `run_dir` | The feature's dossier, `~/Projects/tickets/<KEY>/`. Council artifacts go in `run_dir/council/<kind>/`. |
 
 ### Default persona sets
@@ -32,8 +32,8 @@ For every member, compose, in this order:
 3. `roles/<role>/tools.md`
 4. `rules/engineering-discipline.md`, only for the engineering roles it applies to (Chief of Engineering, Platform Architects)
 5. `memory/global/<role>.md`
-6. `<project>/memory/projects/<role>.md`
-7. The Notion pages the role's `tools.md` allows it to read for this brief (project truth, never judgment)
+6. `<project>/memory/projects/<role>.md` (`owned: yes`); `../memory/<repo>/recipes/council-<kind>.md` (`owned: no`)
+7. The Notion pages the role's `tools.md` allows it to read for this brief (`owned: yes`), or the repo's own docs and `../memory/<repo>/` (`owned: no`). Project truth, never judgment
 8. The brief
 
 Members are separate agents with separate contexts.
@@ -85,7 +85,7 @@ The decision is a lock point. In this order:
 1. Write `run_dir/council/<kind>/decision.md`: brief, positions, synthesis, Amel's decision and his reason if he gave one.
 2. **Write-back to member memory.** For every member that disagreed, record the decision as a lesson in that member's memory. The goal is to teach the agents how Amel thinks about the product and the company, and for Amel to learn from their reasoning in return.
    - The **decision** is the training signal. The agents' own reasoning is stored as context for it, not as a lesson in its own right.
-   - **Propose a split** for each lesson: which part is a durable global-judgment lesson (`memory/global/<role>.md`) and which part is a project-specific fact (`<project>/memory/projects/<role>.md`). "Amel prefers a smaller first release over a complete one" is global. "The project gates the AI projection behind Pro" is project truth and goes to Notion through the Docs-Keeper, not into either memory file.
+   - **Propose a split** for each lesson: which part is a durable global-judgment lesson (`memory/global/<role>.md`) and which part is a project-specific fact (`<project>/memory/projects/<role>.md`, or `../memory/<repo>/recipes/council-<kind>.md` when `owned: no`). "Amel prefers a smaller first release over a complete one" is global. "The project gates the AI projection behind Pro" is project truth and goes to Notion through the Docs-Keeper (`owned: yes`; on `owned: no`, to `../memory/<repo>/docs/`), not into either memory file.
    - **Show the split inline**, in the same message that records the decision, for Amel to review and correct afterwards.
    - **It never blocks.** The split rides along with the decision. It is not a stop and never pauses the workflow. A wrong split is corrected after the fact: when Amel corrects it, move the entry between files.
 3. **Dispatch the Docs-Keeper** with the decision (no CEO gate).
@@ -95,7 +95,7 @@ Memory files are written in the checkouts. This runner does not commit or push t
 
 ### 6. Digital CEO
 
-Phase from `<project>/memory/projects/digital-ceo.md` and `memory/global/digital-ceo.md`; default is phase 1.
+Phase from `<project>/memory/projects/digital-ceo.md` (`owned: yes`; default phase 1 when `owned: no`) and `memory/global/digital-ceo.md`; default is phase 1.
 
 - **Phase 1, silent observer.** After Amel decides, dispatch the Digital CEO with the council outputs and his decision. It appends the record to its own global memory: what the council proposed, what he chose, and why when he gave a reason. It produces no output the council or Amel sees.
 - **Phase 2, visible fourth voice** (only once Amel has switched it on). Before step 4, dispatch the Digital CEO with the brief and the positions; it returns a predicted decision with its reasoning. Store the prediction in `decision.md` **before** Amel's decision is shown to it, show it to Amel as a labeled fourth voice, and after he decides record whether it matched. Its accuracy over time is the thing being measured.

@@ -14,17 +14,34 @@ The design is in `DESIGN.md`; the per-role specification is in `ROLES.md`. This 
 |---|---|
 | Roles (persona, skills, tools) | `roles/<role>/` |
 | Global judgment memory | `memory/global/<role>.md` |
-| Project facts memory | `<project>/memory/projects/<role>.md`, in the project's own repo |
+| Project facts memory | `<project>/memory/projects/<role>.md`, in the project's own repo (`owned: yes`); `../memory/<repo>/recipes/` (`owned: no`) |
 | Council runner | `mechanisms/council/RUNNER.md` |
 | Pipeline runner | `mechanisms/pipeline/RUNNER.md` |
 | Engineering discipline rule | `rules/engineering-discipline.md` |
 
 ## Before anything runs
 
-1. **Find the project.** `--project <path>`, else the current repo. Its Notion hub page is the source of project truth and wins on conflict.
-2. **Check the project's memory files exist** at `<project>/memory/projects/<role>.md`. Missing → `scripts/init-project.sh <project>` creates them empty. A new project starts empty on purpose.
+1. **Find the project.** The repo comes from `state.md` (`repo:`), written by the dispatcher; there is no `--project` flag. `owned: yes` → its Notion hub page is the source of project truth and wins on conflict. `owned: no` → the repo's own docs and `../memory/<repo>/`.
+2. **Check the project's memory files exist** (`owned: yes` only) at `<project>/memory/projects/<role>.md`. If one is missing, create the set empty with `scripts/init-project.sh <project>`. A new project starts empty on purpose. On `owned: no`, `init-project.sh` is not run; project memory is `../memory/<repo>/recipes/`.
 3. **Use the dossier** `~/Projects/tickets/<KEY>/` with `state.md`, `evidence/`.
-4. **Check what the harness can do**: parallel subagents or a workflow tool, worktrees, GitHub tools, Notion. Roles are standing agents composed from their files by the runners; if a capability a role's `tools.md` needs is missing, say so up front and run with the gap named, never silently.
+4. **Check what the harness can do**: parallel subagents or a workflow tool, worktrees, GitHub tools, and Notion (`owned: yes` only). Roles are standing agents composed from their files by the runners; if a capability a role's `tools.md` needs is missing, say so up front and run with the gap named, never silently.
+
+## Owned or not
+
+The dossier's `state.md` carries `owned: yes | no`, set by the dispatcher. Everything below branches on it:
+
+| | `owned: yes` | `owned: no` |
+|---|---|---|
+| Project truth | Notion hub page | `../memory/<repo>/` and the repo's own docs |
+| Project memory | `<project>/memory/projects/<role>.md`, created by `scripts/init-project.sh` | `../memory/<repo>/recipes/` — `init-project.sh` is **not** run |
+| Docs-Keeper writes to | Notion | `../memory/<repo>/` |
+| PR state | ready for review | **draft** |
+| Auto-merge | eligible on MERGE-READY where wired | never |
+| Weekly build (step 12) | runs | skipped |
+| pr-format sections 3, 13 | as written | "not applicable — repo not owned" |
+| pr-format section 17 (Changelog line) | as written | omitted |
+
+Every other mention of Notion, `memory/projects/`, auto-merge or the weekly build in this lane (roles, runners, references) means the `owned: yes` column. On `owned: no` read "Notion" as "the repo's docs and `../memory/<repo>/`", and never call a Notion tool.
 
 ## The flow
 
@@ -42,9 +59,9 @@ Sequential, with Amel the final authority at every decision point. The **Docs-Ke
 | 7 | **Review** | Reviewers | per step, in a fresh context, lint and format first |
 | 8 | **QA** | QA per platform | acceptance, screenshot-vs-mock, accessibility tree, scope drift, proof block and verdict |
 | 9 | **Reconcile** | Chief of Engineering | the cross-platform verdict, for a cross-platform feature |
-| 10 | **PR** | pipeline runner Part B | ready, no reviewers, format per `mechanisms/pipeline/references/pr-format.md` |
-| 11 | **Auto-merge** | pipeline runner Part B | only on `MERGE-READY`, and only where the verdict is wired as a required check |
-| 12 | **Weekly build** | pipeline runner Part B step 9 | changelog collected from the PRs, project build triggered |
+| 10 | **PR** | pipeline runner Part B | ready (draft when `owned: no`), no reviewers, format per `mechanisms/pipeline/references/pr-format.md` |
+| 11 | **Auto-merge** | pipeline runner Part B | `owned: yes` only; only on `MERGE-READY`, and only where the verdict is wired as a required check |
+| 12 | **Weekly build** | pipeline runner Part B step 9 | changelog collected from the PRs, project build triggered (`owned: yes` only) |
 
 Steps 2 and 3 run `mechanisms/council/RUNNER.md` with the `product-business` and `design-architecture` persona sets. Steps 6 to 11 run `mechanisms/pipeline/RUNNER.md`, Part A once per platform in parallel, then Part B once.
 

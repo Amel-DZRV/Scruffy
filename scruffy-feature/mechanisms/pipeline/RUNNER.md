@@ -12,9 +12,9 @@ Two parts:
 | Field | Meaning |
 |---|---|
 | `platform` | `mobile`, `web` or `backend`. Resolves `team-lead-<platform>`, `reviewer-<platform>`, `qa-<platform>`, `<platform>-architect`, plus the single `developer`. |
-| `feature_key` | Short slug. Names branches and the dossier. |
-| `run_dir` | `~/Projects/tickets/<KEY>/`: `spec.md`, `seam.md`, `plan-<platform>.md`, `state.md`, `evidence/`. |
-| `project` | Project repo path, its `memory/projects/` files, its Notion hub page. |
+| `feature_key` | Short slug. Names branches. The dossier is `<KEY>`, from the dispatcher (see `run_dir`). |
+| `run_dir` | `~/Projects/tickets/<KEY>/`: `spec.md`, `seam.md`, `plan-<platform>.md`, `state.md` (carries `owned: yes | no`), `evidence/`. |
+| `project` | Project repo path (`repo:` in `state.md`). `owned: yes` → its `memory/projects/` files and Notion hub page. `owned: no` → `../memory/<repo>/` and the repo's own docs. |
 | `spec` | What, why, acceptance criteria (locked), non-goals. |
 | `plan` | The architect's plan for this platform. Every step has what / files / criteria / depends on. |
 
@@ -32,8 +32,8 @@ For every agent this runner dispatches, compose in this order:
 1. `roles/<role>/persona.md`, `skills.md`, `tools.md`
 2. `rules/engineering-discipline.md`, for the engineering roles it applies to (Team Lead, Developer, Reviewer)
 3. `memory/global/<role>.md`
-4. `<project>/memory/projects/<role>.md`
-5. The project's coding standards, read from Notion
+4. `<project>/memory/projects/<role>.md` (`owned: yes`); `../memory/<repo>/recipes/` (`owned: no`)
+5. The project's coding standards, read from Notion (`owned: yes`); from the repo's own docs (`owned: no`)
 6. The task packet for that step
 
 An agent receives only its packet. The tools it is given are exactly those in its `tools.md`: the Reviewer and the audit-mode QA get no write access to the code under review, and the Digital CEO is never dispatched by this runner.
@@ -101,17 +101,18 @@ Run after every touched platform has finished Part A.
 - **One platform:** its branch is the feature branch.
 - **Several platforms:** one feature, one PR. Merge the platform branches into `scruffy/<feature-key>` and re-run each platform's acceptance suite on the merged branch. One PR, not one per platform, because merging the halves separately would break the seam atomically; the cross-platform PR shape is still an open item in `DESIGN.md` section 9.
 - **Cross-platform:** dispatch `chief-of-engineering` to reconcile the platform verdicts into the feature's verdict, per `references/verification.md`. It never raises a tier above what a platform's own proof supports.
-- Dispatch `docs-keeper`. It updates the Notion pages the feature changed and the Decisions Log, and returns the list of pages and rows for the PR body.
+- Dispatch `docs-keeper`. `owned: yes` → it updates the Notion pages the feature changed and the Decisions Log, and returns the list of pages and rows for the PR body. `owned: no` → it writes the same content under `../memory/<repo>/docs/<feature-key>.md` and returns that path. It never touches Notion.
 
 ## 7. Open the PR and gate auto-merge
 
-Push the branch and open the PR **ready for review, not draft, with no reviewers assigned**. Publishing images and the tracker comment follow `../shared/pr.md`. Draft vs ready is decided by `owned` (see `SKILL.md` §Owned or not). The body follows `references/pr-format.md` section by section. The verdict is the first line.
+Push the branch and open the PR — **draft when `owned: no`**, ready when `owned: yes` — with no reviewers assigned. Publishing images and the tracker comment follow `../shared/pr.md`. Draft vs ready is decided by `owned` (see `SKILL.md` §Owned or not). The body follows `references/pr-format.md` section by section. The verdict is the first line.
 
 **Auto-merge is gated on the verdict, firmly.** The verdict must actually block the merge, not only label the PR.
 
 | Verdict | Action |
 |---|---|
-| `MERGE-READY` | Eligible. Enable auto-merge **only if** the project's memory records `auto-merge: wired` with the name of the required status check that carries the verdict, and that check is confirmed required on the base branch. Otherwise leave the PR open and say that auto-merge is not wired. |
+| any, when `owned: no` | Draft PR; never enable auto-merge, regardless of verdict. Do not check for `auto-merge: wired`. |
+| `MERGE-READY` | (`owned: yes`) Eligible. Enable auto-merge **only if** the project's memory records `auto-merge: wired` with the name of the required status check that carries the verdict, and that check is confirmed required on the base branch. Otherwise leave the PR open and say that auto-merge is not wired. |
 | `REVIEW NEEDED` | Leave open for Amel. Never enable auto-merge. |
 | `PROOF INCOMPLETE` | Leave open for Amel. Never enable auto-merge. |
 
@@ -121,13 +122,13 @@ Append a row to the shared ledger (`~/Projects/tickets/LEDGER.md`; `lane: featur
 
 ## 8. After the PR
 
-- Move the work along: link the PR from the Decisions Log row (Docs-Keeper) and from any tracker item.
+- Move the work along: link the PR from the Decisions Log row (Docs-Keeper, `owned: yes`) or from the `../memory/<repo>/docs/<feature-key>.md` page (`owned: no`), and from any tracker item.
 - Worktrees are kept (`references/worktrees.md`).
 - Do not poll. Subscribe to the PR's activity if the user asks.
 
 ## 9. Weekly release
 
-Not per task. The weekly build respects the build budget (matching Amel's existing batching practice).
+Not per task, and `owned: yes` only. The weekly build respects the build budget (matching Amel's existing batching practice).
 
 1. Collect the `## Changelog line` section from every PR merged since the last release tag. PRs left unmerged (`REVIEW NEEDED`, `PROOF INCOMPLETE`) are not included.
 2. Write the changelog entry from those lines: one user-facing sentence each, no rewriting of meaning.
