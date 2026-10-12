@@ -97,5 +97,13 @@ done
 check "draft when not owned"             grep -q "draft" scruffy-feature/mechanisms/pipeline/RUNNER.md
 check "no unconditional init-project"    bash -c '! grep -q "Missing → \`scripts/init-project.sh" scruffy-feature/SKILL.md'
 
+# --- Task 9: watch mode
+check "watch.md exists"                  test -f scruffy/references/watch.md
+check "watch red lines"                  grep -q "red test" scruffy/references/watch.md
+check "watch never pushes"               grep -qi "never push" scruffy/references/watch.md
+check "watch batches on expensive"       grep -qi "expensive loop" scruffy/references/watch.md
+check "watch-tick.sh executable"         test -x scruffy-bug/scripts/watch-tick.sh
+check "watch-tick usage"                 bash -c 'scruffy-bug/scripts/watch-tick.sh 2>&1 | grep -q "usage"'
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))
