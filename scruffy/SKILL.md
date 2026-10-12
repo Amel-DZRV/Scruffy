@@ -45,13 +45,9 @@ owned: yes  — Amel's own projects
 
 `owned` switches off Notion, auto-merge, the weekly build and `init-project.sh` in the feature lane, and makes every PR a draft. Record it in `state.md`.
 
-## Setup 5 — Interview
+## Setup 5 — Dossier
 
-`references/interview.md`. Bugs: the checklist, the confidence rule, one message, closed once. Features: nothing here — the feature lane's own touchpoints (ambiguity batch, council disagreements, the go gate) are its interview.
-
-## Setup 6 — Dossier and hand-off
-
-Create `~/Projects/tickets/<KEY>/` per `../scruffy-bug/references/dossier.md` (both lanes use it). Write `state.md` with at least:
+Create `~/Projects/tickets/<KEY>/` per `../scruffy-bug/references/dossier.md` (both lanes use it), before anything is written to `evidence/`. Write `state.md` with at least:
 
 ```
 key: <KEY>
@@ -63,7 +59,19 @@ assumptions:
   - <what the ticket left out and what you assumed>
 ```
 
-Then read the lane's `SKILL.md` and follow it from its first step. Bug → `../scruffy-bug/SKILL.md`. Feature → `../scruffy-feature/SKILL.md`. The lane reads the dossier and does not re-ask what it answers.
+`interview:` is set to `closed` when Setup 7 ends.
+
+## Setup 6 — Path-file lookup (UI bugs only)
+
+`../memory/<repo>/paths/<screen>.md` per `../memory/README-paths.md`. Record `path: fresh | stale | missing` in `state.md`. The interview acts on it.
+
+## Setup 7 — Interview
+
+`references/interview.md`. Bugs: the checklist, the confidence rule, one message, closed once. Features: nothing here — the feature lane's own touchpoints (ambiguity batch, council disagreements, the go gate) are its interview.
+
+## Setup 8 — Hand-off
+
+Read the lane's `SKILL.md` and follow it from its first step. Bug → `../scruffy-bug/SKILL.md`. Feature → `../scruffy-feature/SKILL.md`. The lane reads the dossier and does not re-ask what it answers.
 
 ## Close-out
 

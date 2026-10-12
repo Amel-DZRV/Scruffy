@@ -11,7 +11,7 @@ Per item, by source:
 
 **Read whole field blocks.** A grep for the value you expect cannot see what you did not think to search for.
 
-**Every attachment opened and described in words.** A screenshot is the broken state unless it plainly shows a working one — then it is a flag, not a thing to reinterpret. Download a broken-state screenshot to `evidence/reporter-before.<ext>`.
+**Every attachment opened and described in words.** A screenshot is the broken state unless it plainly shows a working one — then it is a flag, not a thing to reinterpret. Stage a broken-state screenshot in a temp file and move it to `evidence/reporter-before.<ext>` when the dossier is created (Setup 5).
 
 **Linked tickets, one hop.**
 

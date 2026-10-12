@@ -19,7 +19,7 @@ Run against what the ticket and comments already state; ask only for the gaps:
 - the screen or template — for Codeless, the JSON template or payload; for Mosaic, the screen or template name and any account or data state it needs
 - **UI bugs only:** a screenshot of the broken state, unless one is attached (then `evidence/reporter-before.<ext>` already holds it)
 
-**Amel's own asks ride in the same message**, because nothing after the interview may ask him anything:
+**Amel's own asks ride in the same message**, because nothing after the interview may ask him anything. They key off `path:` in `state.md`. Before a `record` installs the parent build, run the toolchain rows of `../scruffy-bug/references/preflight.md` for that platform.
 
 - missing path file → `record` it now: install the parent build, dispatch `evidence-capturer` in `record` mode, he navigates while it records
 - stale path file → `repair path file <path>`, by hand per `../memory/README-paths.md`; a `stale_reason` naming `os` is a `record` into `<screen>@<os>.md`

@@ -141,7 +141,7 @@ Fan out, cheap models, strict output contract. Cheap agents locate and transcrib
 - **Discover how the repo works, rather than assuming.** Platform and language from what is on disk; build and test commands from the build files and the CI config; PR conventions from `.github/PULL_REQUEST_TEMPLATE.md`; lint rules from the tooling config. Record what you found in `state.md` so nothing downstream re-derives it.
 - **Establish the cost class here.** Run `verification`'s economics discovery: time one suite run, on the commit the fix will branch from, so it doubles as the baseline (`evidence/baseline.txt`). Record cheap or expensive in `state.md`. Diagnosis depth in step 4 keys off this, so it must exist before step 4 starts.
 - What is *not* discoverable — which repo a ticket belongs to, repo-specific launch skills — comes from repo routing (Setup 3) or from Amel.
-- **For a UI bug, look the path file up now**, not at step 3: `../memory/<repo>/paths/<screen>.md` per `../memory/README-paths.md`. Record whether it is fresh, stale or missing in `state.md`; the dispatcher's interview acts on it, so a missing or stale path is already resolved by the time this lane starts.
+- **For a UI bug, confirm `state.md` has `path:`** (fresh, stale or missing); the dispatcher already looked it up and the interview resolved it.
 - Web search for framework-level symptoms: a crash inside Litho, a Yoga layout behaviour, an OS-version regression
 
 Every claim lands tagged **claim** or **verified**, with its source. Provenance not tracked from here gets reconstructed later, badly, and the chain has to cite `file:line` to a stranger.
