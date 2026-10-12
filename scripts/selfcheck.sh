@@ -133,6 +133,20 @@ check "no hook in bug lane frontmatter"  bash -c '! grep -q "^hooks:" scruffy-bu
 check "goal-check honours tracks.pending" grep -q "tracks.pending" scruffy-bug/scripts/goal-check.sh
 check "orchestration writes tracks.pending" grep -q "tracks.pending" shared/orchestration.md
 check "bug lane writes tracks.pending"   grep -q "tracks.pending" scruffy-bug/SKILL.md
+check "retro owned by dispatcher only"   bash -c '! grep -q "Run the retro" scruffy-bug/SKILL.md'
+check "bug lane proposes rules"          bash -c '! grep -q "Write it down" scruffy-bug/SKILL.md'
+check "backfill in dispatcher Setup 1"   grep -q "Ledger backfill" scruffy/SKILL.md
+check "backfill gone from preflight"     bash -c '! grep -q "Ledger backfill" scruffy-bug/references/preflight.md'
+check "candidate rules in interview"     grep -qi "candidate rule" scruffy/references/interview.md
+check "dispatcher takes --project"       bash -c 'grep -q -- "--project <path>" scruffy/SKILL.md && grep "^argument-hint:" scruffy/SKILL.md | grep -q -- "--project"'
+check "state.md carries repo_path"       grep -q "repo_path:" scruffy/SKILL.md
+for f in scruffy-feature/SKILL.md scruffy-feature/mechanisms/pipeline/RUNNER.md scruffy-feature/mechanisms/council/RUNNER.md; do
+  check "repo_path read in $f" grep -q "repo_path:" "$f"
+done
+check "no 'no --project flag'"           bash -c '! grep -q "no \`--project\` flag" scruffy-feature/SKILL.md'
+check "Setup 5 resumes state.md"         grep -q "Never overwrite \`interview: closed\`" scruffy/SKILL.md
+check "dispatcher loads fresh recipes"   grep -q "status: fresh" scruffy/SKILL.md
+check "mixed batch order stated"         grep -qi "mixed batch" scruffy/SKILL.md
 
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

@@ -21,7 +21,7 @@ The design is in `DESIGN.md`; the per-role specification is in `ROLES.md`. This 
 
 ## Before anything runs
 
-1. **Find the project.** The repo comes from `state.md` (`repo:`), written by the dispatcher; there is no `--project` flag. `owned: yes` → its Notion hub page is the source of project truth and wins on conflict. `owned: no` → the repo's own docs and `../memory/<repo>/`.
+1. **Find the project.** The dispatcher wrote it to `state.md` — routed, or from `/scruffy … --project <path>`, or the cwd repo: `repo:` is the name (`../memory/<repo>/`), `repo_path:` the checkout every `<project>` below means. `owned: yes` → its Notion hub page is the source of project truth and wins on conflict. `owned: no` → the repo's own docs and `../memory/<repo>/`.
 2. **Check the project's memory files exist** (`owned: yes` only) at `<project>/memory/projects/<role>.md`. If one is missing, create the set empty with `scripts/init-project.sh <project>`. A new project starts empty on purpose. On `owned: no`, `init-project.sh` is not run; project memory is `../memory/<repo>/recipes/`.
 3. **Use the dossier** `~/Projects/tickets/<KEY>/` with `state.md`, `evidence/`.
 4. **Check what the harness can do**: parallel subagents or a workflow tool, worktrees, GitHub tools, and Notion (`owned: yes` only). Roles are standing agents composed from their files by the runners; if a capability a role's `tools.md` needs is missing, say so up front and run with the gap named, never silently.

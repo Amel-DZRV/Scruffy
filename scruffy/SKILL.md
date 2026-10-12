@@ -1,7 +1,7 @@
 ---
 name: scruffy
 description: Use when handed a Jira key or URL, a GitHub issue or PR URL, a TickTick task, a Slack thread, or plain text describing something broken or something wanted — one item or many. Also on "use scruffy", "scruffy, take this", and "scruffy watch <pr>". Classifies each item as a bug or a feature, interviews for what is missing, and runs the matching lane to a PR with proof.
-argument-hint: "<jira key | url | github url | ticktick task | pasted text> ... | watch <pr>"
+argument-hint: "<jira key | url | github url | ticktick task | pasted text> ... [--project <path>] | watch <pr>"
 hooks:
   Stop:
     - hooks:
@@ -19,7 +19,11 @@ This file decides **which lane** an item takes and gets the lane what it needs f
 
 ## Setup 1 — Read what was learned
 
-`../shared/learning.md`, then `../memory/rules.md`. Then, for each repo the items route to, every `../memory/<repo>/recipes/*.md`. Past corrections and recipes apply before anything else.
+`../shared/learning.md`, then `../memory/rules.md`. Past corrections apply before anything else. Recipes load at the end of Setup 4, once the items are routed and the repos are known.
+
+**Ledger backfill.** For every row in `~/Projects/tickets/LEDGER.md` with a PR link and a blank outcome: `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Bash, no model. Fill the PR outcome, and read the `comments` and `reviews` bodies for attached images or screenshot requests to fill the pair-outcome column (`../scruffy-bug/references/dossier.md` §Ledger).
+
+**Candidate rules.** Generalize each PR comment new since the last run into a candidate rule per `../scruffy-bug/references/learning.md` — *"three comments since the last run — here is what I would write down."* They ride in the interview message (Setup 7). Amel approves, edits or discards; only what he approves is written to `../memory/rules.md`. This is the only trigger the correction loop has: a run ends when its PR opens, before he has reviewed it.
 
 ## Setup 2 — Intake
 
@@ -41,23 +45,26 @@ Bugs cluster across items (one root cause, two symptoms → one chain, one PR) p
 
 ## Setup 4 — Route and flag ownership
 
-Repo per `../scruffy-bug/references/repo-routing.md`. Then:
+Repo per `../scruffy-bug/references/repo-routing.md`. A repo the table does not route: `--project <path>` names it, else the repo the session's cwd is in. Then:
 
 ```
 owned: no   — ios, android, rooblocks, pedregal, and any repo under a DoorDash / Deliveroo org
-owned: yes  — Amel's own projects
+owned: yes  — Amel's own projects: a `--project` or cwd repo not under those orgs
 ```
 
-`owned` switches off Notion, auto-merge, the weekly build and `init-project.sh` in the feature lane, and makes every PR a draft. Record it in `state.md`.
+`owned` switches off Notion, auto-merge, the weekly build and `init-project.sh` in the feature lane, and makes every PR a draft. Record it in `state.md` with `repo:` (the name; `../memory/<repo>/` keys off it) and `repo_path:` (the checkout's absolute path: the routing table's path, the stream's `rooblocks` clone, or the `--project` / cwd path).
+
+Then load every `../memory/<repo>/recipes/*.md` with `status: fresh` for each routed repo, per `../shared/learning.md` §Read.
 
 ## Setup 5 — Dossier
 
-Create `~/Projects/tickets/<KEY>/` per `../scruffy-bug/references/dossier.md` (both lanes use it), before anything is written to `evidence/`. Write `state.md` with at least:
+Create `~/Projects/tickets/<KEY>/` per `../scruffy-bug/references/dossier.md` (both lanes use it), before anything is written to `evidence/`. If `state.md` already exists — a resume after `needs info` or `decision needed` — read it first, say where it left off, and add only what is missing. Never overwrite `interview: closed` or an answered assumption. Otherwise write `state.md` with at least:
 
 ```
 key: <KEY>
 lane: bug | feature
 repo: <repo>
+repo_path: <absolute path>
 owned: yes | no
 interview: closed | n/a
 assumptions:
@@ -72,12 +79,14 @@ assumptions:
 
 ## Setup 7 — Interview
 
-`references/interview.md`. Bugs: the checklist, the confidence rule, one message, closed once. Features: nothing here — the feature lane's own touchpoints (ambiguity batch, council disagreements, the go gate) are its interview.
+`references/interview.md`. Bugs: the checklist, the confidence rule, one message, closed once. Features: nothing here — the feature lane's own touchpoints (ambiguity batch, council disagreements, the go gate) are its interview. The Setup 1 candidate rules ride in the interview message; on a run with no bug items they go to Amel as one message before the hand-off.
 
 ## Setup 8 — Hand-off
 
 Read the lane's `SKILL.md` and follow it from its first step. Bug → `../scruffy-bug/SKILL.md`. Feature → `../scruffy-feature/SKILL.md`. The lane reads the dossier and does not re-ask what it answers.
 
+**Mixed batch:** one bug-lane run over every bug item (clustered by its Setup 6), then each feature item in turn, then one close-out for the whole batch.
+
 ## Close-out
 
-The lane prints its own summary and writes its ledger row with `lane` set. Afterwards run the retro in `../shared/learning.md` §Write, then show Amel any candidate rules.
+Once, after every lane run in the batch has ended. Each lane prints its own summary and writes its ledger row with `lane` set; the lanes do not run the retro. Then run the retro in `../shared/learning.md` §Write, once, and show Amel any candidate rules — proposed, written only once he approves.

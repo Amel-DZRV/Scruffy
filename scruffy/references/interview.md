@@ -24,6 +24,8 @@ Run against what the ticket and comments already state; ask only for the gaps:
 - missing path file → `record` it now: install the parent build, dispatch `evidence-capturer` in `record` mode, he navigates while it records
 - stale path file → `repair path file <path>`, by hand per `../memory/README-paths.md`; a `stale_reason` naming `os` is a `record` into `<screen>@<os>.md`
 
+**Candidate rules ride here too** — the batch from the ledger backfill (`SKILL.md` Setup 1), each with the PR comment it came from. He approves, edits or discards; only approved ones are written.
+
 ## Shape
 
 One message, batched across every item. Several turns are fine until the gaps close. Say plainly that the run is stopped and waiting, and on what. **Then it is closed**: no bug-lane step asks a human anything again except Stop 2 (two equally correct fixes, his call).

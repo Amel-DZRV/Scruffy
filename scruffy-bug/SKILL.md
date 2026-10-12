@@ -75,9 +75,7 @@ Forcing a PR onto a policy question or an already-fixed ticket is worse than say
 
 `../shared/learning.md` first, then `references/learning.md` and `../memory/rules.md`. Past corrections apply before you do anything else.
 
-Preflight's ledger backfill (Setup 4) also pulls **new PR comments since the last run.** Generalize each into a candidate rule and show them to Amel before the items start: *"three comments since the last run — here is what I would write down."* He approves, edits, or discards.
-
-This is the only trigger the correction loop has. A run ends when the PR opens, before he has reviewed it, so nothing else picks his comments up.
+The ledger backfill and the candidate rules from new PR comments are the dispatcher's (`../scruffy/SKILL.md` Setup 1); they reached Amel in the interview message.
 
 ## Setup 2 — Intake
 
@@ -87,7 +85,7 @@ Someone else's PR handed over to be reviewed, rather than as context for a bug, 
 
 ## Setup 3 — Route to a repo
 
-The dispatcher already routed the item (`../scruffy/SKILL.md` Setup 4; `references/repo-routing.md`) and wrote `repo` and `owned` to `state.md`. Confirm both are there.
+The dispatcher already routed the item (`../scruffy/SKILL.md` Setup 4; `references/repo-routing.md`) and wrote `repo`, `repo_path` and `owned` to `state.md`. Confirm all three are there.
 
 Everything else about a repo — build system, test command, PR template, lint rules, cost class — gather (step 1) discovers. Do not maintain those here; they go stale and the repo is the source of truth.
 
@@ -101,7 +99,7 @@ Any failure blocking an item's evidence routes that item to `blocked` now, with 
 
 ## Setup 5 — Create dossiers
 
-The dispatcher already created the dossier (`references/dossier.md`) and wrote `state.md`. Confirm it exists with `lane`, `repo`, `owned`, `interview` and `assumptions:` before starting the item.
+The dispatcher already created the dossier (`references/dossier.md`) and wrote `state.md`. Confirm it exists with `lane`, `repo`, `repo_path`, `owned`, `interview` and `assumptions:` before starting the item.
 
 ## Setup 6 — Cluster
 
@@ -436,16 +434,14 @@ Opening, image publishing, path/recipe commit and the tracker comment: `../share
 
 ---
 
-## Close-out — Report, ledger, then learn
+## Close-out — Report and ledger
 
 Once, after every item has reached a terminal state.
 
 **Print `summary.md` in full**, per item. It is the last thing Amel reads, so it goes before the table, not after it.
 
-Then append one row per item to `~/Projects/tickets/LEDGER.md`. **Leave the PR-outcome column blank** — a workflow grading its own output is exactly the bias this design exists to remove. The next run's preflight backfills it.
-
-Run the retro per `../shared/learning.md` §Write.
+Then append one row per item to `~/Projects/tickets/LEDGER.md`. **Leave the PR-outcome column blank** — a workflow grading its own output is exactly the bias this design exists to remove. The next run's dispatcher backfills it (`../scruffy/SKILL.md` Setup 1).
 
 Finish with one table: every input, one row, terminal state, **proof verdict** (`MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`), evidence, PR link. The verdict column is the triage: MERGE-READY rows are the PRs Amel can approve on the proof block alone. Anything deferred or capped is named individually. Silent truncation reads as "covered everything" when it did not. An item redirected as a feature request has a row too, reading `not a bug — feature lane`.
 
-Then `references/learning.md`: every comment he leaves on a PR is a defect in this skill, not just in that fix. Write it down. Correcting a run fixes one run; writing it down fixes all of them.
+The retro is the dispatcher's close-out (`../scruffy/SKILL.md`), once per batch. Every comment he leaves on a PR is a defect in this skill, not just in that fix: it becomes a candidate rule per `references/learning.md`, proposed to him and written only once he approves.

@@ -14,7 +14,7 @@ Two parts:
 | `platform` | `mobile`, `web` or `backend`. Resolves `team-lead-<platform>`, `reviewer-<platform>`, `qa-<platform>`, `<platform>-architect`, plus the single `developer`. |
 | `feature_key` | Short slug. Names branches. The dossier is `<KEY>`, from the dispatcher (see `run_dir`). |
 | `run_dir` | `~/Projects/tickets/<KEY>/`: `spec.md`, `seam.md`, `plan-<platform>.md`, `state.md` (carries `owned: yes | no`), `evidence/`. |
-| `project` | Project repo path (`repo:` in `state.md`). `owned: yes` → its `memory/projects/` files and Notion hub page. `owned: no` → `../memory/<repo>/` and the repo's own docs. |
+| `project` | Project repo path (`repo_path:` in `state.md`; `repo:` is its name, for `../memory/<repo>/`). `owned: yes` → its `memory/projects/` files and Notion hub page. `owned: no` → `../memory/<repo>/` and the repo's own docs. |
 | `spec` | What, why, acceptance criteria (locked), non-goals. |
 | `plan` | The architect's plan for this platform. Every step has what / files / criteria / depends on. |
 

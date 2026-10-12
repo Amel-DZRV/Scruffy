@@ -8,13 +8,13 @@ The contract — what is read, what is written, who approves — is `../shared/l
 
 A run ends when the PR opens. Amel has not reviewed it yet. By the time he comments, that run is long over and the next one is on a different ticket with no reason to look back — which is how a correction loop ends up running in only one direction, filling with self-observed defects and none of his.
 
-**So the next run fetches them.** Preflight already backfills PR outcomes from the ledger; it pulls the comments in the same pass:
+**So the next run fetches them.** The dispatcher's ledger backfill (`../scruffy/SKILL.md` Setup 1) fills PR outcomes and pulls the comments in the same pass:
 
 ```bash
 gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews
 ```
 
-Every ledger row with a PR link gets checked. New comments since last time become candidate entries for this run to propose. His review happens whenever it happens; the loop picks it up.
+Every ledger row with a PR link gets checked. New comments since last time become candidate entries, proposed in that run's interview message. His review happens whenever it happens; the loop picks it up.
 
 ## Write when
 

@@ -74,7 +74,7 @@ Run `unslop-prose` over it before printing. It is written for a human to read la
 | **recipe_hits** | steps that followed a recipe |
 | **minutes_saved** | Σ (recipe median − actual) over those steps |
 
-**A run never writes its own PR outcome.** Preflight of the *next* run backfills it: for every row with a PR link and a blank outcome, `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Four lines of bash, no model. A column that never fills makes the whole ledger decorative.
+**A run never writes its own PR outcome.** The *next* run's dispatcher backfills it (`../scruffy/SKILL.md` Setup 1): for every row with a PR link and a blank outcome, `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Four lines of bash, no model. A column that never fills makes the whole ledger decorative.
 
 Standalone verification runs write a dossier but **no ledger row** — they produce no stop and no PR, so there is nothing to correlate. PR reviews get their own short log instead; see `verification`.
 

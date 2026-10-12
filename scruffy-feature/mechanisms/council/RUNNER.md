@@ -11,7 +11,7 @@ Amel is the CEO and the final authority. Nothing here lets a council, a synthesi
 | `kind` | `product-business` or `design-architecture`. Names the council in the Decisions Log; changes nothing else in the mechanism. |
 | `members` | List of role folders under `roles/`. The persona set. |
 | `brief` | What the council is deciding: the idea, the vision to design against, or the question. |
-| `project` | Path to the project repo (`repo:` in `state.md`). `owned: yes` → its `memory/projects/` files and Notion hub page. `owned: no` → `../memory/<repo>/` and the repo's own docs. |
+| `project` | Path to the project repo (`repo_path:` in `state.md`; `repo:` is its name, for `../memory/<repo>/`). `owned: yes` → its `memory/projects/` files and Notion hub page. `owned: no` → `../memory/<repo>/` and the repo's own docs. |
 | `run_dir` | The feature's dossier, `~/Projects/tickets/<KEY>/`. Council artifacts go in `run_dir/council/<kind>/`. |
 
 ### Default persona sets
