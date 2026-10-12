@@ -47,15 +47,21 @@ Parallelism is earned by the DAG, never manufactured. Serial only when the work 
 
 ## The runner ladder
 
-1. **Plain parallel `Agent` calls** from the main thread, one per track, `isolation: "worktree"`. Default.
-2. **The `Workflow` tool**, when Amel opts in for a run: one `pipeline()` per track, reviewer alternating inside each; worktree isolation per `agent()`.
+1. **Plain parallel `Agent` calls** from the main thread, one per track, each given its track worktree's absolute path (below) and no `isolation` option. Default. The harness's own isolation branches from the main thread's cwd HEAD — not the test-only SHA, and maybe not even the target repo — so the Team Lead creates the worktrees itself.
+2. **The `Workflow` tool**, when Amel opts in for a run: one `pipeline()` per track, reviewer alternating inside each; each `agent()` works in its track's pre-created worktree.
 3. **Serial**, when neither is available: track after track in dependency order. Identical history, slower.
 
 Builds still pass through the build slot whatever the runner.
 
 ## Track worktrees
 
-- Created at `.worktrees/<feature-key>-<platform>-track-<n>`, branch `<feature-key>-<platform>-track-<n>`, **branched from the platform branch's test commit**. Every track sees the red tests; none sees another track's edits.
+- **Created by the Team Lead before dispatch**, from the test-only commit:
+
+  ```bash
+  git -C <repo_path> worktree add <path> -b <branch> <test-sha>
+  ```
+
+  Feature lane: `<path>` is `<repo_path>/.worktrees/<feature-key>-<platform>-track-<n>`, branch `<feature-key>-<platform>-track-<n>`, `<test-sha>` the platform branch's test commit. Bug lane: `<repo_path>/.worktrees/<KEY>-track-<n>`, branch `<KEY>-track-<n>`, `<test-sha>` the test-only SHA in `state.md`. Every track sees the red tests; none sees another track's edits. The absolute path is the developer packet's `worktree`.
 - **Removed after successful integration**, always. The merged commits live on the platform branch.
 - A **blocked** track's worktree is kept: a failed run is exactly when Amel digs in.
 

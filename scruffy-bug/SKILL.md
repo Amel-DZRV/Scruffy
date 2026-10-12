@@ -345,7 +345,7 @@ then print the tail of each log and the exit file, and write `evidence/goal-suit
 
 Worktree per item, mandatory — concurrent items may touch the same repo. Create and clean up per `references/worktrees.md`; that file also owns which terminal states keep the worktree and which release it.
 
-**The Team Lead always exists; the bench does not.** From here the main thread is the Team Lead per `../shared/orchestration.md`: write `plan.md` with `what / files / criteria / depends on` per step (one step for a one-line fix), derive tracks, implement serially yourself when there is one track, dispatch `developer` agents in worktrees when there are several, run `step-reviewer` over each step's SHAs, integrate smallest-first, and hand the branch to step 8 without grading it.
+**The Team Lead always exists; the bench does not.** From here the main thread is the Team Lead per `../shared/orchestration.md`: write `plan.md` with `what / files / criteria / depends on` per step (one step for a one-line fix), derive tracks, implement serially yourself when there is one track, dispatch `developer` agents in track worktrees it creates itself (`<KEY>-track-<n>`, from the test-only commit) when there are several, run `step-reviewer` over each step's SHAs, integrate smallest-first, and hand the branch to step 8 without grading it.
 
 **Several tracks:** write `evidence/tracks.pending` before dispatching (and again on each fix-attempt re-dispatch), remove it once every track is integrated or blocked — the goal is armed by now, and the Stop hook stands down while it exists so waiting on developers is not a "GOAL NOT MET" turn.
 

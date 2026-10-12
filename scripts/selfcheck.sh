@@ -155,6 +155,9 @@ check "bug step 10 records worktree"     grep -q "\`worktree:\`" scruffy-bug/SKI
 check "feature step 7 records worktree"  grep -q "\`worktree:\`" scruffy-feature/mechanisms/pipeline/RUNNER.md
 check "watch-tick skips own login"       grep -q "api user" scruffy-bug/scripts/watch-tick.sh
 check "watch.md says own comments skipped" grep -qi "authored by.*own\|own login" scruffy/references/watch.md
+check "no harness worktree isolation"    bash -c '! grep -qiE "isolation: \"worktree\"|worktree isolation" shared/orchestration.md'
+check "Team Lead adds track worktrees"   grep -q "git -C <repo_path> worktree add <path> -b <branch> <test-sha>" shared/orchestration.md
+check "bug-lane track naming"            grep -q "<KEY>-track-<n>" shared/orchestration.md
 
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

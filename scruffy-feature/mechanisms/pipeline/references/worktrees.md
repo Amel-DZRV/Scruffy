@@ -49,4 +49,4 @@ Only remove what this run created.
 
 ## Track worktrees
 
-`.worktrees/<feature-key>-<platform>-track-<n>`, branched from the platform branch's test commit. Removed immediately after successful integration, kept only when the track ended `blocked`. They never outlive the platform branch's own state.
+`.worktrees/<feature-key>-<platform>-track-<n>`, branched from the platform branch's test commit — created by the Team Lead with `git -C <repo_path> worktree add`, per `../shared/orchestration.md` §Track worktrees, never by the harness's own isolation. Removed immediately after successful integration, kept only when the track ended `blocked`. They never outlive the platform branch's own state.
