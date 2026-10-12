@@ -35,7 +35,7 @@ End every tick with one line: `◎ watch #1234 — 1 new human comment (draft re
 ## Red lines
 
 - **Never push, post, or resolve a thread** without his word in that session. "Say push" is the only exit for commits.
-- A finding, from a bot or a human, that would touch a red test's file is **refused and reported**, never committed. The files are every path in `evidence/red-test.sha` — one `<hash>  <path>` line per test, the path relative to `worktree:`; one line for a bug, one per criterion test for a feature. Even a comment-only edit changes a hash and breaks what the test-only commit proves. Report the finding, the file, and that the hash stays as recorded.
+- A finding, from a bot or a human, that would touch a red test's file is **refused and reported**, never committed. The files are every path in `evidence/red-test.sha` — one `<hash>  <path>` line per test, the path as recorded (a relative one resolves under `worktree:`); one line for a bug, one per criterion test for a feature. Even a comment-only edit changes a hash and breaks what the test-only commit proves. Report the finding, the file, and that the hash stays as recorded.
 - A bot finding that widens the diff beyond `plan.md`'s files is a drafted reply, not a fix.
 
 ## Learning hook

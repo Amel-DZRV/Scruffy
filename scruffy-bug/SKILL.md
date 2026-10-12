@@ -184,7 +184,7 @@ Pin the conditions before you build:
 
 - **Latest main, always.** Never a release branch, never the reporter's version.
 - **Claim a device.** Take one that is not running an app under test, record its identifier in `state.md`, pin the rest of the run to it. All busy → boot a fresh one rather than queue. Commands per platform in `references/platforms/`.
-- **Reuse the interview's install** when `state.md` has `device:`, `record_sha:` and `build_identity:` from a `record`: same device, and that install is the before build while `record_sha` is the commit the fix branches from. Otherwise build as below.
+- **Reuse the interview's install** when `state.md` has `device:`, `bundle:`, `record_sha:` and `build_identity:` from a `record`: same device and bundle, and that install is the before build while `record_sha` is the commit the fix branches from. Otherwise build as below.
 - **Missing device or config is assumed, and the assumption is stated** — in the PR body. "Reported without a device; reproduced on iPhone 17, iOS 26.5" narrows the bug for whoever reads it next. The interview already asked; this is for what the reporter could not say. It is never a new question.
 
 The red test itself is written by `verification` — but **against the surviving chain, which does not exist until step 4.** This step pins the conditions, claims the device, and captures the before-state; the handoff happens at step 5, once step 4 has a top-ranked chain. What this skill owes `verification` then: the symptom in the reporter's words, the suspect area, the conditions pinned here, and the top chain.

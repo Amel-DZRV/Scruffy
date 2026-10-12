@@ -158,7 +158,7 @@ check "watch.md says own comments skipped" grep -qi "authored by.*own\|own login
 check "no harness worktree isolation"    bash -c '! grep -qiE "isolation: \"worktree\"|worktree isolation" shared/orchestration.md'
 check "Team Lead adds track worktrees"   grep -q "git -C <repo_path> worktree add <path> -b <branch> <test-sha>" shared/orchestration.md
 check "bug-lane track naming"            grep -q "<KEY>-track-<n>" shared/orchestration.md
-check "interview record has its inputs"  bash -c 'grep -q "record_worktree:" scruffy/references/interview.md && grep -q "build-identity-before.txt" scruffy/references/interview.md'
+check "interview record has its inputs"  bash -c 'grep -q "record_worktree:" scruffy/references/interview.md && grep -q "build-identity-before.txt" scruffy/references/interview.md && grep -q "bundle:" scruffy/references/interview.md && grep -q "bundle:" scruffy-bug/SKILL.md'
 check "bug step 3 reuses the record install" grep -q "record_sha" scruffy-bug/SKILL.md
 check "feature commands use installed paths" grep_empty '\.\./scruffy-bug/scripts/' scruffy-feature/mechanisms scruffy-feature/roles
 check "bug lane takes no \$ARGUMENTS"   bash -c '! grep -q "ARGUMENTS" scruffy-bug/SKILL.md'
