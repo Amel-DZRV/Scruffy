@@ -344,7 +344,7 @@ Step 5 produced a confirmed-red test, and Stop 2 (if it fired) is answered. From
 
 then print the tail of each log and the exit file, and write `evidence/goal-suite.delta` (first line `NO NEW FAILURES` or the failure names, compared by name against `evidence/baseline.txt`). A green exit with no success marker in the log is a failure, not a pass.
 
-**Disarm** when step 8 ends: the script removes the marker itself on success and writes `evidence/goal.met`. Fix attempts exhausted → write `evidence/goal.blocked` and `blocked.md`, which lets the turn end. The harness also overrides a Stop hook after eight consecutive blocks without progress; three fix attempts sit well inside that.
+**Disarm** when step 8 ends: the script removes the marker itself on success and writes `evidence/goal.met`. One track out of fix attempts is only that track `blocked`, memos kept; the goal stays armed and the other tracks continue. Write `evidence/goal.blocked` and `blocked.md`, which lets the turn end, only when every track is blocked or the item ends otherwise. The harness also overrides a Stop hook after eight consecutive blocks without progress. The budget is three fix attempts per track, so one track sits well inside that cap; N tracks can reach 3×N attempts in total, and past eight consecutive no-progress blocks the harness ends the turn, so any track not yet finished is then recorded `blocked` in `blocked.md` as it stands.
 
 **If the hook does not run** (hooks disabled, folder untrusted — `/goal` itself is unavailable in the same cases): print the condition above as a ready-to-paste `/goal <condition>` line and carry on; the inline-run rule and the `proof-auditor` pass do not depend on the hook.
 
@@ -401,7 +401,7 @@ Hand off to `verification`, which dispatches the `proof-auditor` agent with the 
 | Process | build broken, sim gone, suite cannot run | No retry loop — retrying does not fix a dead toolchain. PR opens, proof marked incomplete, failing check named. |
 | Solution | test stays red, suite breaks | The auditor's failed row becomes `evidence/fail-memo-<track>-<n>.md` per `../shared/orchestration.md` §Fail memo. **3 fix attempts per track** — separate from step 5's chain attempts — then that track `blocked` with the memos kept; other tracks finish and integrate. |
 
-The blocked summary is written and left for him to read. It does not halt the run and wait.
+`blocked.md` is written and left for him to read, per blocked track: what was tried (the fail memos), why each attempt failed, and the options in play. It does not halt the run and wait.
 
 ## Step 9 — Clean up
 
