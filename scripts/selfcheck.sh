@@ -21,5 +21,21 @@ check "feature SKILL has no argument-hint" bash -c '! grep -q "^argument-hint:" 
 check "no .taimi run dir"                 grep_empty '\.taimi/' scruffy-feature/
 check "pr-format path fixed"              bash -c '! grep -q "\`references/pr-format.md\`" scruffy-feature/SKILL.md'
 
+# --- Task 1: bug lane moved, memory/ and shared/ exist
+check "scruffy-bug exists"               test -f scruffy-bug/SKILL.md
+check "old scruffy/ gone"                test ! -e scruffy/references/dossier.md
+check "bug SKILL name"                   grep -q "^name: scruffy-bug$" scruffy-bug/SKILL.md
+check "bug SKILL not model-invocable"    grep -q "^disable-model-invocation: true$" scruffy-bug/SKILL.md
+check "hook path updated"                grep -q 'skills/scruffy-bug/scripts/goal-check.sh' scruffy-bug/SKILL.md
+check "memory/rules.md exists"           test -f memory/rules.md
+check "no LEARNED.md anywhere"           bash -c '! find . -name LEARNED.md -not -path "./.git/*" | grep -q .'
+check "path template moved"              test -f memory/TEMPLATE-path.md
+check "paths README moved"               test -f memory/README-paths.md
+check "no scruffy/scripts refs"          grep_empty 'scruffy/scripts/' agents scruffy-bug verification
+check "no scruffy/paths refs"            grep_empty 'scruffy/paths/' agents scruffy-bug verification
+check "no skills/scruffy/ refs"          grep_empty 'skills/scruffy/' agents scruffy-bug verification
+check "three scripts present once"       bash -c 'test -f scruffy-bug/scripts/pair-diff.py && test -f scruffy-bug/scripts/tree-diff.py && test -f scruffy-bug/scripts/ui-touch.sh && test ! -e scruffy-feature/mechanisms/pipeline/scripts'
+check "shared/ exists"                   test -d shared
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

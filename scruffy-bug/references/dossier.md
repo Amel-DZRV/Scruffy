@@ -62,7 +62,7 @@ Run `unslop-prose` over it before printing. It is written for a human to read la
 
 | Column | Why |
 |---|---|
-| date, key, lane, repo, cost class | Lets rates be sliced — trust is rarely uniform across repos. `lane` is always `bug`; the column stays so new rows line up with the existing `LEDGER.md` header |
+| date, key, lane, repo, cost class | Lets rates be sliced — trust is rarely uniform across repos. `lane` is `bug` or `feature`; the column stays so new rows line up with the existing `LEDGER.md` header |
 | terminal state | The distribution across the states *is* the health metric |
 | stops fired | Stop 1 (the intake gate) firing on most items means intake is too weak; stop 2 never firing means its trigger is mis-specified |
 | **what the fix touched** | same file / same component / another team's code / a shared contract. Pairs with the stop-2 column to tune its trigger from real rows rather than guesses |
@@ -70,7 +70,7 @@ Run `unslop-prose` over it before printing. It is written for a human to read la
 | chain correct? | Filled in after the fact. The most important column |
 | **proof verdict** | `MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`, from the PR's proof block |
 | **PR outcome** | `approved as-is` / `approved with comments` / `changes requested` / `closed unmerged` |
-| **pair outcome** | `accepted` / `replaced` (reviewer or Amel attached a different image) / `requested` (a reviewer asked for a screenshot the PR lacked) / `n/a` (NON-UI). Backfilled with `PR outcome` from the PR's comments and attachments. `requested` on a row whose proof block said `not applicable` is a defect in `ui-touch.sh`'s patterns; `replaced` is a framing lesson for `LEARNED.md` |
+| **pair outcome** | `accepted` / `replaced` (reviewer or Amel attached a different image) / `requested` (a reviewer asked for a screenshot the PR lacked) / `n/a` (NON-UI). Backfilled with `PR outcome` from the PR's comments and attachments. `requested` on a row whose proof block said `not applicable` is a defect in `ui-touch.sh`'s patterns; `replaced` is a framing lesson for `../memory/rules.md` |
 
 **A run never writes its own PR outcome.** Preflight of the *next* run backfills it: for every row with a PR link and a blank outcome, `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Four lines of bash, no model. A column that never fills makes the whole ledger decorative.
 

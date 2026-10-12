@@ -1,12 +1,12 @@
 ---
-name: scruffy
-description: Use when handed a Jira key or URL, a GitHub issue or PR URL, a TickTick task, a support request, a Slack thread, or plain text describing something broken — one item or many. Also on "use scruffy" or "scruffy, take this". Takes each bug from intake to a draft PR with proof.
-argument-hint: "<jira key | url | github url | ticktick task | pasted text> ... (one or many)"
+name: scruffy-bug
+description: Scruffy's bug lane. Entered only via /scruffy, which classifies the item, runs the interview and writes the dossier. Takes one bug from gather to a draft PR with proof.
+disable-model-invocation: true
 hooks:
   Stop:
     - hooks:
         - type: command
-          command: "$HOME/.claude/skills/scruffy/scripts/goal-check.sh"
+          command: "$HOME/.claude/skills/scruffy-bug/scripts/goal-check.sh"
 ---
 
 # Scruffy
@@ -79,7 +79,7 @@ Forcing a PR onto a policy question or an already-fixed ticket is worse than say
 
 ## Setup 1 — Read what was learned
 
-`references/learning.md`, then `LEARNED.md` if it exists. Past corrections apply before you do anything else.
+`references/learning.md`, then `../memory/rules.md`. Past corrections apply before you do anything else.
 
 Preflight's ledger backfill (Setup 4) also pulls **new PR comments since the last run.** Generalize each into a candidate rule and show them to Amel before the items start: *"three comments since the last run — here is what I would write down."* He approves, edits, or discards.
 
@@ -144,7 +144,7 @@ Fan out, cheap models, strict output contract. Cheap agents locate and transcrib
 - **Discover how the repo works, rather than assuming.** Platform and language from what is on disk; build and test commands from the build files and the CI config; PR conventions from `.github/PULL_REQUEST_TEMPLATE.md`; lint rules from the tooling config. Record what you found in `state.md` so nothing downstream re-derives it.
 - **Establish the cost class here.** Run `verification`'s economics discovery: time one suite run, on the commit the fix will branch from, so it doubles as the baseline (`evidence/baseline.txt`). Record cheap or expensive in `state.md`. Diagnosis depth in step 4 keys off this, so it must exist before step 4 starts.
 - What is *not* discoverable — which repo a ticket belongs to, repo-specific launch skills — comes from repo routing (Setup 3) or from Amel.
-- **For a UI bug, look the path file up now**, not at step 3: `scruffy/paths/<repo>/<screen>.md` per `paths/README.md`. Record whether it is fresh, stale or missing in `state.md`; the intake gate below acts on it.
+- **For a UI bug, look the path file up now**, not at step 3: `../memory/<repo>/paths/<screen>.md` per `../memory/README-paths.md`. Record whether it is fresh, stale or missing in `state.md`; the intake gate below acts on it.
 - Web search for framework-level symptoms: a crash inside Litho, a Yoga layout behaviour, an OS-version regression
 
 Every claim lands tagged **claim** or **verified**, with its source. Provenance not tracked from here gets reconstructed later, badly, and the chain has to cite `file:line` to a stranger.
@@ -177,7 +177,7 @@ Anything the ticket cannot answer and the reporter cannot be asked is assumed in
 **The gate also carries Amel's own asks**, in the same stop, because the reporter cannot do them and nothing after the gate may:
 
 - **Missing path file → record it now.** Install the parent build, dispatch `evidence-capturer` in `record` mode, and have Amel navigate to the screen while it records, before the gate closes. A missing path is no longer a step-3 park; the gate is where it is resolved.
-- **Stale path file → `repair path file <path>`**, listed here, done by hand per `paths/README.md`. Same exception as before: a `stale_reason` naming `os` is `record` mode into `<screen>@<os>.md`, also done here.
+- **Stale path file → `repair path file <path>`**, listed here, done by hand per `../memory/README-paths.md`. Same exception as before: a `stale_reason` naming `os` is `record` mode into `<screen>@<os>.md`, also done here.
 
 Draft the reporter message as `questions.md`, ready to paste as one ticket comment, and print Amel's asks as a short list under it. The run waits at the gate for the answers; when they arrive it never returns to it.
 
@@ -229,7 +229,7 @@ Same device, same OS, same pinned settings as the "after" — the agent enforces
 - **The agent records the path while he navigates**, so the "after" replays without him. That is what removes the two-presence problem this skill exists to remove.
 - **After the gate nothing parks and nothing asks.** A capture that fails later is a gap, not a handoff: the pair is not shipped, the row on the proof block reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict is `PROOF INCOMPLETE`. The reporter's `reporter-before` screenshot still goes in the PR as the "before", labelled as theirs.
 
-Agent statuses and what they mean here: `CAPTURED` → continue. At the gate (record runs): `GATE FAILED` or `NO PATH` → Amel retries the navigation while still at the gate. After the gate: `GATE FAILED`, `NO PATH` or `PATH STALE` → flip the path file to stale per `paths/README.md` (except when the reason is that the file already exists — then nothing is flipped, the file on disk is healthy), record the gap as above, and list `repair path file <path>` or `path exists: repair or rename <path>` in `summary.md` for next time. `BUILD MISMATCH` → process failure, reinstall, dispatch again once; never a retry loop, never a question.
+Agent statuses and what they mean here: `CAPTURED` → continue. At the gate (record runs): `GATE FAILED` or `NO PATH` → Amel retries the navigation while still at the gate. After the gate: `GATE FAILED`, `NO PATH` or `PATH STALE` → flip the path file to stale per `../memory/README-paths.md` (except when the reason is that the file already exists — then nothing is flipped, the file on disk is healthy), record the gap as above, and list `repair path file <path>` or `path exists: repair or rename <path>` in `summary.md` for next time. `BUILD MISMATCH` → process failure, reinstall, dispatch again once; never a retry loop, never a question.
 
 **Where the build identity comes from.** Whoever installs the app writes `evidence/build-identity-<label>.txt` per `references/platforms/<platform>.md`, "Build identity", right after install. The agent re-hashes at capture. Without that file the agent returns `PACKET INCOMPLETE`, which is correct: a screenshot of an unknown build is not evidence. Response: supply the missing field and dispatch again; it is never guessed.
 
@@ -401,10 +401,10 @@ Hand off to `verification`, which dispatches the `proof-auditor` agent with the 
 1. **The red test turns green** — same test, **file re-hashed against the hash recorded at the step 5 handoff.** A mismatch is reported, not absorbed. A red test adjusted during implementation until it passed proves nothing, and that is the easiest thing in this whole workflow to cheat.
 2. **No new suite failures against baseline** — the repo's suite, not the changed file's tests, compared against the parent-commit baseline `verification` recorded. Commands and the delta pasted; pass counts, not full logs.
 3. **Nothing else moved** — snapshot failures on components you touched are intentional, update the baseline. Failures on components you did not touch → `decision needed`, never auto-updated. A suite re-run to green is `blocked` and flagged flaky, not a pass.
-4. **Reviewer evidence** — a UI diff only (`scruffy/scripts/ui-touch.sh <repo> <parent> <head>` decides; `NON-UI` reads `not applicable`). Take the after-capture **inline** by following `agents/evidence-capturer.md`'s procedure in this thread — the same packet as the "before", with only `sha`, `label` and `build_identity` changed, and the same refusals — so the report and image are in the conversation. The `before` was dispatched as an agent at step 3 because it ran before the goal. Then, in order:
+4. **Reviewer evidence** — a UI diff only (`~/.claude/skills/scruffy-bug/scripts/ui-touch.sh <repo> <parent> <head>` decides; `NON-UI` reads `not applicable`). Take the after-capture **inline** by following `agents/evidence-capturer.md`'s procedure in this thread — the same packet as the "before", with only `sha`, `label` and `build_identity` changed, and the same refusals — so the report and image are in the conversation. The `before` was dispatched as an agent at step 3 because it ran before the goal. Then, in order:
    - **Stage one — the hard gate.** `pair-diff.py before after --mask <the after report's mask: line>` — the gate element's frame, in screenshot pixels. Exit 3 means nothing changed inside the mask: **identical, so nothing visibly changed — a failure and a fix attempt**, back to step 7. Exit 1 means the pair differs outside the fix and is not shipped — re-capture once, then `decision needed` with both images attached. Exit 2 is a process failure, never a pass: the row reads `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>`, `MISSING: mask invalid <value>`, or `MISSING: mask too large <value>`. `mask: none` is valid only for a pair expected to be pixel-identical; a UI fix passes the gate element's frame. A `UI` diff with no `CAPTURED` pair is `PROOF INCOMPLETE`, named on the `Not proven` line.
    - **Stage two — did the right thing change.** Only after stage one exits 0: Read both images (the tool shows them), with the expected-behaviour sentence from step 1 and the mask frame beside them. Judge, in the transcript, in two or three sentences: is the change inside the frame the one the symptom describes, in the direction the expected-behaviour sentence states, and has nothing else visibly moved, clipped or recoloured? Default to FAIL when unsure. A FAIL is a fix attempt. Then write `evidence/goal-ui.status`: `PASS` only when stage one exited 0 **and** stage two passes, else `FAIL: <reason>`. `proof-auditor` repeats stage two on the same images without seeing your reasoning.
-   - **Accessibility tree — a secondary signal, never a gate.** `scruffy/scripts/tree-diff.py before.tree after.tree` (the `.tree.json` / `.tree.xml` the capture wrote). Report its `a11y:` line and findings. A tree can look right while the screen is visibly broken, so it neither replaces stage one or two nor changes the verdict; its value is catching what a picture cannot — a lost accessible name, a new unlabelled control, an element that moved.
+   - **Accessibility tree — a secondary signal, never a gate.** `~/.claude/skills/scruffy-bug/scripts/tree-diff.py before.tree after.tree` (the `.tree.json` / `.tree.xml` the capture wrote). Report its `a11y:` line and findings. A tree can look right while the screen is visibly broken, so it neither replaces stage one or two nor changes the verdict; its value is catching what a picture cannot — a lost accessible name, a new unlabelled control, an element that moved.
 
 **Revert check** — revert the diff, confirm the test goes red again — **only when the test is cheap to run.** A package target in seconds: mandatory. A 35-minute app build: skip it. The red failure output from step 5, kept in `evidence/`, already establishes the test failing on code without the fix, provided the file is unchanged. That is what claim 1's hash check and the test-only commit prove.
 
@@ -450,7 +450,7 @@ Push the branch, open a **draft** PR, repo's own template, follow the repo's `at
 **Attaching the screenshots — a step that must be seen to work.** A local PNG cannot be referenced from markdown, and `gh pr create` or the API cannot attach one, so images are published first and the body links them:
 
 ```bash
-scruffy/scripts/publish-evidence.sh <repo> <KEY> before=evidence/capture-before.png after=evidence/capture-after.png
+~/.claude/skills/scruffy-bug/scripts/publish-evidence.sh <repo> <KEY> before=evidence/capture-before.png after=evidence/capture-after.png
 ```
 
 - **Exit 0** → it printed one image-markdown line per file (pushed to an orphan `scruffy-evidence/<KEY>` branch on the PR's repo). Paste those lines into *Before / after*.
@@ -461,7 +461,7 @@ scruffy/scripts/publish-evidence.sh <repo> <KEY> before=evidence/capture-before.
 
 Run `unslop-prose rewrite --preset crisp` over the body. A PR body taking minutes to read is a defect in the body, not proof of thoroughness.
 
-**Commit any new or changed path file in Scruffy** alongside the ticket comment — a recorded path that lives only in `~/.claude/skills/` is lost on the next install; see Scruffy's README for which install shape writes it into the repo directly.
+**Commit any new or changed path file in Scruffy** alongside the ticket comment — a recorded path that lives only outside the repo is lost on the next install; see Scruffy's README for which install shape writes it into the repo directly.
 
 **Then comment on the ticket** — the PR link, and the repro confirmation from step 5 if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
 

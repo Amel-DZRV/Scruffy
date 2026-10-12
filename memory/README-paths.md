@@ -1,10 +1,10 @@
 # Path library
 
-One file per screen, `<repo>/<screen>.md`, in the shape of `TEMPLATE.md`. A path is how the capture agent reaches a screen without Amel.
+One file per screen, `<repo>/<screen>.md`, in the shape of `TEMPLATE-path.md`. A path is how the capture agent reaches a screen without Amel.
 
 ## Lookup
 
-Scruffy's step 1 (gather) derives `<screen>` from the ticket's component or template name, kebab-cased, and looks for a path file under `paths/<repo>/`. `<screen>@<os>.md` for the current runtime is preferred over `<screen>.md`; if neither exists, it is not found. Not found → `record` mode, done at the intake gate with Amel present — never mid-run. Found and `status: fresh` → `capture` mode. Found and `status: stale` → a `repair path file <path>` ask at the intake gate, never an automatic re-record — except a `stale_reason` naming `os`, which records `<screen>@<os>.md`.
+Scruffy's step 1 (gather) derives `<screen>` from the ticket's component or template name, kebab-cased, and looks for a path file under `memory/<repo>/paths/`. `<screen>@<os>.md` for the current runtime is preferred over `<screen>.md`; if neither exists, it is not found. Not found → `record` mode, done at the intake gate with Amel present — never mid-run. Found and `status: fresh` → `capture` mode. Found and `status: stale` → a `repair path file <path>` ask at the intake gate, never an automatic re-record — except a `stale_reason` naming `os`, which records `<screen>@<os>.md`.
 
 ## Who writes what
 
@@ -18,7 +18,7 @@ Scruffy's step 1 (gather) derives `<screen>` from the ticket's component or temp
 
 Recorded files are committed to Scruffy at the end of the run — step 10 does it alongside the ticket comment.
 
-Recipes append without approval because a wrong recipe fails its own replay and is marked stale. That is the whole difference between this library and `LEARNED.md`: a rule cannot be replayed, a path can.
+Recipes append without approval because a wrong recipe fails its own replay and is marked stale. That is the whole difference between this library and `rules.md`: a rule cannot be replayed, a path can.
 
 ## Staleness
 
@@ -36,4 +36,4 @@ A `@<os>` suffix — `care-home-carousel@27.0.md` — marks a path recorded for 
 
 ## What is not here
 
-Commands. Those live in `scruffy/references/platforms/`. Repo launch skills. Those live in the repos and are named by `references/repo-routing.md`. A path names a skill; it does not copy it.
+Commands. Those live in `scruffy-bug/references/platforms/`. Repo launch skills. Those live in the repos and are named by `references/repo-routing.md`. A path names a skill; it does not copy it.

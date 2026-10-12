@@ -4,7 +4,7 @@ Correcting a run fixes one run. Writing it down fixes every run after it.
 
 ## Read first
 
-`LEARNED.md`, at step 1, before anything else. If it does not exist yet, carry on.
+`../memory/rules.md`, at step 1, before anything else. If it does not exist yet, carry on.
 
 ## The trigger problem, and the fix
 
@@ -45,22 +45,22 @@ Two ways to get this wrong:
 
 Entries drafted from PR comments are **shown to Amel for approval**, at the start of the run that fetched them. "Three comments since the last run — here is what I would write down." He approves, edits, or discards.
 
-A file that fills automatically fills with noise, and a `LEARNED.md` nobody trusts is worse than a short one. Self-observed defects, where the run has direct evidence of its own mistake, are appended without asking.
+A file that fills automatically fills with noise, and a `../memory/rules.md` nobody trusts is worse than a short one. Self-observed defects, where the run has direct evidence of its own mistake, are appended without asking.
 
 ## Path recipes are the exception
 
-`paths/<repo>/<screen>.md` files append without approval. A recipe is verified by its own replay — a wrong one fails the gate and is marked stale — so the noise argument above does not apply. Lessons *about* captures ("crop to the component", "the sample app hides the real padding") are rules, not recipes: they come in through the PR-comment backfill and go through the propose step like everything else. See `../paths/README.md`.
+`../memory/<repo>/paths/<screen>.md` files append without approval. A recipe is verified by its own replay — a wrong one fails the gate and is marked stale — so the noise argument above does not apply. Lessons *about* captures ("crop to the component", "the sample app hides the real padding") are rules, not recipes: they come in through the PR-comment backfill and go through the propose step like everything else. See `../memory/README-paths.md`.
 
 ## Where it goes
 
 | The correction is about | Write it to |
 |---|---|
 | How this repo's code works, or a convention | that repo's `CLAUDE.md` |
-| How this skill should behave | `LEARNED.md` |
+| How this skill should behave | `../memory/rules.md` |
 | A missing or wrong routing fact | `references/repo-routing.md` |
 | A toolchain path or version that moved | `references/preflight.md` |
 
-Prefer the specific file over `LEARNED.md`. `LEARNED.md` is for behaviour that has no better home.
+Prefer the specific file over `../memory/rules.md`. `../memory/rules.md` is for behaviour that has no better home.
 
 ## Format
 
@@ -88,7 +88,7 @@ The cost belongs in the entry. "Broke someone else's passing test and cost a ful
 
 ## Health of the loop
 
-A `LEARNED.md` that is entirely self-observed means the backfill is not running, or PR comments are not being generalized. That is the loop working in one direction only, and it is worth noticing — entries sourced from Amel are the more valuable kind and the harder kind to get.
+A `../memory/rules.md` that is entirely self-observed means the backfill is not running, or PR comments are not being generalized. That is the loop working in one direction only, and it is worth noticing — entries sourced from Amel are the more valuable kind and the harder kind to get.
 
 ## The ledger
 

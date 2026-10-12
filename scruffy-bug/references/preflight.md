@@ -13,7 +13,7 @@ Helpers run in parallel, cheapest model that answers reliably. They do not need 
 | Repos | Every repo the run could touch exists, worktree clean, `git fetch` succeeds, file count recorded |
 | Toolchain | Whatever the routed repos actually need — discovered from their build files and CI config, not assumed |
 | Access | `gh auth status`, tracker reachable, network for web search |
-| Skills | Every `SKILL.md` this run will read is present and readable at its absolute path, and `~/.claude/agents/evidence-capturer.md`, `scruffy/scripts/pair-diff.py`, `scruffy/scripts/ui-touch.sh` present and executable |
+| Skills | Every `SKILL.md` this run will read is present and readable at its absolute path, and `~/.claude/agents/evidence-capturer.md`, `~/.claude/skills/scruffy-bug/scripts/pair-diff.py`, `~/.claude/skills/scruffy-bug/scripts/ui-touch.sh` present and executable |
 | Ledger backfill | For every ledger row with a PR link and a blank outcome: `gh pr view <url> --json state,reviewDecision,mergedAt,comments,reviews`. Bash, no model. **Fetches the review comments as well as the outcome** — see `references/learning.md`; this is the only trigger the correction loop has. Read the fetched `comments` and `reviews` bodies for attached images or screenshot requests to fill the pair-outcome column. |
 
 ## Check the toolchain the repo asks for, not a generic one
