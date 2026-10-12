@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Stop hook for the autonomous execution phase ("the goal"). Registered by scruffy's
 # frontmatter; runs after every turn for the rest of the session, and does nothing unless a
-# dossier holds evidence/goal.active. Exit 0 lets the turn end; exit 2 sends the unmet checks
+# dossier holds evidence/goal.active (and no evidence/tracks.pending). Exit 0 lets the turn end; exit 2 sends the unmet checks
 # back to the model as its next instruction.
 #
 # Why a script and not a prompt hook: a prompt hook sees only the hook's JSON input, never the
@@ -25,6 +25,9 @@ for marker in "${markers[@]}"; do
 
   # the item gave up on its own budget: let the turn end, the blocked artifact explains why
   if [ -f "$ev/goal.blocked" ]; then rm -f "$marker"; continue; fi
+  # developers are out on parallel tracks: the main thread is waiting, not stopping early.
+  # The Team Lead writes tracks.pending at each dispatch and removes it at integration.
+  [ -f "$ev/tracks.pending" ] && continue
 
   miss=()
   # 1. the red test, same file, passing

@@ -68,6 +68,8 @@ Each track's Developer receives, and nothing else from the run's context:
 - the seam notes (`seam.md`) where they exist, and the project's conventions
 - the test command and cost class
 
+**While developers are out, write `evidence/tracks.pending`** (one line per track in flight) — at the first dispatch and at every fix-attempt re-dispatch — and remove it when the last returned track is integrated or blocked. Bug lane: the goal's Stop hook (`../scruffy-bug/scripts/goal-check.sh`) lets a turn end while it exists, so waiting on background developers does not read as "GOAL NOT MET".
+
 It returns commits on its track branch (one per step) and a per-step report: which criterion tests pass, Reviewer findings and their disposition, `[DEBUG-*]` probes added and removed. A Developer that returns prose without commits has returned nothing.
 
 ## Review between steps

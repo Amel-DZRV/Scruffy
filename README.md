@@ -31,7 +31,7 @@ Symlink only. The skills reach `shared/` and `memory/` relative to their own dir
 
 `brew install cameroncooke/axe/axe` for iOS captures; without it the pair is `ungated` and the verdict caps at REVIEW NEEDED on UI diffs.
 
-`scruffy-bug` registers a Stop hook (`scruffy-bug/scripts/goal-check.sh`) from its frontmatter; it drives the autonomous phase and needs hooks enabled and the folder trusted. With hooks off it prints a `/goal` line to paste instead.
+`scruffy` registers a Stop hook (`scruffy-bug/scripts/goal-check.sh`) from its frontmatter, so it is live for the whole `/scruffy` run; it drives the bug lane's autonomous phase, does nothing unless a dossier holds `evidence/goal.active`, and needs hooks enabled and the folder trusted. With hooks off the bug lane prints a `/goal` line to paste instead.
 
 On Windows, Git Bash's `ln -s` copies instead of linking unless Developer Mode is on; a directory junction needs no admin. From `cmd.exe`:
 

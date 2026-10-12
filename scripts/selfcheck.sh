@@ -26,7 +26,7 @@ check "scruffy-bug exists"               test -f scruffy-bug/SKILL.md
 check "old scruffy/ gone"                test ! -e scruffy/references/dossier.md
 check "bug SKILL name"                   grep -q "^name: scruffy-bug$" scruffy-bug/SKILL.md
 check "bug SKILL not model-invocable"    grep -q "^disable-model-invocation: true$" scruffy-bug/SKILL.md
-check "hook path updated"                grep -q 'skills/scruffy-bug/scripts/goal-check.sh' scruffy-bug/SKILL.md
+check "hook path updated"                grep -q 'skills/scruffy-bug/scripts/goal-check.sh' scruffy/SKILL.md
 check "memory/rules.md exists"           test -f memory/rules.md
 check "no LEARNED.md anywhere"           bash -c '! find . -name LEARNED.md -not -path "./.git/*" | grep -q .'
 check "path template moved"              test -f memory/TEMPLATE-path.md
@@ -126,6 +126,13 @@ check "README has no copy install"       bash -c '! grep -qi "copying works too"
 check "no stale repo-wide refs"          bash -c '! grep -rniE "feature-dev|bug-eater|screen-audit|LEARNED\.md" README.md scruffy scruffy-bug shared agents verification memory | grep -q .'
 check "no intake gate leftovers"         bash -c '! grep -rniE "intake gate" README.md scruffy scruffy-bug scruffy-feature shared agents verification memory | grep -q .'
 check "relative ../ paths resolve"       python3 scripts/check-paths.py
+
+# --- Final review fixes
+check "goal hook on the dispatcher"      bash -c 'grep -q "^hooks:" scruffy/SKILL.md && grep -q "goal-check.sh" scruffy/SKILL.md'
+check "no hook in bug lane frontmatter"  bash -c '! grep -q "^hooks:" scruffy-bug/SKILL.md'
+check "goal-check honours tracks.pending" grep -q "tracks.pending" scruffy-bug/scripts/goal-check.sh
+check "orchestration writes tracks.pending" grep -q "tracks.pending" shared/orchestration.md
+check "bug lane writes tracks.pending"   grep -q "tracks.pending" scruffy-bug/SKILL.md
 
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

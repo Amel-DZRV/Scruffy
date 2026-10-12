@@ -2,11 +2,6 @@
 name: scruffy-bug
 description: Scruffy's bug lane. Entered only via /scruffy, which classifies the item, runs the interview and writes the dossier. Takes one bug from gather to a draft PR with proof.
 disable-model-invocation: true
-hooks:
-  Stop:
-    - hooks:
-        - type: command
-          command: "$HOME/.claude/skills/scruffy-bug/scripts/goal-check.sh"
 ---
 
 # Scruffy
@@ -327,7 +322,7 @@ Then log two ledger columns for every proposal: whether stop 2 fired, and what t
 
 Step 5 produced a confirmed-red test, and Stop 2 (if it fired) is answered. From this point to the end of step 8 nothing asks anyone for anything, and the run does not stop on its own judgement that it is done — a completion condition decides, checked after every turn.
 
-**Claude Code's `/goal` cannot be set by a skill.** It is a command Amel types, a wrapper around a session-scoped Stop hook whose evaluator reads only the transcript and runs nothing itself. This skill gets the same behaviour from the Stop hook in this file's frontmatter, backed by `scripts/goal-check.sh`: after every turn the script reads what the inline runs wrote under `evidence/`, and either lets the turn end or sends the unmet checks back as the next instruction. (A prompt-type hook was rejected because it never sees the transcript; an agent-type hook because it is experimental and read-only.)
+**Claude Code's `/goal` cannot be set by a skill.** It is a command Amel types, a wrapper around a session-scoped Stop hook whose evaluator reads only the transcript and runs nothing itself. Scruffy gets the same behaviour from a Stop hook declared in the dispatcher's frontmatter (`../scruffy/SKILL.md`, active for the whole `/scruffy` invocation, which is how this lane is entered), backed by `scripts/goal-check.sh`: after every turn the script reads what the inline runs wrote under `evidence/`, and either lets the turn end or sends the unmet checks back as the next instruction. (A prompt-type hook was rejected because it never sees the transcript; an agent-type hook because it is experimental and read-only.)
 
 **Arm it** by writing `evidence/goal.active` as the last act of step 6, never earlier — a goal armed during Stop 2 would stop you waiting for him. Three `key=value` lines: `test_file=<path to the red test>`, `success_marker=<regex the platform prints on a pass, e.g. TEST SUCCEEDED>`, `ui=1` when `ui-touch.sh` says `UI`, else `ui=0`.
 
@@ -346,13 +341,15 @@ then print the tail of each log and the exit file, and write `evidence/goal-suit
 
 **Disarm** when step 8 ends: the script removes the marker itself on success and writes `evidence/goal.met`. One track out of fix attempts is only that track `blocked`, memos kept; the goal stays armed and the other tracks continue. Write `evidence/goal.blocked` and `blocked.md`, which lets the turn end, only when every track is blocked or the item ends otherwise. The harness also overrides a Stop hook after eight consecutive blocks without progress. The budget is three fix attempts per track, so one track sits well inside that cap; N tracks can reach 3×N attempts in total, and past eight consecutive no-progress blocks the harness ends the turn, so any track not yet finished is then recorded `blocked` in `blocked.md` as it stands.
 
-**If the hook does not run** (hooks disabled, folder untrusted — `/goal` itself is unavailable in the same cases): print the condition above as a ready-to-paste `/goal <condition>` line and carry on; the inline-run rule and the `proof-auditor` pass do not depend on the hook.
+**If the hook does not run** (hooks disabled, folder untrusted — `/goal` itself is unavailable in the same cases — or this lane was reached without `/scruffy` being invoked, so the dispatcher's hook never registered): print the condition above as a ready-to-paste `/goal <condition>` line and carry on; the inline-run rule and the `proof-auditor` pass do not depend on the hook.
 
 ## Step 7 — Implement
 
 Worktree per item, mandatory — concurrent items may touch the same repo. Create and clean up per `references/worktrees.md`; that file also owns which terminal states keep the worktree and which release it.
 
 **The Team Lead always exists; the bench does not.** From here the main thread is the Team Lead per `../shared/orchestration.md`: write `plan.md` with `what / files / criteria / depends on` per step (one step for a one-line fix), derive tracks, implement serially yourself when there is one track, dispatch `developer` agents in worktrees when there are several, run `step-reviewer` over each step's SHAs, integrate smallest-first, and hand the branch to step 8 without grading it.
+
+**Several tracks:** write `evidence/tracks.pending` before dispatching (and again on each fix-attempt re-dispatch), remove it once every track is integrated or blocked — the goal is armed by now, and the Stop hook stands down while it exists so waiting on developers is not a "GOAL NOT MET" turn.
 
 Review between steps, the developer packet, scope and integration are all in `../shared/orchestration.md`; this file adds only the bug-lane specifics below.
 

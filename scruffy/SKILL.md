@@ -2,6 +2,11 @@
 name: scruffy
 description: Use when handed a Jira key or URL, a GitHub issue or PR URL, a TickTick task, a Slack thread, or plain text describing something broken or something wanted — one item or many. Also on "use scruffy", "scruffy, take this", and "scruffy watch <pr>". Classifies each item as a bug or a feature, interviews for what is missing, and runs the matching lane to a PR with proof.
 argument-hint: "<jira key | url | github url | ticktick task | pasted text> ... | watch <pr>"
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "$HOME/.claude/skills/scruffy-bug/scripts/goal-check.sh"
 ---
 
 # Scruffy
