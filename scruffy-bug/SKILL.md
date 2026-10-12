@@ -433,25 +433,9 @@ Push the branch, open a **draft** PR, repo's own template, follow the repo's `at
 
 **The first PR comment** carries the alternative you considered and rejected, with the reason it lost — one or two lines, the answer to the "why not just do X" round-trip that is the most common one on a repo you do not own — and the blast radius (what else reads the thing you changed). Nothing else goes in the comment.
 
-**Attaching the screenshots — a step that must be seen to work.** A local PNG cannot be referenced from markdown, and `gh pr create` or the API cannot attach one, so images are published first and the body links them:
-
-```bash
-~/.claude/skills/scruffy-bug/scripts/publish-evidence.sh <repo> <KEY> before=evidence/capture-before.png after=evidence/capture-after.png
-```
-
-- **Exit 0** → it printed one image-markdown line per file (pushed to an orphan `scruffy-evidence/<KEY>` branch on the PR's repo). Paste those lines into *Before / after*.
-- **Exit 3, `PUSH REFUSED`** — no write access, the usual case on a repo you do not own → fall back: *Before / after* gets a placeholder line naming the two files and their absolute paths, `Screenshots to attach: drag capture-before.png and capture-after.png from <dossier>/evidence/ into this description`, and the run's final report lists the same paths so Amel can drag them in. This is a named gap, not a failure; the `For those interested` section says the images were not attached.
-- **Reporter's screenshot only** (no capture pair): show it as `Before (from the reporter)`, and `After: not captured` — never leave the section looking complete.
-- **Verify after opening.** Read the PR body back and fetch each image URL; one that does not resolve is the same fallback. A PR whose images do not render is the defect this step exists to prevent, so "I included the markdown" is not a result.
-- The evidence branch outlives the PR; list it in `summary.md` so it can be deleted after merge.
-
 Run `unslop-prose rewrite --preset crisp` over the body. A PR body taking minutes to read is a defect in the body, not proof of thoroughness.
 
-**Commit any new or changed path file in Scruffy** alongside the ticket comment — a recorded path that lives only outside the repo is lost on the next install; see Scruffy's README for which install shape writes it into the repo directly.
-
-**Then comment on the ticket** — the PR link, and the repro confirmation from step 5 if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
-
-**TickTick-sourced item:** also move the card, per `references/ticktick.md` — comment with the PR link, then move it to the `In Review` column if that board has one. Every other terminal state leaves the card where it is.
+Opening, image publishing, path/recipe commit and the tracker comment: `../shared/pr.md`.
 
 ---
 

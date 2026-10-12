@@ -105,7 +105,7 @@ Run after every touched platform has finished Part A.
 
 ## 7. Open the PR and gate auto-merge
 
-Push the branch and open the PR **ready for review, not draft, with no reviewers assigned**. The body follows `references/pr-format.md` section by section. The verdict is the first line.
+Push the branch and open the PR **ready for review, not draft, with no reviewers assigned**. Publishing images and the tracker comment follow `../shared/pr.md`. Draft vs ready is decided by `owned` (see `SKILL.md` §Owned or not). The body follows `references/pr-format.md` section by section. The verdict is the first line.
 
 **Auto-merge is gated on the verdict, firmly.** The verdict must actually block the merge, not only label the PR.
 

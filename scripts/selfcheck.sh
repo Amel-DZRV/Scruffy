@@ -83,5 +83,12 @@ check "plan-only-when-earned removed"    bash -c '! grep -q "Plan only when it e
 check "step 8 cites fail memo"           grep -q "fail-memo" scruffy-bug/SKILL.md
 check "fix budget per track in bug lane" grep -q "per track" scruffy-bug/SKILL.md
 
+# --- Task 7: shared PR mechanics
+check "shared/pr.md exists"              test -f shared/pr.md
+check "publish-evidence in shared/pr.md" grep -q "publish-evidence.sh" shared/pr.md
+check "bug step 10 cites shared/pr.md"   grep -q "shared/pr.md" scruffy-bug/SKILL.md
+check "feature RUNNER cites shared/pr.md" grep -q "shared/pr.md" scruffy-feature/mechanisms/pipeline/RUNNER.md
+check "publish block not duplicated"     bash -c '[ "$(grep -l "PUSH REFUSED" scruffy-bug/SKILL.md shared/pr.md | wc -l | tr -d " ")" = 1 ]'
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))
