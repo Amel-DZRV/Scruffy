@@ -352,9 +352,9 @@ then print the tail of each log and the exit file, and write `evidence/goal-suit
 
 Worktree per item, mandatory — concurrent items may touch the same repo. Create and clean up per `references/worktrees.md`; that file also owns which terminal states keep the worktree and which release it.
 
-**Plan only when it earns one.** Multi-file or multi-concern → `superpowers:writing-plans` into `plan.md`, then `subagent-driven-development`, one helper per independent step, one commit each. A three-line fix goes straight to the diff; a plan and a subagent chain for a one-liner is pure ceremony.
+**The Team Lead always exists; the bench does not.** From here the main thread is the Team Lead per `../shared/orchestration.md`: write `plan.md` with `what / files / criteria / depends on` per step (one step for a one-line fix), derive tracks, implement serially yourself when there is one track, dispatch `developer` agents in worktrees when there are several, run `step-reviewer` over each step's SHAs, integrate smallest-first, and hand the branch to step 8 without grading it.
 
-**Code review between steps** means the `step-reviewer` agent, not a second look from the model that wrote the step. Give it only the two SHAs bounding the step, the plan step it was supposed to satisfy, and nothing from this run's own context — a reviewer primed with the implementer's reasoning inherits its blind spots. It reports Critical / Important / Minor; Critical and Important get fixed before the next step starts, Minor gets noted and carried to step 9.
+Review between steps, the developer packet, scope and integration are all in `../shared/orchestration.md`; this file adds only the bug-lane specifics below.
 
 **Fixing at the source doesn't stop at the origin.** The chain in step 4 already names every link between cause and symptom — each one is a place the same class of bug can recur through a different caller, a mock, or a future edit. Where a link is cheap to guard (a validation at a boundary the chain crossed, not a rewrite), add it alongside the fix. This is defense-in-depth, not scope creep: it stays inside the file(s) the chain already touched, and it does not chase problems the chain didn't find.
 
@@ -399,7 +399,7 @@ Hand off to `verification`, which dispatches the `proof-auditor` agent with the 
 | Mode | Looks like | Response |
 |---|---|---|
 | Process | build broken, sim gone, suite cannot run | No retry loop — retrying does not fix a dead toolchain. PR opens, proof marked incomplete, failing check named. |
-| Solution | test stays red, suite breaks | Back to the fix, **3 fix attempts** — a budget separate from step 5's chain attempts — then `blocked` with a summary: what was tried, why each attempt failed, the two options in play. |
+| Solution | test stays red, suite breaks | The auditor's failed row becomes `evidence/fail-memo-<track>-<n>.md` per `../shared/orchestration.md` §Fail memo. **3 fix attempts per track** — separate from step 5's chain attempts — then that track `blocked` with the memos kept; other tracks finish and integrate. |
 
 The blocked summary is written and left for him to read. It does not halt the run and wait.
 

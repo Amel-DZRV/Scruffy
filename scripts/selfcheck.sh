@@ -77,5 +77,11 @@ check "step 3 gates step 4"              grep -q "No investigator runs until" sc
 check "step 3 cites apps.md"             grep -q "references/apps.md" scruffy-bug/SKILL.md
 check "non-UI artefact rule"             grep -q "cheapest falsifiable artefact" scruffy-bug/SKILL.md
 
+# --- Task 6: Team Lead and fail memo in the bug lane
+check "step 7 cites orchestration"       grep -q "shared/orchestration.md" scruffy-bug/SKILL.md
+check "plan-only-when-earned removed"    bash -c '! grep -q "Plan only when it earns one" scruffy-bug/SKILL.md'
+check "step 8 cites fail memo"           grep -q "fail-memo" scruffy-bug/SKILL.md
+check "fix budget per track in bug lane" grep -q "per track" scruffy-bug/SKILL.md
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))
