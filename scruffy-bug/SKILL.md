@@ -15,7 +15,7 @@ hooks:
 
 Amel is a cross-platform triage owner on SDUI renderers — Mosaic (DoorDash) and Codeless Components / RooBlocks (Deliveroo) — across repos he does not own. He approves and comments; he does not type code.
 
-Scruffy solves bugs: something is broken and the fix belongs in code. One bug, start to finish. Feature development moved to Taimi, a separate repo.
+Scruffy solves bugs: something is broken and the fix belongs in code. One bug, start to finish. Features are not worked here: the feature lane is reached through `/scruffy`, which classifies each item before it gets here.
 
 **This file owns diagnosis.** Proof belongs to `verification`, which it calls at step 5 and step 8; step 3 pins the conditions that handoff runs under. Preflight, worktrees, the dossier and the ledger are the setup steps below and the files under `references/`.
 
@@ -35,12 +35,12 @@ Both batched across every item in a run. Never one interrupt per bug.
 
 | Stop | When | You are asking |
 |---|---|---|
-| 1 | End of gather — **the intake gate** | Everything the rest of the run needs from a human, in one go: the reporter message, plus anything only Amel can do (recording a screen path) |
+| 1 | Before the lane starts — **the dispatcher's interview** (`../scruffy/references/interview.md`) | Everything the rest of the run needs from a human, in one go: the reporter message, plus anything only Amel can do (recording a screen path) |
 | 2 | Before implementing — after the red test is confirmed | Which of two equally correct fixes — only when the choice is his |
 
 A well-specified bug fires neither. If both fire routinely, this file is wrong, not him.
 
-**Commander's intent.** The intake gate is the only point in the run that drafts a message for a reporter, and the only point that asks a human to do anything. Once it closes, no step — verification included — pauses to ask for anything. What cannot be obtained after the gate degrades to a named gap on the `Not proven` line (`PROOF INCOMPLETE` where the verdict table says so), never to a question. Stop 2 sits before the autonomous handoff, so it does not break this.
+**Commander's intent.** The dispatcher's interview is the only point in the run that drafts a message for a reporter, and the only point that asks a human to do anything. Once it closes, no step — verification included — pauses to ask for anything. What cannot be obtained after the interview degrades to a named gap on the `Not proven` line (`PROOF INCOMPLETE` where the verdict table says so), never to a question. Stop 2 sits before the autonomous handoff, so it does not break this.
 
 ## Progress, in the chat
 
@@ -57,7 +57,6 @@ Amel follows a run by reading the conversation, and this workflow has not been p
 - One line to start, one to finish; a step that found nothing or failed says so (`✘ … — could not reproduce, ending blocked`).
 - **Say what is being waited on.** A build, a device, a dispatched agent: `… building the parent for the before-capture (expected ~35 min, holding the build slot)`, `… dispatching evidence-capturer (before, iPhone 17)`. A silent wait reads as a hang.
 - **During the goal**, start each turn with its progress against the condition — `◎ MOSAIC-3559 · goal 2/3 met — waiting on: after-screenshot comparison` — so the Stop hook's pushback is visible as progress, not as a mystery restart.
-- At the intake gate, say plainly that the run is stopped and waiting, and on what.
 - Several items: print the one-line status table whenever an item reaches a terminal state.
 
 ## Terminal states
@@ -68,7 +67,7 @@ Every item reaches exactly one. **A PR is not the only exit.**
 |---|---|---|
 | `PR opened` | step 10 | branch + draft PR |
 | `recommend close` | step 2 | `verdict.md` — merged PR named, red test passing on clean main |
-| `needs info` | step 1, at the intake gate | `questions.md`, ready to paste as a ticket comment |
+| `needs info` | step 1 exit test, or the dispatcher's interview | `questions.md`, ready to paste as a ticket comment |
 | `decision needed` | step 6 or 7 | `memo.md` — what changed, the trade-off, who decides. Also covers "already in flight" (step 6). |
 | `blocked` | any step | `blocked.md` with the exact failure |
 | `deferred` | Running the items — budget | named in the final table, never started-and-abandoned |
@@ -87,15 +86,13 @@ This is the only trigger the correction loop has. A run ends when the PR opens, 
 
 ## Setup 2 — Intake
 
-Per item: Jira via the Atlassian MCP; GitHub via `gh issue view` / `gh pr view --comments --files`; TickTick per `references/ticktick.md`; anything else as-is.
+Done by the dispatcher: intake and the bug/feature classification are in `../scruffy/references/intake.md`. Read the dossier's `state.md`, including `## Source text` and `assumptions:`. Step 1's own lookups (duplicates, linked tickets, repo history) read whole field blocks too — never grep a dump for the value you expect.
 
-**Read whole field blocks. Never grep a dump for the value you expect** — you cannot see what you did not think to search for. When a Jira dump is too large to read whole, parse it and print the fields you need in full: `labels`, `attachment`, `issuelinks`, `parent`, `components`, `comment.comments`.
-
-**Scruffy works bugs only.** An item that is a feature request — something wanted rather than broken, or debt to remove — gets one line saying so, with the reason, and a pointer to Taimi. It is not worked here and nothing is asked about it: it takes a row in the final table and no dossier. Someone else's PR handed over to be reviewed, rather than as context for a bug, is `verification`'s review mode (mode 3) — invoke that directly.
+Someone else's PR handed over to be reviewed, rather than as context for a bug, is `verification`'s review mode (mode 3) — the dispatcher routes it there.
 
 ## Setup 3 — Route to a repo
 
-The one fact that is not discoverable. A Jira key does not say which codebase it lives in. `references/repo-routing.md`.
+The dispatcher already routed the item (`../scruffy/SKILL.md` Setup 4; `references/repo-routing.md`) and wrote `repo` and `owned` to `state.md`. Confirm both are there.
 
 Everything else about a repo — build system, test command, PR template, lint rules, cost class — gather (step 1) discovers. Do not maintain those here; they go stale and the repo is the source of truth.
 
@@ -109,7 +106,7 @@ Any failure blocking an item's evidence routes that item to `blocked` now, with 
 
 ## Setup 5 — Create dossiers
 
-`references/dossier.md`. One per item. Write `state.md` before starting any item.
+The dispatcher already created the dossier (`references/dossier.md`) and wrote `state.md`. Confirm it exists with `lane`, `repo`, `owned`, `interview` and `assumptions:` before starting the item.
 
 ## Setup 6 — Cluster
 
@@ -144,7 +141,7 @@ Fan out, cheap models, strict output contract. Cheap agents locate and transcrib
 - **Discover how the repo works, rather than assuming.** Platform and language from what is on disk; build and test commands from the build files and the CI config; PR conventions from `.github/PULL_REQUEST_TEMPLATE.md`; lint rules from the tooling config. Record what you found in `state.md` so nothing downstream re-derives it.
 - **Establish the cost class here.** Run `verification`'s economics discovery: time one suite run, on the commit the fix will branch from, so it doubles as the baseline (`evidence/baseline.txt`). Record cheap or expensive in `state.md`. Diagnosis depth in step 4 keys off this, so it must exist before step 4 starts.
 - What is *not* discoverable — which repo a ticket belongs to, repo-specific launch skills — comes from repo routing (Setup 3) or from Amel.
-- **For a UI bug, look the path file up now**, not at step 3: `../memory/<repo>/paths/<screen>.md` per `../memory/README-paths.md`. Record whether it is fresh, stale or missing in `state.md`; the intake gate below acts on it.
+- **For a UI bug, look the path file up now**, not at step 3: `../memory/<repo>/paths/<screen>.md` per `../memory/README-paths.md`. Record whether it is fresh, stale or missing in `state.md`; the dispatcher's interview acts on it, so a missing or stale path is already resolved by the time this lane starts.
 - Web search for framework-level symptoms: a crash inside Litho, a Yoga layout behaviour, an OS-version regression
 
 Every claim lands tagged **claim** or **verified**, with its source. Provenance not tracked from here gets reconstructed later, badly, and the chain has to cite `file:line` to a stranger.
@@ -160,28 +157,9 @@ Neither writable — no description, or a description nobody can parse into a sy
 
 **Hard stop:** gather ends when you can state the symptom in the reporter's conditions, name a suspect area, and give a version or commit range. Past that you are investigating, and that is step 4.
 
-### Stop 1 — the intake gate
+### Stop 1 — the dispatcher's interview
 
-Only what `gh`, Jira, TickTick, grep, or web search cannot answer. Read every comment before you ask — a question already answered in comment 4 is the same defect as asking a lookup.
-
-**Front-load. This is the only message you will ever draft for the reporter**, so it must carry everything the rest of the run needs. Run the checklist against what the ticket and comments already state, and ask only for the gaps:
-
-- platform and device (model, OS version)
-- app version, and the branch or build the reporter was on
-- feature flags and experiment arms
-- platform-specific repro inputs — for Codeless, the JSON template or payload that renders the broken screen; for Mosaic, the screen or template name and any account or data state it needs
-- **UI bugs only: a screenshot of the broken state.** Skip it when one is already attached, which step 1 downloaded to `evidence/reporter-before.<ext>`. Otherwise ask for it; a screenshot of the working state is not a substitute.
-
-Anything the ticket cannot answer and the reporter cannot be asked is assumed instead and recorded (see below). Nothing on this list is re-asked later, by any step.
-
-**The gate also carries Amel's own asks**, in the same stop, because the reporter cannot do them and nothing after the gate may:
-
-- **Missing path file → record it now.** Install the parent build, dispatch `evidence-capturer` in `record` mode, and have Amel navigate to the screen while it records, before the gate closes. A missing path is no longer a step-3 park; the gate is where it is resolved.
-- **Stale path file → `repair path file <path>`**, listed here, done by hand per `../memory/README-paths.md`. Same exception as before: a `stale_reason` naming `os` is `record` mode into `<screen>@<os>.md`, also done here.
-
-Draft the reporter message as `questions.md`, ready to paste as one ticket comment, and print Amel's asks as a short list under it. The run waits at the gate for the answers; when they arrive it never returns to it.
-
-He may not know the answers either; he is not the reporter. Three ways out per question: answer it, ask the reporter (→ `needs info` when the item cannot proceed without it), or assume it (→ recorded, and surfaced in the PR body).
+The interview happened in the dispatcher (`../scruffy/references/interview.md`): the reporter checklist, Amel's own asks (recording or repairing a path file), and the confidence rule. **Precondition:** `state.md` holds `interview: closed`. If it does not, stop and say the item must go back through `/scruffy`. After this point no bug-lane step asks a human anything except Stop 2.
 
 ## Step 2 — Already dead?
 
@@ -195,7 +173,7 @@ A hit here is a **flag carried forward, not an exit.** Record it in `state.md` a
 
 **A close recommendation needs proof of the same shape as everything else.** The red test, written and run against clean main, passing without any fix. Naming a merged PR is an argument; a green test on untouched main is proof. Closing someone's ticket wrongly on a repo you do not own is expensive.
 
-Cannot reproduce, and nothing found that would have fixed it → `blocked`, not `recommend close`. Absence of a repro is not absence of a bug — usually it means the reporter had conditions you did not recreate. `blocked.md` names the conditions tried (the ones the intake gate collected) and the gap. **No second reporter message is drafted here** — the gate already asked for everything; Amel decides whether to go back to the reporter.
+Cannot reproduce, and nothing found that would have fixed it → `blocked`, not `recommend close`. Absence of a repro is not absence of a bug — usually it means the reporter had conditions you did not recreate. `blocked.md` names the conditions tried (the ones the interview collected) and the gap. **No second reporter message is drafted here** — the interview already asked for everything; Amel decides whether to go back to the reporter.
 
 ## Step 3 — Reproduce
 
@@ -207,7 +185,7 @@ Pin the conditions before you build:
 
 - **Latest main, always.** Never a release branch, never the reporter's version.
 - **Claim a device.** Take one that is not running an app under test, record its identifier in `state.md`, pin the rest of the run to it. All busy → boot a fresh one rather than queue. Commands per platform in `references/platforms/`.
-- **Missing device or config is assumed, and the assumption is stated** — in the PR body. "Reported without a device; reproduced on iPhone 17, iOS 26.5" narrows the bug for whoever reads it next. The gate already asked; this is for what the reporter could not say. It is never a new question.
+- **Missing device or config is assumed, and the assumption is stated** — in the PR body. "Reported without a device; reproduced on iPhone 17, iOS 26.5" narrows the bug for whoever reads it next. The interview already asked; this is for what the reporter could not say. It is never a new question.
 
 The red test itself is written by `verification` — but **against the surviving chain, which does not exist until step 4.** This step pins the conditions, claims the device, and captures the before-state; the handoff happens at step 5, once step 4 has a top-ranked chain. What this skill owes `verification` then: the symptom in the reporter's words, the suspect area, the conditions pinned here, and the top chain.
 
@@ -219,17 +197,17 @@ The red test itself is written by `verification` — but **against the surviving
 
 Never invent a snapshot suite where none exists. That is separate work and it will get the PR rejected.
 
-**The "before" pair is captured here, on clean main, by the `evidence-capturer` agent.** It is dispatched from the main thread with the packet its file lists — device from `state.md`, the parent SHA, bundle id, the build-identity file written at install, and the path file. The path file was looked up and, if missing or stale, resolved at the intake gate (step 1), so by here it is fresh and this is `capture` mode. A stale path is never re-recorded automatically, because recording over it would destroy the one thing that shows what changed; the gate lists it as `repair path file <path>` for Amel, and a `stale_reason` naming `os` is the one exception (`record` into `<screen>@<os>.md`, also at the gate).
+**The "before" pair is captured here, on clean main, by the `evidence-capturer` agent.** It is dispatched from the main thread with the packet its file lists — device from `state.md`, the parent SHA, bundle id, the build-identity file written at install, and the path file. The path file was looked up and, if missing or stale, resolved in the dispatcher's interview, so by here it is fresh and this is `capture` mode. A stale path is never re-recorded automatically, because recording over it would destroy the one thing that shows what changed; the interview listed it as `repair path file <path>` for Amel, and a `stale_reason` naming `os` is the one exception (`record` into `<screen>@<os>.md`, also done in the interview).
 
 Same device, same OS, same pinned settings as the "after" — the agent enforces that, and the pair diff at step 8 checks it. That consistency is the point: the before/after pair is the single thing that most reliably gets a PR approved, and a pair that differs by anything other than the diff does not do that job.
 
-**Navigation is the unreliable part, not capture.** A `record` run needs Amel once, on main, and never again for that screen. It happens inside the intake gate, never mid-run:
+**Navigation is the unreliable part, not capture.** A `record` run needs Amel once, on main, and never again for that screen. It happens inside the dispatcher's interview, never mid-run:
 
-- **Batch the asks.** Across a run, one list at the gate — three screens, the launch skill for each, any order. Not one ping per bug.
+- **Batch the asks.** Across a run, one list in the interview — three screens, the launch skill for each, any order. Not one ping per bug.
 - **The agent records the path while he navigates**, so the "after" replays without him. That is what removes the two-presence problem this skill exists to remove.
-- **After the gate nothing parks and nothing asks.** A capture that fails later is a gap, not a handoff: the pair is not shipped, the row on the proof block reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict is `PROOF INCOMPLETE`. The reporter's `reporter-before` screenshot still goes in the PR as the "before", labelled as theirs.
+- **After the interview nothing parks and nothing asks.** A capture that fails later is a gap, not a handoff: the pair is not shipped, the row on the proof block reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict is `PROOF INCOMPLETE`. The reporter's `reporter-before` screenshot still goes in the PR as the "before", labelled as theirs.
 
-Agent statuses and what they mean here: `CAPTURED` → continue. At the gate (record runs): `GATE FAILED` or `NO PATH` → Amel retries the navigation while still at the gate. After the gate: `GATE FAILED`, `NO PATH` or `PATH STALE` → flip the path file to stale per `../memory/README-paths.md` (except when the reason is that the file already exists — then nothing is flipped, the file on disk is healthy), record the gap as above, and list `repair path file <path>` or `path exists: repair or rename <path>` in `summary.md` for next time. `BUILD MISMATCH` → process failure, reinstall, dispatch again once; never a retry loop, never a question.
+Agent statuses and what they mean here: `CAPTURED` → continue. In the interview (record runs): `GATE FAILED` or `NO PATH` → Amel retries the navigation there. After it: `GATE FAILED`, `NO PATH` or `PATH STALE` → flip the path file to stale per `../memory/README-paths.md` (except when the reason is that the file already exists — then nothing is flipped, the file on disk is healthy), record the gap as above, and list `repair path file <path>` or `path exists: repair or rename <path>` in `summary.md` for next time. `BUILD MISMATCH` → process failure, reinstall, dispatch again once; never a retry loop, never a question.
 
 **Where the build identity comes from.** Whoever installs the app writes `evidence/build-identity-<label>.txt` per `references/platforms/<platform>.md`, "Build identity", right after install. The agent re-hashes at capture. Without that file the agent returns `PACKET INCOMPLETE`, which is correct: a screenshot of an unknown build is not evidence. Response: supply the missing field and dispatch again; it is never guessed.
 
@@ -290,7 +268,7 @@ Both refute → promote hypothesis 2, repeat once. All refuted → `blocked`, bo
 
 ## Step 5 — Red test
 
-**Nothing hands off to autonomous execution until this step ends.** Closing the intake gate is not a handoff, and neither is a ranked chain: the red test does not exist yet at either point. The order is fixed — intake → reproduce → investigate → **red test against the confirmed root cause, not the raw symptom** → confirm it is red → only then propose (step 6) and run autonomously (step 7 onward).
+**Nothing hands off to autonomous execution until this step ends.** Closing the interview is not a handoff, and neither is a ranked chain: the red test does not exist yet at either point. The order is fixed — intake → reproduce → investigate → **red test against the confirmed root cause, not the raw symptom** → confirm it is red → only then propose (step 6) and run autonomously (step 7 onward).
 
 Everything in step 4 is a ranked guess — cited, argued, still a guess. The test is the only part that can come back and say no.
 
@@ -477,6 +455,6 @@ Once, after every item has reached a terminal state.
 
 Then append one row per item to `~/Projects/tickets/LEDGER.md`. **Leave the PR-outcome column blank** — a workflow grading its own output is exactly the bias this design exists to remove. The next run's preflight backfills it.
 
-Finish with one table: every input, one row, terminal state, **proof verdict** (`MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`), evidence, PR link. The verdict column is the triage: MERGE-READY rows are the PRs Amel can approve on the proof block alone. Anything deferred or capped is named individually. Silent truncation reads as "covered everything" when it did not. An item redirected as a feature request has a row too, reading `not a bug — Taimi`.
+Finish with one table: every input, one row, terminal state, **proof verdict** (`MERGE-READY` / `REVIEW NEEDED` / `PROOF INCOMPLETE`), evidence, PR link. The verdict column is the triage: MERGE-READY rows are the PRs Amel can approve on the proof block alone. Anything deferred or capped is named individually. Silent truncation reads as "covered everything" when it did not. An item redirected as a feature request has a row too, reading `not a bug — feature lane`.
 
 Then `references/learning.md`: every comment he leaves on a PR is a defect in this skill, not just in that fix. Write it down. Correcting a run fixes one run; writing it down fixes all of them.

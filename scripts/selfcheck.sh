@@ -44,5 +44,18 @@ check "bug engine cites it"              grep -q "shared/proof-block.md" verific
 check "feature engine cites it"         grep -q "shared/proof-block.md" scruffy-feature/mechanisms/pipeline/references/verification.md
 check "block not duplicated in bug engine" bash -c '[ "$(grep -c "^| Fails without fix" verification/SKILL.md)" = 0 ]'
 
+# --- Task 3: dispatcher
+check "dispatcher SKILL exists"          test -f scruffy/SKILL.md
+check "dispatcher name"                  grep -q "^name: scruffy$" scruffy/SKILL.md
+check "dispatcher is model-invocable"    bash -c '! grep -q "^disable-model-invocation: true$" scruffy/SKILL.md'
+check "dispatcher routes to both lanes"  bash -c 'grep -q "scruffy-bug/SKILL.md" scruffy/SKILL.md && grep -q "scruffy-feature/SKILL.md" scruffy/SKILL.md'
+check "owned flag defined"               grep -q "owned: no" scruffy/SKILL.md
+check "intake.md exists"                 test -f scruffy/references/intake.md
+check "interview.md exists"              test -f scruffy/references/interview.md
+check "confidence rule present"          grep -qi "confidence" scruffy/references/interview.md
+check "missing-button example present"   grep -qi "never built" scruffy/references/intake.md
+check "bug lane has no intake gate"      bash -c '! grep -q "### Stop 1 — the intake gate" scruffy-bug/SKILL.md'
+check "no Taimi in bug lane"             grep_empty 'taimi' scruffy-bug
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))
