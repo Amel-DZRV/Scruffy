@@ -32,7 +32,7 @@ Installed by the repo-root README; do not install this directory alone.
 
 Runners and roles are plain files the driver reads, not separate skills, so there is nothing else to register.
 
-For a new project:
+For a new `owned: yes` project:
 
 ```bash
 scripts/init-project.sh /path/to/project

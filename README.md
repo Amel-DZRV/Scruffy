@@ -88,10 +88,10 @@ Scruffy/
 ├── scruffy-bug/                  the bug lane
 │   ├── SKILL.md                  steps 1–10
 │   ├── references/               dossier, models, preflight, repo-routing, ticktick, worktrees, apps, platforms/
-│   └── scripts/                  goal-check.sh, pair-diff.py, tree-diff.py, ui-touch.sh, publish-evidence.sh
+│   └── scripts/                  goal-check.sh, watch-tick.sh, pair-diff.py, tree-diff.py, ui-touch.sh, publish-evidence.sh
 ├── scruffy-feature/              the feature lane (formerly Taimi)
 │   ├── SKILL.md                  the driver
-│   ├── DESIGN.md, ROLES.md
+│   ├── README.md, DESIGN.md, ROLES.md
 │   ├── roles/<role>/             persona / skills / tools
 │   ├── memory/global/<role>.md   judgment memory per role
 │   ├── mechanisms/council/RUNNER.md
@@ -105,6 +105,7 @@ Scruffy/
 │   └── learning.md               the learning layer's contract
 ├── memory/                       what the workflow has learned, versioned here
 │   ├── rules.md                  judgment corrections
+│   ├── README.md, README-paths.md, TEMPLATE-recipe.md, TEMPLATE-path.md
 │   └── <repo>/
 │       ├── recipes/<name>.md     build Consumer for sim, install DevApp, screenshot, pin status bar …
 │       └── paths/<screen>.md     recorded navigation

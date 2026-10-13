@@ -5,7 +5,7 @@ The shared per-platform pipeline, built once. It takes a `platform` and resolves
 Two parts:
 
 - **Part A, per platform** (steps 1 to 5): from locked criteria to a verified platform branch. Run once per platform the feature touches, in parallel across platforms.
-- **Part B, per feature** (steps 6 to 9): from verified branch(es) to PR, auto-merge and the weekly release. Run once.
+- **Part B, per feature** (steps 6 to 9): from verified branch(es) to PR, auto-merge and the weekly release (both `owned: yes` only). Run once.
 
 ## Input
 
@@ -44,13 +44,13 @@ An agent receives only its packet. The tools it is given are exactly those in it
 
 ## 1. Platform branch and worktree
 
-Create the platform branch `<feature-key>-<platform>` in its own worktree per `references/worktrees.md`. Run the project's dependency install if the toolchain needs it.
+Create the platform branch `<feature-key>-<platform>` in its own worktree per `mechanisms/pipeline/references/worktrees.md`. Run the project's dependency install if the toolchain needs it.
 
-Discover the economics (cheap or expensive loop) and run the baseline, per `references/verification.md`. The Team Lead's project memory may already carry them. Record in `state.md`.
+Discover the economics (cheap or expensive loop) and run the baseline, per `mechanisms/pipeline/references/verification.md`. The Team Lead's project memory may already carry them. Record in `state.md`.
 
 ## 2. Acceptance tests, red first
 
-Dispatch `qa-<platform>` in **Author mode** (`references/verification.md`): one test per acceptance criterion for this platform, every one watched failing, hashed, and committed on their own before any implementation. History reads `parent → tests → implementation`.
+Dispatch `qa-<platform>` in **Author mode** (`mechanisms/pipeline/references/verification.md`): one test per acceptance criterion for this platform, every one watched failing, hashed, and committed on their own before any implementation. History reads `parent → tests → implementation`.
 
 - A test that will not go red means the behaviour already exists. Stop and send it back to the architect.
 - A criterion with no testable seam is named as unverified. It is never dropped.
@@ -84,7 +84,7 @@ Any edit beyond comments and prints sends the platform back through the Reviewer
 
 ## 5. Verify
 
-Dispatch `qa-<platform>` in **Audit mode** with the packet from `references/verification.md`: SHAs, test files and hashes, commands, baseline, criteria and non-goals. Not the plan, the seam notes, or the Developers' reports. It returns the proof block, the criterion table, the verdict tier and one line per failed or unrunnable claim.
+Dispatch `qa-<platform>` in **Audit mode** with the packet from `mechanisms/pipeline/references/verification.md`: SHAs, test files and hashes, commands, baseline, criteria and non-goals. Not the plan, the seam notes, or the Developers' reports. It returns the proof block, the criterion table, the verdict tier and one line per failed or unrunnable claim.
 
 The Team Lead decides what a failed claim is: a fix attempt (counted against the track's budget of three), a design attempt, or a process failure (no retry loop; the platform ends with proof marked incomplete and the failing check named). It writes the fail memo per `../shared/orchestration.md` §Fail memo first.
 
@@ -100,12 +100,12 @@ Run after every touched platform has finished Part A.
 
 - **One platform:** its branch is the feature branch.
 - **Several platforms:** one feature, one PR. Merge the platform branches into `scruffy/<feature-key>` and re-run each platform's acceptance suite on the merged branch. One PR, not one per platform, because merging the halves separately would break the seam atomically; the cross-platform PR shape is still an open item in `DESIGN.md` section 9.
-- **Cross-platform:** dispatch `chief-of-engineering` to reconcile the platform verdicts into the feature's verdict, per `references/verification.md`. It never raises a tier above what a platform's own proof supports.
+- **Cross-platform:** dispatch `chief-of-engineering` to reconcile the platform verdicts into the feature's verdict, per `mechanisms/pipeline/references/verification.md`. It never raises a tier above what a platform's own proof supports.
 - Dispatch `docs-keeper`. `owned: yes` → it updates the Notion pages the feature changed and the Decisions Log, and returns the list of pages and rows for the PR body. `owned: no` → it writes the same content under `../memory/<repo>/docs/<feature-key>.md` and returns that path. It never touches Notion.
 
 ## 7. Open the PR and gate auto-merge
 
-Push the branch and open the PR — **draft when `owned: no`**, ready when `owned: yes` — with no reviewers assigned. Publishing images and the tracker comment follow `../shared/pr.md`, as does writing `pr:`, `branch:` and `worktree:` (the feature branch's checkout) into `state.md`. Draft vs ready is decided by `owned` (see `SKILL.md` §Owned or not). The body follows `references/pr-format.md` section by section. The verdict is the first line.
+Push the branch and open the PR — **draft when `owned: no`**, ready when `owned: yes` — with no reviewers assigned. Publishing images and the tracker comment follow `../shared/pr.md`, as does writing `pr:`, `branch:` and `worktree:` (the feature branch's checkout) into `state.md`. The body follows `mechanisms/pipeline/references/pr-format.md` section by section. The verdict is the first line.
 
 **Auto-merge is gated on the verdict, firmly.** The verdict must actually block the merge, not only label the PR.
 
@@ -123,7 +123,7 @@ Append a row to the shared ledger (`~/Projects/tickets/LEDGER.md`; `lane: featur
 ## 8. After the PR
 
 - Move the work along: link the PR from the Decisions Log row (Docs-Keeper, `owned: yes`) or from the `../memory/<repo>/docs/<feature-key>.md` page (`owned: no`), and from any tracker item.
-- Worktrees are kept (`references/worktrees.md`).
+- Worktrees are kept (`mechanisms/pipeline/references/worktrees.md`).
 - Do not poll. Subscribe to the PR's activity if the user asks.
 
 ## 9. Weekly release

@@ -178,8 +178,6 @@ Cannot reproduce, and nothing found that would have fixed it → `blocked`, not 
 
 **Non-UI bugs** (crash, logic, data) substitute the cheapest falsifiable artefact for the screenshot — a crash log at the reporter's conditions, a failing run, a wrong value printed — and it too exists before step 4 starts.
 
-The red test is still written at step 5, against the chain step 4 produces; this step pins conditions, claims the device and captures the before-state.
-
 Pin the conditions before you build:
 
 - **Latest main, always.** Never a release branch, never the reporter's version.

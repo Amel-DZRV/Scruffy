@@ -58,7 +58,7 @@ Then load every `../memory/<repo>/recipes/*.md` with `status: fresh` for each ro
 
 ## Setup 5 — Dossier
 
-Create `~/Projects/tickets/<KEY>/` per `../scruffy-bug/references/dossier.md` (both lanes use it), before anything is written to `evidence/`. If `state.md` already exists — a resume after `needs info` or `decision needed` — read it first, say where it left off, and add only what is missing. Never overwrite `interview: closed` or an answered assumption. Otherwise write `state.md` with at least:
+Create `~/Projects/tickets/<KEY>/` per `../scruffy-bug/references/dossier.md` (both lanes use it), before anything is written to `evidence/`; one dossier per item, before any clustering. Move the staged reporter screenshot into `evidence/` per `references/intake.md`. If `state.md` already exists — a resume after `needs info` or `decision needed` — read it first, say where it left off, and add only what is missing. Never overwrite `interview: closed` or an answered assumption. Otherwise write `state.md` with at least:
 
 ```
 key: <KEY>
@@ -79,7 +79,7 @@ assumptions:
 
 ## Setup 7 — Interview
 
-`references/interview.md`. Bugs: the checklist, the confidence rule, one message, closed once. Features: nothing here — the feature lane's own touchpoints (ambiguity batch, council disagreements, the go gate) are its interview. The Setup 1 candidate rules ride in the interview message; on a run with no bug items they go to Amel as one message before the hand-off.
+`references/interview.md`. Bugs: the checklist, the confidence rule, one message, closed once. Features: nothing here beyond a Setup 3 classification question — the feature lane's own touchpoints (ambiguity batch, council disagreements, the go gate) are its interview. The Setup 1 candidate rules ride in the interview message; on a run with no bug items they go to Amel as one message before the hand-off.
 
 ## Setup 8 — Hand-off
 

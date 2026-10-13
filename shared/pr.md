@@ -10,7 +10,7 @@ Then write `pr:` (the PR URL), `branch:` (its head branch) and `worktree:` (the 
 
 ## Attaching the screenshots
 
-**Attaching the screenshots — a step that must be seen to work.** A local PNG cannot be referenced from markdown, and `gh pr create` or the API cannot attach one, so images are published first and the body links them:
+A step that must be seen to work. A local PNG cannot be referenced from markdown, and `gh pr create` or the API cannot attach one, so images are published first and the body links them:
 
 ```bash
 ~/.claude/skills/scruffy-bug/scripts/publish-evidence.sh <repo> <KEY> before=evidence/capture-before.png after=evidence/capture-after.png
@@ -28,6 +28,6 @@ Then write `pr:` (the PR URL), `branch:` (its head branch) and `worktree:` (the 
 
 ## Tell the tracker
 
-**Then comment on the ticket** — the PR link, and the repro confirmation from step 5 if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
+**Then comment on the ticket** — the PR link, and (bug lane) the repro confirmation from step 5 if it has not already been posted. It is what the reporter actually cares about and it costs nothing.
 
 **TickTick-sourced item:** also move the card, per `../scruffy-bug/references/ticktick.md` — comment with the PR link, then move it to the `In Review` column if that board has one. Every other terminal state leaves the card where it is.

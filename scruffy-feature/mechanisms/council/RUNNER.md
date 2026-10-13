@@ -95,7 +95,7 @@ Memory files are written in the checkouts. This runner does not commit or push t
 
 ### 6. Digital CEO
 
-Phase from `<project>/memory/projects/digital-ceo.md` (`owned: yes`; default phase 1 when `owned: no`) and `memory/global/digital-ceo.md`; default is phase 1.
+Phase from `<project>/memory/projects/digital-ceo.md` (`owned: yes`) and `memory/global/digital-ceo.md`; default is phase 1.
 
 - **Phase 1, silent observer.** After Amel decides, dispatch the Digital CEO with the council outputs and his decision. It appends the record to its own global memory: what the council proposed, what he chose, and why when he gave a reason. It produces no output the council or Amel sees.
 - **Phase 2, visible fourth voice** (only once Amel has switched it on). Before step 4, dispatch the Digital CEO with the brief and the positions; it returns a predicted decision with its reasoning. Store the prediction in `decision.md` **before** Amel's decision is shown to it, show it to Amel as a labeled fourth voice, and after he decides record whether it matched. Its accuracy over time is the thing being measured.

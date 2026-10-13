@@ -247,7 +247,7 @@ A review verdict, not a PR and not a commit. **Never push to someone else's bran
 - What it does not cover
 - The test itself, offered — it is more useful to them than a comment
 
-**No pair on an external PR.** Build identity is what makes a pair evidence, and you cannot produce it for someone else's branch — no install of yours, no hash to compare. So on a `UI` diff the Reviewer evidence row reads `not applicable — external PR, no build identity available`, and it **does not demote the verdict and is not repeated on the `Not proven` line** — that line is for gaps that demote, and nothing here was ever obtainable. This is the one exception to the gate below; a review of a UI change is not held at PROOF INCOMPLETE for a picture nobody could have taken.
+**No pair on an external PR.** Build identity is what makes a pair evidence, and you cannot produce it for someone else's branch — no install of yours, no hash to compare. So on a `UI` diff the Reviewer evidence row reads `not applicable — external PR, no build identity available`, and it **does not demote the verdict and is not repeated on the `Not proven` line** — that line is for gaps that demote, and nothing here was ever obtainable. This is the one exception to the UI-pair gate in `../shared/proof-block.md`; a review of a UI change is not held at PROOF INCOMPLETE for a picture nobody could have taken.
 
 Log it: date, PR, radius, whether the independent test confirmed the claim. Separate from the bug ledger. Over time it answers a question worth knowing — how often does a fix that reads correctly fail an independent test.
 

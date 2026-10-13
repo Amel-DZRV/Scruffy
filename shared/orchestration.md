@@ -76,7 +76,7 @@ Each track's Developer receives, and nothing else from the run's context:
 
 **While developers are out, write `evidence/tracks.pending`** (one line per track in flight) — at the first dispatch and at every fix-attempt re-dispatch — and remove it when the last returned track is integrated or blocked. Bug lane: the goal's Stop hook (`../scruffy-bug/scripts/goal-check.sh`) lets a turn end while it exists, so waiting on background developers does not read as "GOAL NOT MET".
 
-It returns commits on its track branch (one per step) and a per-step report: which criterion tests pass, Reviewer findings and their disposition, `[DEBUG-*]` probes added and removed. A Developer that returns prose without commits has returned nothing.
+It returns commits on its track branch (one per step) and a per-step report: which criterion tests pass, `[DEBUG-*]` probes added and removed. A Developer that returns prose without commits has returned nothing.
 
 ## Review between steps
 
@@ -85,7 +85,7 @@ Identical whether one track runs or five:
 - **One commit per step.**
 - **Run the track's acceptance tests after every step.** It tells you which criterion each step actually delivered.
 - The mechanical layer (lint, format, pre-commit hooks) runs before the reviewer sees the diff.
-- **Review between steps**, fresh context: the two SHAs bounding the step, the plan step with its `criteria`, nothing else. Bug lane: `step-reviewer`. Feature lane: `reviewer-<platform>`, composed from its role files. A developer cannot launch either, so the Team Lead runs the reviewer over each returned track's commits in order before integrating. Critical / Important → a fresh developer for that track, against **that track's** fix budget.
+- **Review between steps**, fresh context: the two SHAs bounding the step, the plan step with its `criteria`, nothing else. Bug lane: `step-reviewer`. Feature lane: `reviewer-<platform>`, composed from its role files. A developer cannot launch either, so the Team Lead runs the reviewer over each returned track's commits in order before integrating. Critical / Important → a fresh developer for that track, against **that track's** fix budget. A comment that breaks the engineering discipline rule is Important; Minor findings carry to cleanup. The Team Lead's report records each finding and its disposition.
 
 The Team Lead does not add a second review of its own. It integrates.
 
@@ -99,7 +99,7 @@ Tracks are mutually independent by construction, so merge order is free. Take th
 
 After **each** merge, the full acceptance suite on the platform branch. A failure that appears only after a merge is an interaction between tracks: a fix attempt against the merging track's budget, not a mystery.
 
-Conflicts: mechanical → resolve and note it; judgement-shaped → `blocked`. Both are a derivation defect (the DAG said these tracks were disjoint and it was wrong); record the lesson in the Team Lead's project memory.
+Conflicts: mechanical → resolve and note it; judgement-shaped → `blocked`. Both are a derivation defect (the DAG said these tracks were disjoint and it was wrong).
 
 A seam that has to change mid-build is not settled locally: escalate to the Chief of Engineering. Either kind of conflict is a derivation defect — write it to the learning layer as a candidate rule.
 
@@ -124,7 +124,7 @@ The Team Lead decides which it is — fix attempt, chain / design attempt, proce
 | Chain attempts (bug lane) | 3 | next hypothesis; none left → `blocked` |
 | Design attempts (a test will not go red because the behaviour already exists, or the approach will not fit) | 3 | back to the architect's plan |
 
-The two budgets are not shared. The platform is done only when every criterion's test is green on the integrated branch. A dead track ends the platform `blocked`, the integrated branch holding the finished work, the dead track's worktree kept, and a memo naming which criteria landed and which did not. Verification then runs on the integrated branch exactly as if the work had been serial.
+The budgets are not shared. The platform is done only when every criterion's test is green on the integrated branch. A dead track ends the platform `blocked`, the integrated branch holding the finished work, the dead track's worktree kept, and a memo naming which criteria landed and which did not. Verification then runs on the integrated branch exactly as if the work had been serial.
 
 ## Builds still queue
 

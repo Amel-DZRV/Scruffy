@@ -41,6 +41,8 @@ Section 17 (`owned: yes`) is written under the exact heading `## Changelog line`
 
 ## Template
 
+Sections 3, 13 and 17 follow the `owned: no` rule above.
+
 ```markdown
 <MERGE-READY | REVIEW NEEDED | PROOF INCOMPLETE>
 

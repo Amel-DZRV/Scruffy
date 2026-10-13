@@ -42,7 +42,7 @@ Three tiers, so "can I just merge this" is mechanical rather than a feeling:
 
 **A UI diff without a verified pair cannot be MERGE-READY.** This is a gate, not a reminder — an agent that forgot to capture cannot talk its way past a row that reads `MISSING`. It governs Modes 1 and 2; Mode 3's `not applicable — external PR, no build identity available` is the single named exception, because there no pair was ever obtainable.
 
-**Radius trumps greenness.** A shared-radius change self-demotes to REVIEW NEEDED however green it is — the tests prove the claim, not the blast radius. And the tier is a claim like any other: the ledger's PR-outcome column is what eventually says whether MERGE-READY predicts `approved as-is`, which is the number this entire module is trying to earn.
+**Radius trumps greenness.** A shared-radius change self-demotes to REVIEW NEEDED however green it is — the tests (or criteria) prove the claim, not the blast radius. And the tier is a claim like any other: the ledger's PR-outcome column is what eventually says whether MERGE-READY predicts `approved as-is`, which is the number this entire module is trying to earn.
 
 ### Feature lane tier criteria
 
@@ -54,7 +54,7 @@ The feature lane reads the three tiers with these criteria in place of the table
 | **REVIEW NEEDED** | the proof holds but the judgement is Amel's | shared blast radius, a design or trade-off embedded in the diff, or any earned exception: no seam, an unverifiable criterion |
 | **PROOF INCOMPLETE** | do not merge on this | any process failure, any claim that could not run, a `UI` diff with a `MISSING` Reviewer evidence row, an independent audit that could not be dispatched and was not demoted |
 
-The UI-pair gate and radius-trumps-greenness apply unchanged.
+The UI-pair gate and radius-trumps-greenness apply unchanged; the feature lane has no Mode 3 exception.
 
 **A new contract at a seam is not, by itself, shared radius.** A cross-platform feature that introduces its own contract (an endpoint, a data shape nothing else reads) and has the Chief of Engineering's seam sign-off is contained. A change that alters a contract other code already reads is shared.
 

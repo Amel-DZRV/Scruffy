@@ -4,11 +4,11 @@ The workflow gets faster by remembering what it did. Three kinds of memory, one 
 
 | Kind | Where | Holds | Written | Approval |
 |---|---|---|---|---|
-| **Recipe** | `memory/<repo>/recipes/<name>.md` | a procedure that worked: command sequence, median duration, the trap that bit and the workaround | by the retro, at close-out | automatic — a recipe is verifiable by running it |
-| **Path** | `memory/<repo>/paths/<screen>.md` | navigation to a screen (`../memory/README-paths.md`) | by `evidence-capturer` record mode; repaired on stale | automatic |
-| **Rule** | `memory/rules.md` | a judgment correction — a PR comment generalised, a decision Amel overruled | proposed at close-out and at watch ticks | **Amel approves** |
+| **Recipe** | `../memory/<repo>/recipes/<name>.md` | a procedure that worked: command sequence, median duration, the trap that bit and the workaround | by the retro, at close-out | automatic — a recipe is verifiable by running it |
+| **Path** | `../memory/<repo>/paths/<screen>.md` | navigation to a screen (`../memory/README-paths.md`) | by `evidence-capturer` record mode; repaired on stale | automatic |
+| **Rule** | `../memory/rules.md` | a judgment correction — a PR comment generalised, a decision Amel overruled | proposed at close-out and at watch ticks | **Amel approves** |
 
-The feature lane's `memory/global/<role>.md` is a fourth kind, role judgment, with its own write path (the council). Project facts for repos Amel does not own go under `memory/<repo>/recipes/` too.
+The feature lane's `../scruffy-feature/memory/global/<role>.md` is a fourth kind, role judgment, with its own write path (the council). Project facts for repos Amel does not own go under `../memory/<repo>/recipes/` too.
 
 ## Precedence
 
@@ -17,7 +17,7 @@ The feature lane's `memory/global/<role>.md` is a fourth kind, role judgment, wi
 ## Read — at every run's start
 
 1. `../memory/rules.md`.
-2. Every `memory/<repo>/recipes/*.md` with `status: fresh` for each routed repo.
+2. Every `../memory/<repo>/recipes/*.md` with `status: fresh` for each routed repo.
 3. A step with a matching recipe announces it — `▶ … following recipe build-consumer-sim (median 31 min)` — follows it, times it, and opens the `derived_from` skill only on a trap. Opening the skill means checking the recipe against it: where they disagree, the skill wins.
 
 ## Write — the retro, at close-out
