@@ -12,6 +12,7 @@ done
 cp "$root"/agents/*.md ~/.claude/agents/
 chmod +x "$root"/scruffy-bug/scripts/*.sh "$root"/scruffy-bug/scripts/*.py "$root"/scruffy-feature/scripts/* "$root"/scripts/*.sh "$root"/scripts/*.py
 # Skills read ../shared via their real path; expose it the same way for tools that resolve logically.
+rm -rf ~/.claude/skills/shared ~/.claude/skills/memory
 ln -sfn "$root/shared" ~/.claude/skills/shared
 ln -sfn "$root/memory" ~/.claude/skills/memory
 # Prove the relative paths resolve through the links.

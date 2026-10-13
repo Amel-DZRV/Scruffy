@@ -52,7 +52,7 @@ owned: no   — ios, android, rooblocks, pedregal, and any repo under a DoorDash
 owned: yes  — Amel's own projects: a `--project` or cwd repo not under those orgs
 ```
 
-`owned` switches off Notion, auto-merge, the weekly build and `init-project.sh` in the feature lane, and makes every PR a draft. Record it in `state.md` with `repo:` (the name; `../memory/<repo>/` keys off it) and `repo_path:` (the checkout's absolute path: the routing table's path, the stream's `rooblocks` clone, or the `--project` / cwd path).
+`owned` switches off Notion, auto-merge, the weekly build and `init-project.sh` in the feature lane, and makes every PR a draft. Hold it for Setup 5, which writes it to `state.md` with `repo:` (the name; `../memory/<repo>/` keys off it) and `repo_path:` (the checkout's absolute path: the routing table's path, the stream's `rooblocks` clone, or the `--project` / cwd path).
 
 Then load every `../memory/<repo>/recipes/*.md` with `status: fresh` for each routed repo, per `../shared/learning.md` §Read.
 

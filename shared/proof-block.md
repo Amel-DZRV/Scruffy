@@ -26,7 +26,7 @@ Everything else in the verification discipline exists to produce this artifact. 
 ## Rules
 
 - **Every cell is a command, a SHA, or a count.** A cell that reads "verified ✓" is the self-attestation this block exists to replace.
-- **Replay is generated on cheap loops, always.** On expensive loops, state the cost instead — "replay is a 35-minute build; red output archived below" — and fold the raw 1b failure output into a `<details>` block under the table. Trust-me is acceptable only with the receipt attached.
+- **Replay is generated on cheap loops, always.** On expensive loops, state the cost instead — "replay is a 35-minute build; red output archived below" — and fold the raw red failure output into a `<details>` block under the table. Trust-me is acceptable only with the receipt attached.
 - **The `Not proven` line is mandatory**, even when it says "nothing". Its absence is indistinguishable from silence about a gap.
 - A `MISSING` cell in the Reviewer evidence row is repeated on the `Not proven` line. A `not applicable` cell never is — `Not proven` carries gaps that demote, and neither `NON-UI` nor an external PR is one.
 

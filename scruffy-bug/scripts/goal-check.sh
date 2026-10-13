@@ -9,7 +9,8 @@
 # exit codes and logs under evidence/, and this script reads those — the same "output you can
 # point at" rule, checked mechanically.
 set -u
-cat >/dev/null 2>&1   # discard hook input; state lives in the dossier
+input=$(cat 2>/dev/null)   # hook input: only session_id is used; state lives in the dossier
+sid=$(printf '%s' "$input" | sed -n 's/.*"session_id" *: *"\([^"]*\)".*/\1/p' | head -1)
 root="${SCRUFFY_TICKETS:-$HOME/Projects/tickets}"
 shopt -s nullglob
 markers=("$root"/*/evidence/goal.active)
@@ -19,6 +20,12 @@ sha() { if command -v shasum >/dev/null; then shasum -a 256 "$1" | cut -d' ' -f1
 unmet=()
 for marker in "${markers[@]}"; do
   ev=$(dirname "$marker"); key=$(basename "$(dirname "$ev")")
+  # a goal belongs to one session: the first Stop after arming claims the marker, others skip it
+  if [ -n "$sid" ]; then
+    owner=$(sed -n 's/^session=//p' "$marker" | head -1)
+    if [ -z "$owner" ]; then echo "session=$sid" >> "$marker"
+    elif [ "$owner" != "$sid" ]; then continue; fi
+  fi
   # marker is key=value lines: test_file, success_marker (regex), ui (0|1)
   get() { sed -n "s/^$1=//p" "$marker" | head -1; }
   test_file=$(get test_file); success=$(get success_marker); ui=$(get ui)
@@ -27,7 +34,8 @@ for marker in "${markers[@]}"; do
   if [ -f "$ev/goal.blocked" ]; then rm -f "$marker"; continue; fi
   # developers are out on parallel tracks: the main thread is waiting, not stopping early.
   # The Team Lead writes tracks.pending at each dispatch and removes it at integration.
-  [ -f "$ev/tracks.pending" ] && continue
+  # A pending file older than 6 hours is stale (a crashed run) and no longer silences the goal.
+  if [ -f "$ev/tracks.pending" ] && [ -z "$(find "$ev/tracks.pending" -mmin +360 2>/dev/null)" ]; then continue; fi
 
   miss=()
   # 1. the red test, same file, passing

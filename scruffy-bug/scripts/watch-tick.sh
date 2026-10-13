@@ -7,6 +7,7 @@
 set -u
 [ $# -eq 2 ] || { echo "usage: watch-tick.sh <pr-url> <state.json>" >&2; exit 1; }
 pr=$1; state=$2
+mkdir -p "$(dirname "$state")"
 [ -f "$state" ] || echo '{"seen":[]}' > "$state"
 
 json=$(gh pr view "$pr" --json comments,reviews,statusCheckRollup,state,reviewDecision,url,number 2>/dev/null) || exit 2
