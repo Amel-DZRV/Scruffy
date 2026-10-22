@@ -64,7 +64,7 @@ Record which it is in `state.md`. A module that assumes expensive on a Jest repo
 
 ## Nothing here asks for anything
 
-Scruffy's intake gate is the only point in a run that asks a human for input. Verification never pauses for a device, a screenshot, a path or a missing field. What cannot be produced is a named gap: the row reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict table decides the tier.
+The dispatcher's interview (`../scruffy/references/interview.md`) is the only point in a run that asks a human for input. Verification never pauses for a device, a screenshot, a path or a missing field. What cannot be produced is a named gap: the row reads `MISSING: <status>`, the `Not proven` line repeats it, and the verdict table decides the tier.
 
 ## The two failure modes
 
@@ -247,7 +247,7 @@ A review verdict, not a PR and not a commit. **Never push to someone else's bran
 - What it does not cover
 - The test itself, offered — it is more useful to them than a comment
 
-**No pair on an external PR.** Build identity is what makes a pair evidence, and you cannot produce it for someone else's branch — no install of yours, no hash to compare. So on a `UI` diff the Reviewer evidence row reads `not applicable — external PR, no build identity available`, and it **does not demote the verdict and is not repeated on the `Not proven` line** — that line is for gaps that demote, and nothing here was ever obtainable. This is the one exception to the gate below; a review of a UI change is not held at PROOF INCOMPLETE for a picture nobody could have taken.
+**No pair on an external PR.** Build identity is what makes a pair evidence, and you cannot produce it for someone else's branch — no install of yours, no hash to compare. So on a `UI` diff the Reviewer evidence row reads `not applicable — external PR, no build identity available`, and it **does not demote the verdict and is not repeated on the `Not proven` line** — that line is for gaps that demote, and nothing here was ever obtainable. This is the one exception to the UI-pair gate in `../shared/proof-block.md`; a review of a UI change is not held at PROOF INCOMPLETE for a picture nobody could have taken.
 
 Log it: date, PR, radius, whether the independent test confirmed the claim. Separate from the bug ledger. Over time it answers a question worth knowing — how often does a fix that reads correctly fail an independent test.
 
@@ -255,47 +255,7 @@ Log it: date, PR, radius, whether the independent test confirmed the claim. Sepa
 
 # The proof block
 
-Everything above is discipline; this is the artifact it exists to produce. **One block, fixed shape, pasted verbatim into the PR description (in a collapsible section headed by the verdict tier).** The dossier is for resumption; the proof block is for the reviewer, and the whole point of a fixed shape is that Amel learns to read it in ten seconds. Scruffy's PR body carries it; Mode 2 puts it in the dossier verdict; Mode 3 puts it in the review.
-
-```markdown
-## Proof
-
-**Verdict: MERGE-READY**   (or REVIEW NEEDED / PROOF INCOMPLETE — with the reason, one line)
-
-| Claim | Evidence |
-|---|---|
-| Fails without fix | `<command>` at `<test-commit sha>` — exit 1, "<one-line failure excerpt>" |
-| Passes with fix | same command at `<head sha>` — pass |
-| Test unchanged since red | test-only commit `<sha>`, untouched since — `git log --follow -p <file>` |
-| Suite | <N> passed at head; baseline at parent: <N> passed (or: same <k> pre-existing failures, named) |
-| Revert check | done / skipped — expensive loop, the red commit stands in |
-| Accessibility check (informational — never changes the verdict) | `tree-diff.py` — `a11y: UNCHANGED / CHANGED / ATTENTION` and its findings, or `not applicable` / `UNAVAILABLE <why>` |
-| Reviewer evidence | `capture-before.png` @ `<parent sha>`, `capture-after.png` @ `<head sha>`, gate `<label role>`, pair-diff `changed=<f> inside=<f>` exit 0, right-change: "<one sentence>" — or `not applicable — NON-UI` — or `not applicable — external PR, no build identity available` (Mode 3) — or `MISSING: <status the agent returned>` / `MISSING: size mismatch <bw>x<bh> vs <aw>x<ah>` / `MISSING: mask invalid <value>` / `MISSING: mask too large <value>` |
-
-**Replay:** `git checkout <test-commit> && <command>`  (expect red) `&& git checkout <head> && <command>`  (expect green)
-**Not proven:** what could not be checked and why — or "nothing".
-```
-
-Rules:
-
-- **Every cell is a command, a SHA, or a count.** A cell that reads "verified ✓" is the self-attestation this block exists to replace.
-- **Replay is generated on cheap loops, always.** On expensive loops, state the cost instead — "replay is a 35-minute build; red output archived below" — and fold the raw 1b failure output into a `<details>` block under the table. Trust-me is acceptable only with the receipt attached.
-- **The `Not proven` line is mandatory**, even when it says "nothing". Its absence is indistinguishable from silence about a gap.
-- A `MISSING` cell in the Reviewer evidence row is repeated on the `Not proven` line. A `not applicable` cell never is — `Not proven` carries gaps that demote, and neither `NON-UI` nor an external PR is one.
-
-## The verdict
-
-Three tiers, so "can I just merge this" is mechanical rather than a feeling:
-
-| Verdict | Means | Criteria — all of them |
-|---|---|---|
-| **MERGE-READY** | approve on the proof alone | contained blast radius (Mode 3's radius table), all four claims proven, revert check done or expensive-loop exemption, suite delta against baseline is zero, nothing in `Not proven`, Reviewer evidence row is a pair or `not applicable` |
-| **REVIEW NEEDED** | the proof holds but the judgement is his | shared blast radius, a design or trade-off embedded in the diff, or any earned exception — no seam |
-| **PROOF INCOMPLETE** | do not merge on this | any process failure, any claim that could not run, a `UI` diff with a `MISSING` Reviewer evidence row |
-
-**A UI diff without a verified pair cannot be MERGE-READY.** This is a gate, not a reminder — an agent that forgot to capture cannot talk its way past a row that reads `MISSING`. It governs Modes 1 and 2; Mode 3's `not applicable — external PR, no build identity available` is the single named exception, because there no pair was ever obtainable.
-
-**Radius trumps greenness.** A shared-radius change self-demotes to REVIEW NEEDED however green it is — the tests prove the claim, not the blast radius. And the tier is a claim like any other: the ledger's PR-outcome column is what eventually says whether MERGE-READY predicts `approved as-is`, which is the number this entire module is trying to earn.
+The shape, the rules, and the three verdict tiers are in `../shared/proof-block.md`. Paste the block verbatim into the PR description, inside `<details><summary>Proof — <tier></summary>`. Mode 2 puts it in the dossier verdict; Mode 3 in the review.
 
 ---
 

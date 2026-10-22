@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# watch-tick.sh <pr-url> <state.json>
+# Prints one JSON line per comment, review, inline review comment or failed check run not yet
+# recorded in state.json, then rewrites state.json with everything seen. Items authored by the
+# gh login itself (Amel's own comments) are marked seen but never printed.
+# Exit 0 normally, 1 on wrong arguments, 2 if gh fails.
+set -u
+[ $# -eq 2 ] || { echo "usage: watch-tick.sh <pr-url> <state.json>" >&2; exit 1; }
+pr=$1; state=$2
+mkdir -p "$(dirname "$state")"
+[ -f "$state" ] || echo '{"seen":[]}' > "$state"
+
+json=$(gh pr view "$pr" --json comments,reviews,statusCheckRollup,state,reviewDecision,url,number 2>/dev/null) || exit 2
+url=$(printf '%s' "$json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"])') || exit 2
+num=$(printf '%s' "$json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["number"])') || exit 2
+slug=$(printf '%s' "$url" | sed -E 's#^https?://[^/]+/([^/]+/[^/]+)/pull/.*#\1#')
+[ -n "$slug" ] && [ "$slug" != "$url" ] || exit 2
+inline=$(gh api "repos/$slug/pulls/$num/comments" --paginate 2>/dev/null) || exit 2
+me=$(gh api user --jq .login 2>/dev/null) || exit 2
+[ -n "$me" ] || exit 2
+
+read -r -d '' prog <<'PY'
+import json, os, sys
+state_path, inline_path, me = sys.argv[1], sys.argv[2], sys.argv[3]
+d = json.load(sys.stdin)
+raw = open(inline_path).read().strip()
+# --paginate may emit several concatenated JSON arrays
+inline, dec, pos = [], json.JSONDecoder(), 0
+while pos < len(raw):
+    v, end = dec.raw_decode(raw, pos)
+    inline += v if isinstance(v, list) else [v]
+    pos = end
+    while pos < len(raw) and raw[pos].isspace(): pos += 1
+try:
+    state = json.load(open(state_path))
+except Exception:
+    state = {}
+if not isinstance(state, dict): state = {}
+seen = state.get("seen", [])
+seen = set(x for x in seen if isinstance(x, str)) if isinstance(seen, list) else set()
+out = []
+def bot(login): return login.endswith("[bot]") or login.lower() in {"devbot", "flux", "danger", "github-actions"}
+def login(a): return (a or {}).get("login", "")
+for c in d.get("comments") or []:
+    i = "c:" + str(c.get("id") or c.get("url"))
+    if i not in seen:
+        a = login(c.get("author"))
+        out.append({"kind": "comment", "id": i, "author": a, "is_bot": bot(a), "body": c.get("body", ""), "url": c.get("url", d["url"])})
+for r in d.get("reviews") or []:
+    i = "r:" + str(r.get("id") or r.get("submittedAt"))
+    if i not in seen:
+        a = login(r.get("author"))
+        out.append({"kind": "review", "id": i, "author": a, "is_bot": bot(a), "body": r.get("body", ""), "url": d["url"], "state": r.get("state")})
+for c in inline:
+    i = "rc:" + str(c["id"])
+    if i not in seen:
+        u = c.get("user") or {}
+        a = u.get("login", "")
+        out.append({"kind": "comment", "id": i, "author": a, "is_bot": u.get("type") == "Bot" or bot(a), "body": c.get("body", ""), "url": c.get("html_url", d["url"])})
+failing = set()
+for ch in d.get("statusCheckRollup") or []:
+    name = ch.get("name") or ch.get("context", "")
+    concl = str(ch.get("conclusion") or ch.get("state") or "")
+    i = "k:" + name + ":" + concl
+    if concl.upper() not in {"FAILURE", "ERROR", "CANCELLED", "TIMED_OUT"}: continue
+    failing.add(i)
+    if i not in seen:
+        out.append({"kind": "check", "id": i, "author": "ci", "is_bot": True, "body": name, "url": ch.get("detailsUrl") or ch.get("targetUrl", "")})
+for o in out:
+    seen.add(o["id"])
+    if o["kind"] != "check" and o["author"] == me: continue
+    print(json.dumps(o))
+# a check that stopped failing is forgotten, so a later failure is reported again
+seen = {x for x in seen if not x.startswith("k:") or x in failing}
+state["seen"] = sorted(seen); state["pr_state"] = d.get("state"); state["review_decision"] = d.get("reviewDecision")
+with open(state_path + ".tmp", "w") as f: json.dump(state, f, indent=1)
+os.replace(state_path + ".tmp", state_path)
+PY
+tmp=$(mktemp); printf '%s' "${inline:-[]}" > "$tmp"
+printf '%s' "$json" | python3 -c "$prog" "$state" "$tmp" "$me"; rc=$?
+rm -f "$tmp"
+[ $rc -eq 0 ] || exit 2
+exit 0

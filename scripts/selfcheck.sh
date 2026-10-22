@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+# Layout and cross-reference assertions for the Scruffy repo. Exit 0 = all pass.
+cd "$(dirname "$0")/.."
+fails=0
+check() {  # check "<description>" <command...>
+  local desc=$1; shift
+  if "$@" >/dev/null 2>&1; then :; else fails=$((fails+1)); echo "FAIL $fails: $desc"; fi
+}
+grep_empty() {  # pass when grep finds nothing
+  ! grep -rniE "$1" "${@:2}" 2>/dev/null | grep -q .
+}
+
+# --- Task 0: feature lane copied and renamed
+check "scruffy-feature exists"            test -f scruffy-feature/SKILL.md
+check "ROLES.md replaces taimi_roles.md"  test -f scruffy-feature/ROLES.md
+check "no taimi_roles.md"                 test ! -e scruffy-feature/taimi_roles.md
+check "rename grep clean (DESIGN.md exempt)" bash -c '! grep -rniE "taimi|feature-dev|LEARNED\.md|pipeline/scripts|references/orchestration|Relentless" scruffy-feature/ --exclude=DESIGN.md | grep -q .'
+check "feature SKILL name"                grep -q "^name: scruffy-feature$" scruffy-feature/SKILL.md
+check "feature SKILL not model-invocable" grep -q "^disable-model-invocation: true$" scruffy-feature/SKILL.md
+check "feature SKILL has no argument-hint" bash -c '! grep -q "^argument-hint:" scruffy-feature/SKILL.md'
+check "no .taimi run dir"                 grep_empty '\.taimi/' scruffy-feature/
+check "pr-format path fixed"              bash -c '! grep -q "\`references/pr-format.md\`" scruffy-feature/SKILL.md'
+
+# --- Task 1: bug lane moved, memory/ and shared/ exist
+check "scruffy-bug exists"               test -f scruffy-bug/SKILL.md
+check "old scruffy/ gone"                test ! -e scruffy/references/dossier.md
+check "bug SKILL name"                   grep -q "^name: scruffy-bug$" scruffy-bug/SKILL.md
+check "bug SKILL not model-invocable"    grep -q "^disable-model-invocation: true$" scruffy-bug/SKILL.md
+check "hook path updated"                grep -q 'skills/scruffy-bug/scripts/goal-check.sh' scruffy/SKILL.md
+check "memory/rules.md exists"           test -f memory/rules.md
+check "no LEARNED.md anywhere"           bash -c '! find . -name LEARNED.md -not -path "./.git/*" | grep -q .'
+check "path template moved"              test -f memory/TEMPLATE-path.md
+check "paths README moved"               test -f memory/README-paths.md
+check "no scruffy/scripts refs"          grep_empty 'scruffy/scripts/' agents scruffy-bug verification
+check "no scruffy/paths refs"            grep_empty 'scruffy/paths/' agents scruffy-bug verification
+check "no skills/scruffy/ refs"          grep_empty 'skills/scruffy/' agents scruffy-bug verification
+check "three scripts present once"       bash -c 'test -f scruffy-bug/scripts/pair-diff.py && test -f scruffy-bug/scripts/tree-diff.py && test -f scruffy-bug/scripts/ui-touch.sh && test ! -e scruffy-feature/mechanisms/pipeline/scripts'
+check "shared/ exists"                   test -d shared
+
+# --- Task 2: one proof block
+check "proof-block.md exists"            test -f shared/proof-block.md
+check "proof-block has tiers"            grep -q "^## Verdict tiers" shared/proof-block.md
+check "bug engine cites it"              grep -q "shared/proof-block.md" verification/SKILL.md
+check "feature engine cites it"         grep -q "shared/proof-block.md" scruffy-feature/mechanisms/pipeline/references/verification.md
+check "block not duplicated in bug engine" bash -c '[ "$(grep -c "^| Fails without fix" verification/SKILL.md)" = 0 ]'
+
+# --- Task 3: dispatcher
+check "dispatcher SKILL exists"          test -f scruffy/SKILL.md
+check "dispatcher name"                  grep -q "^name: scruffy$" scruffy/SKILL.md
+check "dispatcher is model-invocable"    bash -c '! grep -q "^disable-model-invocation: true$" scruffy/SKILL.md'
+check "dispatcher routes to both lanes"  bash -c 'grep -q "scruffy-bug/SKILL.md" scruffy/SKILL.md && grep -q "scruffy-feature/SKILL.md" scruffy/SKILL.md'
+check "owned flag defined"               grep -q "owned: no" scruffy/SKILL.md
+check "intake.md exists"                 test -f scruffy/references/intake.md
+check "interview.md exists"              test -f scruffy/references/interview.md
+check "confidence rule present"          grep -qi "confidence" scruffy/references/interview.md
+check "missing-button example present"   grep -qi "never built" scruffy/references/intake.md
+check "bug lane has no intake gate"      bash -c '! grep -q "### Stop 1 — the intake gate" scruffy-bug/SKILL.md'
+check "no Taimi in bug lane"             grep_empty 'taimi' scruffy-bug
+
+# --- Task 4: orchestration shared, developer agent
+check "orchestration.md in shared"       test -f shared/orchestration.md
+check "orchestration gone from feature refs" test ! -e scruffy-feature/mechanisms/pipeline/references/orchestration.md
+check "main thread is Team Lead"         grep -q "main thread" shared/orchestration.md
+check "four plan fields"                 grep -q "what / files / criteria / depends on" shared/orchestration.md
+check "fail memo per track"              grep -q "fail-memo-<track>-<n>.md" shared/orchestration.md
+check "scope rule"                       grep -q "non-goals" shared/orchestration.md
+check "developer agent exists"           test -f agents/developer.md
+check "developer is sonnet"              grep -q "^model: sonnet$" agents/developer.md
+check "team-lead tools no longer spawn"  grep_empty 'Spawning Developer agents' scruffy-feature/roles
+check "RUNNER does not dispatch team lead" bash -c '! grep -q "Dispatch \`team-lead-<platform>\`" scruffy-feature/mechanisms/pipeline/RUNNER.md'
+check "runner ladder: Agent first"       grep -qi "plain parallel \`Agent\`" shared/orchestration.md
+
+# --- Task 5: reproduce first
+check "apps.md exists"                   test -f scruffy-bug/references/apps.md
+check "apps.md has DevApp row"           grep -q "DevApp" scruffy-bug/references/apps.md
+check "step 3 gates step 4"              grep -q "No investigator runs until" scruffy-bug/SKILL.md
+check "step 3 cites apps.md"             grep -q "references/apps.md" scruffy-bug/SKILL.md
+check "non-UI artefact rule"             grep -q "cheapest falsifiable artefact" scruffy-bug/SKILL.md
+
+# --- Task 6: Team Lead and fail memo in the bug lane
+check "step 7 cites orchestration"       grep -q "shared/orchestration.md" scruffy-bug/SKILL.md
+check "plan-only-when-earned removed"    bash -c '! grep -q "Plan only when it earns one" scruffy-bug/SKILL.md'
+check "step 8 cites fail memo"           grep -q "fail-memo" scruffy-bug/SKILL.md
+check "fix budget per track in bug lane" grep -q "per track" scruffy-bug/SKILL.md
+
+# --- Task 7: shared PR mechanics
+check "shared/pr.md exists"              test -f shared/pr.md
+check "publish-evidence in shared/pr.md" grep -q "publish-evidence.sh" shared/pr.md
+check "bug step 10 cites shared/pr.md"   grep -q "shared/pr.md" scruffy-bug/SKILL.md
+check "feature RUNNER cites shared/pr.md" grep -q "shared/pr.md" scruffy-feature/mechanisms/pipeline/RUNNER.md
+check "publish block not duplicated"     bash -c '[ "$(grep -l "PUSH REFUSED" scruffy-bug/SKILL.md shared/pr.md | wc -l | tr -d " ")" = 1 ]'
+
+# --- Task 8: owned vs not-owned
+for f in scruffy-feature/SKILL.md scruffy-feature/mechanisms/pipeline/RUNNER.md scruffy-feature/roles/docs-keeper/tools.md scruffy-feature/mechanisms/pipeline/references/pr-format.md scruffy-feature/mechanisms/council/RUNNER.md; do
+  check "owned branch in $f" grep -q "owned: no" "$f"
+done
+check "draft when not owned"             grep -q "draft" scruffy-feature/mechanisms/pipeline/RUNNER.md
+check "no unconditional init-project"    bash -c '! grep -q "Missing → \`scripts/init-project.sh" scruffy-feature/SKILL.md'
+
+# --- Task 9: watch mode
+check "watch.md exists"                  test -f scruffy/references/watch.md
+check "watch red lines"                  grep -q "red test" scruffy/references/watch.md
+check "watch never pushes"               grep -qi "never push" scruffy/references/watch.md
+check "watch batches on expensive"       grep -qi "expensive loop" scruffy/references/watch.md
+check "watch-tick.sh executable"         test -x scruffy-bug/scripts/watch-tick.sh
+check "watch-tick usage"                 bash -c 'scruffy-bug/scripts/watch-tick.sh 2>&1 | grep -q "usage"'
+
+# --- Task 10: learning layer
+check "shared/learning.md exists"        test -f shared/learning.md
+check "three memory kinds"               bash -c 'grep -q "Recipe" shared/learning.md && grep -q "Path" shared/learning.md && grep -q "Rule" shared/learning.md'
+check "precedence: skill wins"           grep -qi "skill wins" shared/learning.md
+check "recipe template exists"           test -f memory/TEMPLATE-recipe.md
+check "recipe template frontmatter"      bash -c 'for k in name repo app derived_from last_run runs median_minutes; do grep -q "^$k:" memory/TEMPLATE-recipe.md || exit 1; done'
+check "ledger has recipe columns"        bash -c 'grep -q "recipe_hits" scruffy-bug/references/dossier.md && grep -q "minutes_saved" scruffy-bug/references/dossier.md'
+check "bug lane cites shared learning"   grep -q "shared/learning.md" scruffy-bug/SKILL.md
+check "retro step defined"               grep -qi "retro" shared/learning.md
+
+# --- Task 11: install
+check "install.sh executable"            test -x scripts/install.sh
+check "install.sh parses"                bash -n scripts/install.sh
+check "install links four skills"        bash -c 'for s in scruffy scruffy-bug scruffy-feature verification; do grep -q "for s in .*$s" scripts/install.sh || exit 1; done'
+check "install removes old skills"       bash -c 'grep -q "bug-eater" scripts/install.sh && grep -q "taimi" scripts/install.sh'
+check "install links shared and memory"  bash -c 'grep -q "skills/shared" scripts/install.sh && grep -q "skills/memory" scripts/install.sh'
+check "README names four skills"         bash -c 'for s in scruffy scruffy-bug scruffy-feature verification; do grep -q "\`$s\`" README.md || exit 1; done'
+check "README has no copy install"       bash -c '! grep -qi "copying works too" README.md'
+check "no stale repo-wide refs"          bash -c '! grep -rniE "feature-dev|bug-eater|screen-audit|LEARNED\.md" README.md scruffy scruffy-bug shared agents verification memory | grep -q .'
+check "no intake gate leftovers"         bash -c '! grep -rniE "intake gate" README.md scruffy scruffy-bug scruffy-feature shared agents verification memory | grep -q .'
+check "relative ../ paths resolve"       python3 scripts/check-paths.py
+
+# --- Final review fixes
+check "goal hook on the dispatcher"      bash -c 'grep -q "^hooks:" scruffy/SKILL.md && grep -q "goal-check.sh" scruffy/SKILL.md'
+check "no hook in bug lane frontmatter"  bash -c '! grep -q "^hooks:" scruffy-bug/SKILL.md'
+check "goal-check honours tracks.pending" grep -q "tracks.pending" scruffy-bug/scripts/goal-check.sh
+check "orchestration writes tracks.pending" grep -q "tracks.pending" shared/orchestration.md
+check "bug lane writes tracks.pending"   grep -q "tracks.pending" scruffy-bug/SKILL.md
+check "retro owned by dispatcher only"   bash -c '! grep -q "Run the retro" scruffy-bug/SKILL.md'
+check "bug lane proposes rules"          bash -c '! grep -q "Write it down" scruffy-bug/SKILL.md'
+check "backfill in dispatcher Setup 1"   grep -q "Ledger backfill" scruffy/SKILL.md
+check "backfill gone from preflight"     bash -c '! grep -q "Ledger backfill" scruffy-bug/references/preflight.md'
+check "candidate rules in interview"     grep -qi "candidate rule" scruffy/references/interview.md
+check "dispatcher takes --project"       bash -c 'grep -q -- "--project <path>" scruffy/SKILL.md && grep "^argument-hint:" scruffy/SKILL.md | grep -q -- "--project"'
+check "state.md carries repo_path"       grep -q "repo_path:" scruffy/SKILL.md
+for f in scruffy-feature/SKILL.md scruffy-feature/mechanisms/pipeline/RUNNER.md scruffy-feature/mechanisms/council/RUNNER.md; do
+  check "repo_path read in $f" grep -q "repo_path:" "$f"
+done
+check "no 'no --project flag'"           bash -c '! grep -q "no \`--project\` flag" scruffy-feature/SKILL.md'
+check "Setup 5 resumes state.md"         grep -q "Never overwrite \`interview: closed\`" scruffy/SKILL.md
+check "dispatcher loads fresh recipes"   grep -q "status: fresh" scruffy/SKILL.md
+check "mixed batch order stated"         grep -qi "mixed batch" scruffy/SKILL.md
+check "watch red line uses red-test.sha" grep -q "red-test.sha" scruffy/references/watch.md
+check "watch no longer reads test_file"  bash -c '! grep -q "test_file" scruffy/references/watch.md'
+check "watch resolves dossier by pr:"    grep -q "tickets/\*/state.md" scruffy/references/watch.md
+check "pr.md records pr/branch/worktree" bash -c 'grep -q "\`pr:\`" shared/pr.md && grep -q "\`branch:\`" shared/pr.md && grep -q "\`worktree:\`" shared/pr.md'
+check "bug step 10 records worktree"     grep -q "\`worktree:\`" scruffy-bug/SKILL.md
+check "feature step 7 records worktree"  grep -q "\`worktree:\`" scruffy-feature/mechanisms/pipeline/RUNNER.md
+check "watch-tick skips own login"       grep -q "api user" scruffy-bug/scripts/watch-tick.sh
+check "watch.md says own comments skipped" grep -qi "authored by.*own\|own login" scruffy/references/watch.md
+check "no harness worktree isolation"    bash -c '! grep -qiE "isolation: \"worktree\"|worktree isolation" shared/orchestration.md'
+check "Team Lead adds track worktrees"   grep -q "git -C <repo_path> worktree add <path> -b <branch> <test-sha>" shared/orchestration.md
+check "bug-lane track naming"            grep -q "<KEY>-track-<n>" shared/orchestration.md
+check "interview record has its inputs"  bash -c 'grep -q "record_worktree:" scruffy/references/interview.md && grep -q "build-identity-before.txt" scruffy/references/interview.md && grep -q "bundle:" scruffy/references/interview.md && grep -q "bundle:" scruffy-bug/SKILL.md'
+check "bug step 3 reuses the record install" grep -q "record_sha" scruffy-bug/SKILL.md
+check "feature commands use installed paths" grep_empty '\.\./scruffy-bug/scripts/' scruffy-feature/mechanisms scruffy-feature/roles
+check "bug lane takes no \$ARGUMENTS"   bash -c '! grep -q "ARGUMENTS" scruffy-bug/SKILL.md'
+check "goal budget is per track"         bash -c '! grep -q "stop after 3 fix attempts" scruffy-bug/SKILL.md'
+check "no feature-redirect row"          bash -c '! grep -q "not a bug — feature lane" scruffy-bug/SKILL.md'
+check "plan.md always"                   bash -c '! grep -q "only when the change earned a plan" scruffy-bug/references/dossier.md'
+check "path lookup is dispatcher Setup 6" grep -q "Setup 6" memory/README-paths.md
+check "capturer not dispatched at step 1" bash -c '! grep -q "at step 1" agents/evidence-capturer.md'
+check "pr.md: symlink install only"      bash -c '! grep -q "install shape" shared/pr.md'
+check "feature proof rows per criterion" bash -c '[ "$(grep -c "^| Fails without feature" shared/proof-block.md)" -ge 2 ]'
+
+echo "selfcheck: $fails failure(s)"
+exit $(( fails > 0 ))
