@@ -35,3 +35,23 @@
 ## 2026-10-02 — Worktree creation does not carry over a working-tree-only patch from the main checkout
 **Context:** MOSAIC-3537, this run. A prior run's MOSAIC-4516 patch (two-line type annotation, deliberately left uncommitted) existed in the main checkout. Creating `.worktrees/MOSAIC-3537` from `main` via `git worktree add` produced a fresh checkout at the last commit — the uncommitted patch was not there, and the build failed until it was re-applied inside the worktree.
 **So:** when a dossier or ledger entry names a working-tree-only patch as a precondition, re-apply it inside each new worktree explicitly — it will not follow you from the main checkout or from a prior worktree. Check for it with the same build-failure signature before assuming the toolchain regressed.
+
+## 2026-10-13 — Every branch a fix adds gets a test that fails when the branch is flipped
+**Context:** MOSAIC-3521. The fix added an RTL flip and a liquid-glass guard. The red test covered only the reported symptom (LTR), so a reviewer found both branches unpinned. Amel approved this rule.
+**So:** list each new `if`/`guard`/ternary in `parent..head` and name the test that fails if it is inverted. Check by mutation: flip the condition, run the owning tests, expect red, restore. An unpinned branch goes on the `Not proven` line and caps the verdict at REVIEW NEEDED.
+
+## 2026-10-13 — A new test is not proven until it fails with its guard disabled, and it asserts its own precondition
+**Context:** MOSAIC-3521. My first RTL test passed with the RTL flip disabled: it never rendered right-to-left (setting `semanticContentAttribute` after construction does nothing; the direction is passed to `FlexLayoutAdapter.makeLayout` and needs a `traitOverrides.layoutDirection`), and English text sat left-aligned in a wide box, so it never touched the padded edge.
+**So:** after writing a test for a guard, disable the guard and watch the test go red. Assert the precondition inside the test (e.g. `effectiveUserInterfaceLayoutDirection == .rightToLeft`) and pin anything that makes the assertion vacuous (text alignment).
+
+## 2026-10-13 — Layout bugs: ask for direction/locale, infer LTR when the ticket is silent
+**Context:** MOSAIC-3521. `padding-left` mirrors on iOS and Android and not on web. The interview checklist had no direction row, so RTL was never recorded as a condition. Amel approved this rule tentatively ("i guess").
+**So:** for any padding, margin, alignment or ordering bug, add the layout direction/locale to the interview. When the ticket is silent, assume LTR and write that under `assumptions:` so it reaches the PR body.
+
+## 2026-10-13 — Read earlier attempts on the same component for failure modes, after your own fix exists
+**Context:** MOSAIC-3521 was run from scratch on instruction, which correctly kept #423 and its dossier out of the diagnosis. That also hid the one known trap (left/right mix-up on a first pass).
+**So:** keep "do not look for PRs on this ticket" until the fix and red test exist. Then read closed or archived attempts on the same component, read-only, and extract only their failure modes into the axes checklist (direction, wrapper views, other element kinds). Do not reuse their code.
+
+## 2026-10-13 — macOS has no `timeout`, and a mutate-run-restore step must restore on a trap
+**Context:** MOSAIC-3521. `timeout` is missing on macOS (exit 127, read before reading any test delta). `xcodebuild test-without-building` can hang after printing its result. A restore with a relative path inside a trap failed once because the script had changed directory.
+**So:** use `perl -e 'alarm N; exec @ARGV' cmd` for time limits. Put the restore in a `trap ... EXIT` that uses absolute paths, and check `git status` afterwards. Gate test runs on the `TEST BUILD SUCCEEDED` marker.
