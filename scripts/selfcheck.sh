@@ -170,5 +170,47 @@ check "capturer not dispatched at step 1" bash -c '! grep -q "at step 1" agents/
 check "pr.md: symlink install only"      bash -c '! grep -q "install shape" shared/pr.md'
 check "feature proof rows per criterion" bash -c '[ "$(grep -c "^| Fails without feature" shared/proof-block.md)" -ge 2 ]'
 
+# --- Review lane
+check "seats.json exists"              test -f scruffy-review/seats.json
+check "resolver tests pass"            python3 -m unittest scripts/test_resolve_seats.py
+check "no seat above high"             bash -c '! grep -qE "\"effort\": *\"(xhigh|max|ultra)" scruffy-review/seats.json'
+check "reviewer prompt exists"         test -f scruffy-review/references/reviewer.md
+check "contract has checked_and_sound" grep -q "checked_and_sound" scruffy-review/references/contract.md
+check "judge has three verdicts"       bash -c 'for v in CONFIRMED REFUTED CONTESTED; do grep -q "$v" scruffy-review/references/judge.md || exit 1; done'
+check "judge contests, not refutes, when unsure" grep -qi "can.t confirm.*CONTESTED" scruffy-review/references/judge.md
+check "judge marks outside-diff"       grep -q "outside-diff" scruffy-review/references/judge.md
+check "judge reads red-green result"   grep -qi "red-green test check" scruffy-review/references/judge.md
+check "pr-reviewer is read-only"       bash -c 'grep -q "^tools: Read, Grep, Glob, Bash$" agents/pr-reviewer.md && grep -qi "never edit" agents/pr-reviewer.md'
+check "no Mode 3 left"                 grep_empty 'mode 3|mode: review' verification shared agents scruffy scruffy-bug scruffy-review README.md
+check "verification names red-green"   grep -q "^# Red-green test check" verification/SKILL.md
+check "auditor has red-green mode"     grep -q "red-green" agents/proof-auditor.md
+check "red-green accepts forced depth" grep -q "depth: deep" verification/SKILL.md
+check "review lane exists"             test -f scruffy-review/SKILL.md
+check "review lane not model-invocable" grep -q "^disable-model-invocation: true$" scruffy-review/SKILL.md
+check "lane calls the resolver"        grep -q "resolve-seats.py" scruffy-review/SKILL.md
+check "lane handles needs-search"      grep -q "needs-search" scruffy-review/SKILL.md
+check "lane fetches fork heads"        grep -q "pull/<n>/head" scruffy-review/SKILL.md
+check "lane no harness isolation"      bash -c '! grep -q "isolation:" scruffy-review/SKILL.md'
+check "lane integrity check"           grep -q "status --porcelain" scruffy-review/SKILL.md
+check "lane red-green on codeless"     bash -c 'grep -qi "red-green test check" scruffy-review/SKILL.md && grep -q "codeless" scruffy-review/SKILL.md'
+check "lane drafts only when settled"  grep -qi "settled" scruffy-review/SKILL.md
+check "lane posts only on go"          grep -qi "only on his go\|only after his go" scruffy-review/SKILL.md
+check "lane single-provider flag"      grep -q "single-provider run" scruffy-review/SKILL.md
+check "lane outside-diff not inline"   grep -q "outside-diff" scruffy-review/SKILL.md
+check "lane uses merge-base"           grep -q "merge-base" scruffy-review/SKILL.md
+check "lane forces deep red-green"     grep -q "depth: deep" scruffy-review/SKILL.md
+check "lane ignores red-green refs"    grep -q "refs/heads/scruffy-redgreen/" scruffy-review/SKILL.md
+check "path checker covers review"     grep -q '"scruffy-review"' scripts/check-paths.py
+check "voice pairs file exists"        test -f memory/voice/pairs.md
+check "voice rules file exists"        test -f memory/voice/rules.md
+check "learning names voice"           grep -q "memory/voice" shared/learning.md
+check "lane records posted pairs"      grep -q "voice/pairs.md" scruffy-review/SKILL.md
+check "dispatcher routes review"       grep -q "../scruffy-review/SKILL.md" scruffy/SKILL.md
+check "argument-hint has review"       bash -c 'grep "^argument-hint:" scruffy/SKILL.md | grep -q "review <pr>"'
+check "intake routes PR review"        bash -c 'grep "review PR #1234" scruffy/references/intake.md | grep -q "scruffy-review"'
+check "review lane in run cap"         grep -q "Review lane" scruffy-bug/references/models.md
+check "installer links review lane"    grep -q "scruffy-review" scripts/install.sh
+check "README names the review lane"   grep -q "scruffy-review" README.md
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

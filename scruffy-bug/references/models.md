@@ -34,7 +34,8 @@ Hitting a cap routes to `blocked` with state preserved. Never a silent retry, ne
 | Chain refuted → re-investigate | **1** | `blocked`, both skeptics' reasoning recorded |
 | Build failure | **3** | `blocked`, worktree kept |
 | Flaky suite re-run | **2** | `blocked` and flagged flaky — **never re-run to green** |
-| Deep PR review — test-writing attempts | **2** | fall back to shallow, with a note saying why |
+| Red-green test check — test-writing attempts | **2** | fall back to shallow, with a note saying why |
+| Review lane, per run | **11** invocations (3 seats + 3 retries + 1 proof-auditor + 4 follow-up judge rounds) | seat failed: <seat>; both reviewers → blocked; follow-ups past 4 answered in the main thread |
 | Whole run, **total** agent invocations | **60** cumulative | Remaining items `deferred`, named individually |
 
 **Chain attempts and fix attempts do not share a budget.** One exhausting the other is how a correct diagnosis gets abandoned, or a wrong one gets implemented three times. Counted separately in `state.md`.

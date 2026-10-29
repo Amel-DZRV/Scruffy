@@ -17,7 +17,7 @@ The caller hands you a packet. Anything missing that you need → stop and retur
 
 | Field | Used for |
 |---|---|
-| `mode` | `fix`, `standalone`, or `review` |
+| `mode` | `fix`, `standalone`, or `red-green` |
 | repo path, dossier path | where to run, where `evidence/` lives |
 | `parent`, `test_commit`, `head` SHAs | the three points every claim is measured at (`test_commit` absent in standalone mode when no test was added) |
 | test file(s) and the hash recorded when it went red | claim 1 |

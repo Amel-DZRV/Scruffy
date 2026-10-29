@@ -1,15 +1,16 @@
 # Scruffy
 
-Scruffy takes bugs and features, in repos you don't own, to a draft PR with proof. One entry point, `/scruffy`: hand it a ticket, an issue, a PR, a Slack thread or plain text. It classifies each item, interviews you once for what only a human can supply, then runs the bug lane or the feature lane. Bugs get a cause, a red test that fails on exactly what was reported, a fix and a proof block. Features get a spec, a plan you approve, and a built, verified branch.
+Scruffy takes bugs and features, in repos you don't own, to a draft PR with proof. One entry point, `/scruffy`: hand it a ticket, an issue, a PR, a Slack thread or plain text. It classifies each item, interviews you once for what only a human can supply, then runs the bug lane or the feature lane. Bugs get a cause, a red test that fails on exactly what was reported, a fix and a proof block. Features get a spec, a plan you approve, and a built, verified branch. The third lane, `/scruffy review <pr>`, reviews someone else's PR: two blind reviewers on different models, a red-green test check when it applies, a judge that checks every finding against the code, then drafts in your voice, posted only on your go.
 
 | Skill | Owns |
 |---|---|
 | `scruffy` | The dispatcher, and the only skill you type. Intake, bug-or-feature classification, the interview, the hand-off to a lane, and `watch` mode for PRs already open |
 | `scruffy-bug` | The bug lane: preflight, dossier, clustering, the budget, then per bug: gather, already dead?, reproduce, investigate, red test, propose, fix, verify, clean up, draft PR. Then the final report, the ledger and learning |
 | `scruffy-feature` | The feature lane (formerly Taimi): a team of roles that specs, plans, builds and reviews a feature, with a council mechanism for decisions |
-| `verification` | Proof. Red tests, the four claims, the proof block. Called by both lanes, or run standalone on a branch, a diff or someone else's PR |
+| `scruffy-review` | The review lane: Opus 5.5 and GPT-6.1 Sol review blind (Fable 5.1 when there is no GPT), the red-green test check on codeless and shared-code PRs, a Sonnet 5.5 judge, follow-up questions, drafts, posting on go, and learning from your edits |
+| `verification` | Proof. Red tests, the four claims, the proof block. Called by the bug and feature lanes, run standalone on a branch or a diff, or as the red-green test check on someone else's PR |
 
-`scruffy-bug` and `scruffy-feature` are entered only through the dispatcher. `shared/` and `memory/` are not skills.
+`scruffy-bug`, `scruffy-feature` and `scruffy-review` are entered only through the dispatcher. `shared/` and `memory/` are not skills.
 
 Agents the skills dispatch, never called directly:
 
@@ -17,6 +18,7 @@ Agents the skills dispatch, never called directly:
 |---|---|
 | `proof-auditor` | Runs the four claims and awards the verdict, in a fresh context with no write tools. The model that wrote a fix never grades it |
 | `step-reviewer` | Reviews one implementation step from its two SHAs, with none of the implementer's reasoning |
+| `pr-reviewer` | The review lane's reviewer and judge on the no-T3 transport: read-only, in a detached worktree at someone else's PR head |
 | `evidence-capturer` | Takes the before/after pair from a simulator or emulator by a recorded path, gated on the accessibility tree and the installed binary's hash |
 | `developer` | Implements one track of a plan in its own worktree, from a packet the Team Lead writes |
 
@@ -39,6 +41,7 @@ On Windows, Git Bash's `ln -s` copies instead of linking unless Developer Mode i
 mklink /J "%USERPROFILE%\.claude\skills\scruffy" "C:\dev\Scruffy\scruffy"
 mklink /J "%USERPROFILE%\.claude\skills\scruffy-bug" "C:\dev\Scruffy\scruffy-bug"
 mklink /J "%USERPROFILE%\.claude\skills\scruffy-feature" "C:\dev\Scruffy\scruffy-feature"
+mklink /J "%USERPROFILE%\.claude\skills\scruffy-review" "C:\dev\Scruffy\scruffy-review"
 mklink /J "%USERPROFILE%\.claude\skills\verification" "C:\dev\Scruffy\verification"
 mklink /J "%USERPROFILE%\.claude\skills\shared" "C:\dev\Scruffy\shared"
 mklink /J "%USERPROFILE%\.claude\skills\memory" "C:\dev\Scruffy\memory"
@@ -53,10 +56,11 @@ Without the agents everything still runs, but verification grades in-context and
 /scruffy <feature idea> --project <path>
 /scruffy MOSAIC-3559 MOSAIC-3561 MOSAIC-3570
 /scruffy watch <pr>
+/scruffy review <pr>
 verification <pr>
 ```
 
-The dispatcher classifies each item as a bug or a feature. Several bugs at once are taken in together, so two tickets with one root cause become one PR. `watch` monitors a PR you already opened: bots, human reviewers, the loop, the exits. `verification` also runs on its own against the current worktree.
+The dispatcher classifies each item as a bug or a feature. Several bugs at once are taken in together, so two tickets with one root cause become one PR. `watch` monitors a PR you already opened: bots, human reviewers, the loop, the exits. `review` reviews a PR someone else opened. `verification` also runs on its own against the current worktree.
 
 ## The idea
 
@@ -98,20 +102,26 @@ Scruffy/
 │   ├── mechanisms/pipeline/      RUNNER.md, references/{verification,worktrees,spec-and-plan,pr-format}.md
 │   ├── rules/engineering-discipline.md
 │   └── scripts/init-project.sh
-├── shared/                       read by both lanes; not a skill
+├── scruffy-review/               the review lane
+│   ├── SKILL.md                  resolve → blind review → red-green → judge → follow-ups → drafts → post on go
+│   ├── seats.json                reviewer-a, reviewer-b, judge, with fallbacks
+│   ├── references/               reviewer.md, judge.md, contract.md
+│   └── scripts/resolve-seats.py  seats + live capabilities → the models that run
+├── shared/                       read by the lanes; not a skill
 │   ├── orchestration.md          Team Lead mechanics: tracks, worktrees, developer packet, integration, fail memo
 │   ├── pr.md                     evidence publishing, image verification, ticket comment
 │   ├── proof-block.md            the block shape and the three tiers, one copy
 │   └── learning.md               the learning layer's contract
 ├── memory/                       what the workflow has learned, versioned here
 │   ├── rules.md                  judgment corrections
+│   ├── voice/                    pairs.md (draft vs posted), rules.md (approved voice rules)
 │   ├── README.md, README-paths.md, TEMPLATE-recipe.md, TEMPLATE-path.md
 │   └── <repo>/
 │       ├── recipes/<name>.md     build Consumer for sim, install DevApp, screenshot, pin status bar …
 │       └── paths/<screen>.md     recorded navigation
 ├── verification/                 the proof engine, separately invocable
-├── agents/                       proof-auditor, step-reviewer, evidence-capturer, developer
-├── scripts/                      install.sh, selfcheck.sh, check-paths.py
+├── agents/                       proof-auditor, step-reviewer, evidence-capturer, developer, pr-reviewer
+├── scripts/                      install.sh, selfcheck.sh, check-paths.py, test_resolve_seats.py
 └── docs/superpowers/             specs and plans, history
 ```
 
@@ -122,6 +132,7 @@ Scruffy/
 - **Recipes** (`memory/<repo>/recipes/`): how to build, install and capture in a repo, written after a run that worked it out, reused by the next.
 - **Paths** (`memory/<repo>/paths/`): recorded navigation to a screen, replayed by `evidence-capturer`.
 - **Rules** (`memory/rules.md`): judgment corrections from you. The skill wins where they conflict. Contract in `shared/learning.md`.
+- **Voice** (`memory/voice/`): every posted review comment next to its draft, and the voice rules you approved from your edits. Read by `pr-review-comments`.
 
 ## Status
 

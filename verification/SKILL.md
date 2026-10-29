@@ -211,9 +211,9 @@ Writes a dossier — resumption and evidence both need somewhere to live. **No l
 
 ---
 
-# Mode 3 — Reviewing someone else's PR
+# Red-green test check — someone else's PR
 
-The mode that justifies this being a separate module. Reading a diff tells you whether it *looks* right. Writing the red test its author did not and running it against their branch tells you whether it **does anything.**
+Write the test the PR's author didn't write, run it on the parent commit (red) and on their branch (green). The check that justifies this being a separate module. Reading a diff tells you whether it *looks* right. Writing the red test its author did not and running it against their branch tells you whether it **does anything.**
 
 ## Depth by blast radius, not by size
 
@@ -226,15 +226,17 @@ Line count is a bad proxy. A 300-line change to a test file is safe; a one-line 
 
 To judge it, look at what reads the thing being changed — grep the callers, not the line count. When it is ambiguous, go deep. A shallow review of a wide change is worth roughly nothing, and the cost of the deep one is a test you can hand them.
 
+A caller may pass `depth: deep`, and then it goes deep whatever the radius. The review lane (`../scruffy-review/SKILL.md`) does this on every codeless PR, contained or not. It may also pass `parent:` (the merge-base, not the base branch's tip), the parent-commit worktree's path and the scratch branch's name; use them as given.
+
 ## Deep review
 
 1. **Derive the claim.** What does this PR say it fixes? From the description and its linked ticket.
 2. **Write the red test for that claim**, at a seam, asserting the symptom.
 3. **Run it against the parent commit.** It must fail. If it passes, either the bug was already gone or your test asserts the wrong thing — resolve which before going further.
 4. **Run it against their branch.** It must pass.
-5. **Check coverage against the reporter's conditions**, all of them. A fix that handles two of three reported cases is the most valuable finding this mode produces, and the one least likely to be caught by reading.
+5. **Check coverage against the reporter's conditions**, all of them. A fix that handles two of three reported cases is the most valuable finding this check produces, and the one least likely to be caught by reading.
 
-Step 2 runs in the main thread, in a throwaway worktree at the parent commit, committed to a local scratch branch — never to theirs. Steps 3–5 run in `proof-auditor` with `mode: review`: the test, its hash, the parent SHA and their head. The shallow review is the auditor alone. Separating writer from runner is what keeps "your test passes on their fix" from being a claim you made about your own test.
+Step 2 runs in the main thread, in a throwaway worktree at the parent commit, committed to a local scratch branch — never to theirs. Steps 3–5 run in `proof-auditor` with `mode: red-green`: the test, its hash, the parent SHA and their head. The shallow review is the auditor alone. Separating writer from runner is what keeps "your test passes on their fix" from being a claim you made about your own test.
 
 Their fix passing your test is a strong result. Their fix passing on the parent commit too means the test proves nothing about their change — say so.
 
@@ -255,7 +257,7 @@ Log it: date, PR, radius, whether the independent test confirmed the claim. Sepa
 
 # The proof block
 
-The shape, the rules, and the three verdict tiers are in `../shared/proof-block.md`. Paste the block verbatim into the PR description, inside `<details><summary>Proof — <tier></summary>`. Mode 2 puts it in the dossier verdict; Mode 3 in the review.
+The shape, the rules, and the three verdict tiers are in `../shared/proof-block.md`. Paste the block verbatim into the PR description, inside `<details><summary>Proof — <tier></summary>`. Mode 2 puts it in the dossier verdict; the red-green test check in the review.
 
 ---
 

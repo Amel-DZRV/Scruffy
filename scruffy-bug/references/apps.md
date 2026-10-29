@@ -6,9 +6,9 @@ Decided at step 3, recorded in `state.md` as `app:` and repeated in the PR's "Ho
 |---|---|---|---|
 | ios | one Mosaic feature, a component | **DevApp** with that feature — fastest | `devapp` |
 | ios | navigation, deep link, app-level state, anything DevApp cannot host | **Consumer** | `run-doordash-consumer` (check the JDK path first — see `../memory/rules.md`) |
-| rooblocks | a template's rendering | **sample app** | `sdui-accessibility-manual-test` |
-| rooblocks | template-only, no native code touched | **Live Preview** | `live-preview-setup` |
-| rooblocks | the Roo consumer app itself | **Roo Consumer** in `../doordash-ios` | that repo's launch skill |
+| codeless | a template's rendering | **sample app** | `sdui-accessibility-manual-test` |
+| codeless | template-only, no native code touched | **Live Preview** | `live-preview-setup` |
+| codeless | the Roo consumer app itself | **Roo Consumer** in `../doordash-ios` | that repo's launch skill |
 | android | component | a sample / devapp target **if one exists** — the first run's recipe records which; until then **Consumer** | `using-android-cli` |
 | pedregal | — | no simulator; stage the graph or sandbox | `running-graphs`, `sandbox-testing` |
 

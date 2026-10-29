@@ -1,6 +1,6 @@
 ---
 name: <kebab-case, e.g. build-consumer-sim>
-repo: <ios | android | rooblocks | pedregal>
+repo: <ios | android | codeless | pedregal>
 app: <Consumer | DevApp | sample app | Live Preview | Roo Consumer | n/a>
 derived_from: <repo>:<path to the skill or script this came from>
 last_run: <YYYY-MM-DD>

@@ -1,14 +1,15 @@
 # Learning — read first, write last
 
-The workflow gets faster by remembering what it did. Three kinds of memory, one place (`../memory/`), versioned with the skill.
+The workflow gets faster by remembering what it did. Four kinds of memory, one place (`../memory/`), versioned with the skill.
 
 | Kind | Where | Holds | Written | Approval |
 |---|---|---|---|---|
 | **Recipe** | `../memory/<repo>/recipes/<name>.md` | a procedure that worked: command sequence, median duration, the trap that bit and the workaround | by the retro, at close-out | automatic — a recipe is verifiable by running it |
 | **Path** | `../memory/<repo>/paths/<screen>.md` | navigation to a screen (`../memory/README-paths.md`) | by `evidence-capturer` record mode; repaired on stale | automatic |
 | **Rule** | `../memory/rules.md` | a judgment correction — a PR comment generalised, a decision Amel overruled | proposed at close-out and at watch ticks | **Amel approves** |
+| **Voice** | `../memory/voice/rules.md`, from `../memory/voice/pairs.md` | how Amel writes review comments, generalised from his edits to the review lane's drafts | pairs recorded automatically after each posted review; rules proposed at the review lane's start | **Amel approves** |
 
-The feature lane's `../scruffy-feature/memory/global/<role>.md` is a fourth kind, role judgment, with its own write path (the council). Project facts for repos Amel does not own go under `../memory/<repo>/recipes/` too.
+The feature lane's `../scruffy-feature/memory/global/<role>.md` is a fifth kind, role judgment, with its own write path (the council). Project facts for repos Amel does not own go under `../memory/<repo>/recipes/` too.
 
 ## Precedence
 
