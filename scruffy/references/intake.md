@@ -25,6 +25,6 @@ Per item, by source:
 | "The retry button is missing on the error screen" — and it was removed in a commit last week | bug | it used to work |
 | "Add dark-mode support to the store carousel" | feature | new behaviour |
 | "Remove the deprecated `LegacyBadge` renderer" | feature | debt to remove |
-| "Please review PR #1234" | neither | `verification` Mode 3 |
+| "Please review PR #1234" | review | `scruffy-review`: two reviewers, a judge, the red-green test check when it applies |
 
 When the lane depends on a fact you can look up (was it ever built?), look it up. When it depends on intent you cannot, ask — one question, with your guess.

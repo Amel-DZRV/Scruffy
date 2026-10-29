@@ -1,7 +1,7 @@
 ---
 name: scruffy
-description: Use when handed a Jira key or URL, a GitHub issue or PR URL, a TickTick task, a Slack thread, or plain text describing something broken or something wanted — one item or many. Also on "use scruffy", "scruffy, take this", and "scruffy watch <pr>". Classifies each item as a bug or a feature, interviews for what is missing, and runs the matching lane to a PR with proof.
-argument-hint: "<jira key | url | github url | ticktick task | pasted text> ... [--project <path>] | watch <pr>"
+description: Use when handed a Jira key or URL, a GitHub issue or PR URL, a TickTick task, a Slack thread, or plain text describing something broken or something wanted — one item or many. Also on "use scruffy", "scruffy, take this", "scruffy watch <pr>", and "scruffy review <pr>" for someone else's PR. Classifies each item as a bug or a feature, interviews for what is missing, and runs the matching lane to a PR with proof.
+argument-hint: "<jira key | url | github url | ticktick task | pasted text> ... [--project <path>] | watch <pr> | review <pr>"
 hooks:
   Stop:
     - hooks:
@@ -11,9 +11,9 @@ hooks:
 
 # Scruffy
 
-**Input:** $ARGUMENTS. Empty → take the items from the conversation above. First token `watch` → `references/watch.md` and nothing else in this file.
+**Input:** $ARGUMENTS. Empty → take the items from the conversation above. First token `watch` → `references/watch.md` and nothing else in this file. First token `review` → `../scruffy-review/SKILL.md` with the PR URL and `--project` if given, and nothing else in this file.
 
-Amel is a cross-platform triage owner on SDUI renderers — Mosaic (DoorDash) and Codeless Components / RooBlocks (Deliveroo) — across repos he does not own, and the CEO of his own projects. He approves and comments; he does not type code.
+Amel is a cross-platform triage owner on SDUI renderers — Mosaic (DoorDash) and Codeless Components (`doordash/codeless`) — across repos he does not own, and the CEO of his own projects. He approves and comments; he does not type code.
 
 This file decides **which lane** an item takes and gets the lane what it needs from a human. It fixes nothing itself. Every step announces itself in chat as plain text before and after its tool calls, as the lanes do.
 
@@ -37,7 +37,7 @@ Per item, one question: **is something broken, or is something wanted?**
 |---|---|
 | A behaviour that used to work, a crash, a visual defect, a mismatch with a spec that already exists | `bug` |
 | New behaviour, a new screen, a change to what a component promises, debt to remove | `feature` |
-| Someone else's PR handed over to be reviewed | neither — read `../verification/SKILL.md` Mode 3 and run it |
+| Someone else's PR handed over to be reviewed | `review` — read `../scruffy-review/SKILL.md` and run it, nothing else in this file |
 
 Ambiguous → one question in the interview, with your guess and why. A bug wrapped around a feature ("the button is missing" when the button was never built) is a feature; say so in one line.
 
@@ -48,11 +48,11 @@ Bugs cluster across items (one root cause, two symptoms → one chain, one PR) p
 Repo per `../scruffy-bug/references/repo-routing.md`. A repo the table does not route: `--project <path>` names it, else the repo the session's cwd is in. Then:
 
 ```
-owned: no   — ios, android, rooblocks, pedregal, and any repo under a DoorDash / Deliveroo org
+owned: no   — ios, android, codeless, pedregal, and any repo under a DoorDash / Deliveroo org
 owned: yes  — Amel's own projects: a `--project` or cwd repo not under those orgs
 ```
 
-`owned` switches off Notion, auto-merge, the weekly build and `init-project.sh` in the feature lane, and makes every PR a draft. Hold it for Setup 5, which writes it to `state.md` with `repo:` (the name; `../memory/<repo>/` keys off it) and `repo_path:` (the checkout's absolute path: the routing table's path, the stream's `rooblocks` clone, or the `--project` / cwd path).
+`owned` switches off Notion, auto-merge, the weekly build and `init-project.sh` in the feature lane, and makes every PR a draft. Hold it for Setup 5, which writes it to `state.md` with `repo:` (the name; `../memory/<repo>/` keys off it) and `repo_path:` (the checkout's absolute path: the routing table's path, the `codeless` clone the routing table picks, or the `--project` / cwd path).
 
 Then load every `../memory/<repo>/recipes/*.md` with `status: fresh` for each routed repo, per `../shared/learning.md` §Read.
 

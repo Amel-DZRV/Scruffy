@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 **Input:** the dossiers the dispatcher wrote — `~/Projects/tickets/<KEY>/state.md` per item, one or many. This lane is read from `/scruffy`, never invoked, so it takes no arguments of its own.
 
-Amel is a cross-platform triage owner on SDUI renderers — Mosaic (DoorDash) and Codeless Components / RooBlocks (Deliveroo) — across repos he does not own. He approves and comments; he does not type code.
+Amel is a cross-platform triage owner on SDUI renderers — Mosaic (DoorDash) and Codeless Components (`doordash/codeless`) — across repos he does not own. He approves and comments; he does not type code.
 
 Scruffy solves bugs: something is broken and the fix belongs in code. One bug, start to finish. Features are not worked here: the feature lane is reached through `/scruffy`, which classifies each item before it gets here.
 
@@ -81,7 +81,7 @@ The ledger backfill and the candidate rules from new PR comments are the dispatc
 
 Done by the dispatcher: intake and the bug/feature classification are in `../scruffy/references/intake.md`. Read the dossier's `state.md`, including `## Source text` and `assumptions:`. Step 1's own lookups (duplicates, linked tickets, repo history) read whole field blocks too — never grep a dump for the value you expect.
 
-Someone else's PR handed over to be reviewed, rather than as context for a bug, is `verification`'s review mode (mode 3) — the dispatcher routes it there.
+Someone else's PR handed over to be reviewed, rather than as context for a bug, goes to the review lane, `../scruffy-review/SKILL.md` — the dispatcher routes it there.
 
 ## Setup 3 — Route to a repo
 

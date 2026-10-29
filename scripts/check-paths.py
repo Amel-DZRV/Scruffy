@@ -8,7 +8,7 @@ Prints each unresolved path as file:line and exits non-zero if any.
 import os, re, sys
 
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-tops = ["scruffy", "scruffy-bug", "scruffy-feature", "verification", "shared", "memory"]
+tops = ["scruffy", "scruffy-bug", "scruffy-feature", "scruffy-review", "verification", "shared", "memory"]
 pat = re.compile(r"`\.\./(" + "|".join(map(re.escape, tops)) + r")/([^`\s]*)")
 bad = 0
 for d in tops + ["agents"]:
