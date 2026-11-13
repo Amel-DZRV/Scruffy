@@ -1,6 +1,6 @@
 # Scruffy
 
-Scruffy takes bugs and features, in repos you don't own, to a draft PR with proof. One entry point, `/scruffy`: hand it a ticket, an issue, a PR, a Slack thread or plain text. It classifies each item, interviews you once for what only a human can supply, then runs the bug lane or the feature lane. Bugs get a cause, a red test that fails on exactly what was reported, a fix and a proof block. Features get a spec, a plan you approve, and a built, verified branch. The third lane, `/scruffy review <pr>`, reviews someone else's PR: two blind reviewers on different models, a red-green test check when it applies, a judge that checks every finding against the code, then drafts in your voice, posted only on your go.
+Scruffy takes bugs and features, in repos you don't own, to a draft PR with proof. One entry point, `/scruffy`: hand it a ticket, an issue, a PR, a Slack thread or plain text. It classifies each item, interviews you once for what only a human can supply, then runs the bug lane or the feature lane. Bugs get a cause, a red test that fails on exactly what was reported, a fix and a proof block. Features get a spec, a plan you approve, and a built, verified branch. The third lane, `/scruffy review <pr>`, reviews someone else's PR: two blind reviewers on different models, a red-green test check when it applies, a judge that checks every finding against the code, then drafts in your voice, posted only on your go. The fourth, `/scruffy design <handoff>`, implements a finished Claude Design handoff into an app of your own: every state is built, captured on a device, compared with the rendered design, and handed to you on a review page to approve or decline.
 
 | Skill | Owns |
 |---|---|
@@ -8,9 +8,10 @@ Scruffy takes bugs and features, in repos you don't own, to a draft PR with proo
 | `scruffy-bug` | The bug lane: preflight, dossier, clustering, the budget, then per bug: gather, already dead?, reproduce, investigate, red test, propose, fix, verify, clean up, draft PR. Then the final report, the ledger and learning |
 | `scruffy-feature` | The feature lane (formerly Taimi): a team of roles that specs, plans, builds and reviews a feature, with a council mechanism for decisions |
 | `scruffy-review` | The review lane: Opus 5.5 and GPT-6.1 Sol review blind (Fable 5.1 when there is no GPT), the red-green test check on codeless and shared-code PRs, a Sonnet 5.5 judge, follow-up questions, drafts, posting on go, and learning from your edits |
+| `scruffy-design` | The design lane: preflight and a per-project profile, intake of the handoff against the product document, a serial foundation, a pilot screen, parallel screen developers, a visual QA loop, a draft PR, and a review page whose report drives the fix rounds |
 | `verification` | Proof. Red tests, the four claims, the proof block. Called by the bug and feature lanes, run standalone on a branch or a diff, or as the red-green test check on someone else's PR |
 
-`scruffy-bug`, `scruffy-feature` and `scruffy-review` are entered only through the dispatcher. `shared/` and `memory/` are not skills.
+`scruffy-bug`, `scruffy-feature`, `scruffy-review` and `scruffy-design` are entered only through the dispatcher. `shared/` and `memory/` are not skills.
 
 Agents the skills dispatch, never called directly:
 
@@ -21,6 +22,7 @@ Agents the skills dispatch, never called directly:
 | `pr-reviewer` | The review lane's reviewer and judge on the no-T3 transport: read-only, in a detached worktree at someone else's PR head |
 | `evidence-capturer` | Takes the before/after pair from a simulator or emulator by a recorded path, gated on the accessibility tree and the installed binary's hash |
 | `developer` | Implements one track of a plan in its own worktree, from a packet the Team Lead writes |
+| `design-qa` | The design lane's judge: compares the rendered design with the device capture for each state of one screen, against a fixed rubric, and returns a gap report. Read-only, and never sees the developer's reasoning |
 
 ## Install
 
@@ -42,6 +44,7 @@ mklink /J "%USERPROFILE%\.claude\skills\scruffy" "C:\dev\Scruffy\scruffy"
 mklink /J "%USERPROFILE%\.claude\skills\scruffy-bug" "C:\dev\Scruffy\scruffy-bug"
 mklink /J "%USERPROFILE%\.claude\skills\scruffy-feature" "C:\dev\Scruffy\scruffy-feature"
 mklink /J "%USERPROFILE%\.claude\skills\scruffy-review" "C:\dev\Scruffy\scruffy-review"
+mklink /J "%USERPROFILE%\.claude\skills\scruffy-design" "C:\dev\Scruffy\scruffy-design"
 mklink /J "%USERPROFILE%\.claude\skills\verification" "C:\dev\Scruffy\verification"
 mklink /J "%USERPROFILE%\.claude\skills\shared" "C:\dev\Scruffy\shared"
 mklink /J "%USERPROFILE%\.claude\skills\memory" "C:\dev\Scruffy\memory"
@@ -57,10 +60,12 @@ Without the agents everything still runs, but verification grades in-context and
 /scruffy MOSAIC-3559 MOSAIC-3561 MOSAIC-3570
 /scruffy watch <pr>
 /scruffy review <pr>
+/scruffy design <handoff> --spec <product doc> --project <path>
+/scruffy design fix <design-review-….zip>
 verification <pr>
 ```
 
-The dispatcher classifies each item as a bug or a feature. Several bugs at once are taken in together, so two tickets with one root cause become one PR. `watch` monitors a PR you already opened: bots, human reviewers, the loop, the exits. `review` reviews a PR someone else opened. `verification` also runs on its own against the current worktree.
+The dispatcher classifies each item as a bug or a feature. Several bugs at once are taken in together, so two tickets with one root cause become one PR. `watch` monitors a PR you already opened: bots, human reviewers, the loop, the exits. `review` reviews a PR someone else opened. `design` implements a finished design handoff and ends at a review page; `design fix` takes the report that page downloads and fixes what you declined. `verification` also runs on its own against the current worktree.
 
 ## The idea
 
@@ -107,6 +112,11 @@ Scruffy/
 │   ├── seats.json                reviewer-a, reviewer-b, judge, with fallbacks
 │   ├── references/               reviewer.md, judge.md, contract.md
 │   └── scripts/resolve-seats.py  seats + live capabilities → the models that run
+├── scruffy-design/               the design lane
+│   ├── SKILL.md                  preflight → intake → foundation → pilot → screens → integration → hand-off
+│   ├── references/               preflight (and the project profile), intake, build, capture, visual-qa, hand-off
+│   ├── assets/review.html        the review page template
+│   └── scripts/                  build-review.py, read-report.py
 ├── shared/                       read by the lanes; not a skill
 │   ├── orchestration.md          Team Lead mechanics: tracks, worktrees, developer packet, integration, fail memo
 │   ├── pr.md                     evidence publishing, image verification, ticket comment
@@ -120,7 +130,7 @@ Scruffy/
 │       ├── recipes/<name>.md     build Consumer for sim, install DevApp, screenshot, pin status bar …
 │       └── paths/<screen>.md     recorded navigation
 ├── verification/                 the proof engine, separately invocable
-├── agents/                       proof-auditor, step-reviewer, evidence-capturer, developer, pr-reviewer
+├── agents/                       proof-auditor, step-reviewer, evidence-capturer, developer, pr-reviewer, design-qa
 ├── scripts/                      install.sh, selfcheck.sh, check-paths.py, test_resolve_seats.py
 └── docs/superpowers/             specs and plans, history
 ```
@@ -136,4 +146,4 @@ Scruffy/
 
 ## Status
 
-Written, not yet run end to end as merged; the first ticket writes the first recipe.
+Written, not yet run end to end as merged; the first ticket writes the first recipe. The design lane is written and not yet run: its review page and both scripts were exercised once by hand, its capture commands are proposals that the first run's preflight proves or rejects.

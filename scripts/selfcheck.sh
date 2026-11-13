@@ -212,5 +212,50 @@ check "review lane in run cap"         grep -q "Review lane" scruffy-bug/referen
 check "installer links review lane"    grep -q "scruffy-review" scripts/install.sh
 check "README names the review lane"   grep -q "scruffy-review" README.md
 
+# --- Design lane
+check "design lane exists"               test -f scruffy-design/SKILL.md
+check "design SKILL name"                grep -q "^name: scruffy-design$" scruffy-design/SKILL.md
+check "design lane not model-invocable"  grep -q "^disable-model-invocation: true$" scruffy-design/SKILL.md
+check "design SKILL has no argument-hint" bash -c '! grep -q "^argument-hint:" scruffy-design/SKILL.md'
+check "design lane takes no \$ARGUMENTS" bash -c '! grep -q "ARGUMENTS" scruffy-design/SKILL.md'
+for f in preflight intake build capture visual-qa hand-off; do
+  check "design reference $f.md exists" test -f "scruffy-design/references/$f.md"
+done
+check "seven-step progress block"        bash -c 'for s in "1 Preflight" "2 Intake" "3 Foundation" "4 Pilot screen" "5 Screens" "6 Integration" "7 Hand-off"; do grep -q "$s" scruffy-design/SKILL.md || exit 1; done'
+check "design lane resumes from state.md" grep -q "continue from that step" scruffy-design/SKILL.md
+check "two asks, one decision"           bash -c 'grep -q "Missing inputs" scruffy-design/SKILL.md && grep -q "Intake questions" scruffy-design/SKILL.md && grep -q "The review page" scruffy-design/SKILL.md'
+check "design lane never merges"         grep -qi "does not merge" scruffy-design/references/hand-off.md
+check "design PR always a draft"         grep -q "always a draft" scruffy-design/references/hand-off.md
+check "design lane never MERGE-READY"    bash -c 'grep -q "never \`MERGE-READY\`" scruffy-design/references/hand-off.md && grep -q "Design lane tier criteria" shared/proof-block.md'
+check "profile has its commands"         bash -c 'for k in install_cmd check_cmd test_cmd build_cmd launch_cmd open_state_cmd screenshot_cmd render_cmd shared_globs; do grep -q "^$k:" scruffy-design/references/preflight.md || exit 1; done'
+check "profile proven before building"   grep -q "proven:" scruffy-design/references/preflight.md
+check "intake closes once"               grep -q "intake: closed" scruffy-design/references/intake.md
+check "shared files frozen"              bash -c 'grep -q "frozen" scruffy-design/references/build.md && grep -q "frozen" agents/developer.md'
+check "visual rounds capped at three"    grep -q "After round 3" scruffy-design/references/build.md
+check "developers never capture"         grep -qi "developers still never capture" scruffy-design/references/build.md
+check "one device slot"                  grep -q "## The slot" scruffy-design/references/capture.md
+check "no pixel diff against the design" grep -qi "never pixel-diffed" scruffy-design/references/visual-qa.md
+check "three QA verdicts"                bash -c 'for v in "MATCH" "GAPS" "CANNOT JUDGE"; do grep -q "$v" scruffy-design/references/visual-qa.md || exit 1; done'
+check "design-qa agent exists"           test -f agents/design-qa.md
+check "design-qa is sonnet"              grep -q "^model: sonnet$" agents/design-qa.md
+check "design-qa is read-only"           bash -c 'grep -q "^tools: Read, Grep, Glob, Bash$" agents/design-qa.md && grep -qi "never edit" agents/design-qa.md'
+check "design lane no harness isolation" bash -c '! grep -rq "isolation:" scruffy-design/'
+check "design commands use installed paths" grep_empty '\.\./scruffy-design/scripts/|\.\./scruffy-bug/scripts/' scruffy-design
+check "review template has one data marker" bash -c '[ "$(grep -c "__RUN_DATA__" scruffy-design/assets/review.html)" = 1 ]'
+check "review template has no placeholder art" grep_empty 'KINDS|Placeholder screens' scruffy-design/assets/review.html
+check "build-review usage"               bash -c 'python3 scruffy-design/scripts/build-review.py 2>&1 | grep -q "usage"'
+check "read-report usage"                bash -c 'python3 scruffy-design/scripts/read-report.py 2>&1 | grep -q "usage"'
+check "fix round re-captures every state" grep -q "Re-capture \*\*every\*\* state" scruffy-design/references/hand-off.md
+check "owner reason outranks QA"         grep -qi "outranks the QA verdict" scruffy-design/references/hand-off.md
+check "dispatcher routes design"         grep -q "../scruffy-design/SKILL.md" scruffy/SKILL.md
+check "argument-hint has design"         bash -c 'grep "^argument-hint:" scruffy/SKILL.md | grep -q "design <handoff>"'
+check "intake routes a design handoff"   bash -c 'grep "Claude Design handoff" scruffy/references/intake.md | grep -q "scruffy-design"'
+check "design lane in run cap"           grep -q "Design lane, per run" scruffy-bug/references/models.md
+check "ledger knows the design lane"     grep -q '`design`' scruffy-bug/references/dossier.md
+check "orchestration names the design lane" grep -q "Design lane" shared/orchestration.md
+check "path checker covers design"       grep -q '"scruffy-design"' scripts/check-paths.py
+check "installer links design lane"      grep -q "scruffy-design" scripts/install.sh
+check "README names the design lane"     grep -q "scruffy-design" README.md
+
 echo "selfcheck: $fails failure(s)"
 exit $(( fails > 0 ))

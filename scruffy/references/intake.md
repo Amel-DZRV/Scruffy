@@ -26,5 +26,6 @@ Per item, by source:
 | "Add dark-mode support to the store carousel" | feature | new behaviour |
 | "Remove the deprecated `LegacyBadge` renderer" | feature | debt to remove |
 | "Please review PR #1234" | review | `scruffy-review`: two reviewers, a judge, the red-green test check when it applies |
+| "Implement the Claude Design handoff for the Training tab" | design | `scruffy-design`: the look is decided and drawn; the lane builds it and proves each state against the design |
 
 When the lane depends on a fact you can look up (was it ever built?), look it up. When it depends on intent you cannot, ask — one question, with your guess.
