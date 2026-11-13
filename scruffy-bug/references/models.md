@@ -17,6 +17,7 @@ Two rules: cheapest model that answers reliably, and every loop has a number.
 | Red test, implement, PR body | sonnet | Reading call paths and suite output |
 | `proof-auditor` agent — 1c, 1d, verdict | sonnet, pinned in the agent file | Independence is the point, not horsepower. Fresh context, no write tools |
 | `step-reviewer` agent — between plan steps | sonnet, pinned in the agent file | Same: a reviewer primed with the implementer's reasoning inherits its blind spots |
+| `design-qa` agent — design lane, one per screen per round | sonnet, pinned in the agent file | Reads two pictures and two sets of values against a fixed rubric. Fresh context, no write tools, never the developer's reasoning |
 | `evidence-capturer` agent — before/after captures | sonnet, pinned in the agent file | Resolving labels to frames and judging a stable tree needs reading, not horsepower. Device work: passes through the build slot on expensive loops |
 
 Cheap agents **locate and transcribe. They do not summarize** — three paragraphs of mush costs a strong model a second read. Give them a strict output contract: fields, sources, claim-vs-verified.
@@ -36,6 +37,7 @@ Hitting a cap routes to `blocked` with state preserved. Never a silent retry, ne
 | Flaky suite re-run | **2** | `blocked` and flagged flaky — **never re-run to green** |
 | Red-green test check — test-writing attempts | **2** | fall back to shallow, with a note saying why |
 | Review lane, per run | **11** invocations (3 seats + 3 retries + 1 proof-auditor + 4 follow-up judge rounds) | seat failed: <seat>; both reviewers → blocked; follow-ups past 4 answered in the main thread |
+| Design lane, per run | **16 + 10 per screen** invocations (foundation 16; per screen: 3 visual rounds of `developer` + `design-qa`, 1 behaviour `developer`, 1 `step-reviewer`, 1 re-check, 1 at integration) | remaining screens `deferred`, named. The design lane counts against this row, not the 60 below |
 | Whole run, **total** agent invocations | **60** cumulative | Remaining items `deferred`, named individually |
 
 **Chain attempts and fix attempts do not share a budget.** One exhausting the other is how a correct diagnosis gets abandoned, or a wrong one gets implemented three times. Counted separately in `state.md`.

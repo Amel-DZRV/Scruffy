@@ -1,6 +1,6 @@
 # Orchestration — the Team Lead
 
-How an approved plan becomes work, in either lane. The mechanics here are shared; who wears the hat is per lane.
+How an approved plan becomes work, in any lane that builds. The mechanics here are shared; who wears the hat is per lane.
 
 ## Who is the Team Lead
 
@@ -8,6 +8,7 @@ How an approved plan becomes work, in either lane. The mechanics here are shared
 
 - **Feature lane:** compose `../scruffy-feature/roles/team-lead-<platform>/{persona,skills,tools}.md`, `../scruffy-feature/rules/engineering-discipline.md`, `../scruffy-feature/memory/global/team-lead-<platform>.md`, and the project memory, exactly as `../scruffy-feature/mechanisms/pipeline/RUNNER.md` composes any role — then be that role for the rest of this file.
 - **Bug lane:** no role file; the main thread is the Team Lead with the dossier and `../scruffy-bug/references/models.md`.
+- **Design lane:** no role file; the main thread is the Team Lead with the dossier, `slices.md` and `../scruffy-design/references/build.md`, which lists what that lane does differently from this file (one track per screen after a serial foundation, tracks branched from the foundation commit, captures by the Team Lead only).
 
 The model is whatever Amel runs the skill under; Opus on escalation, never on schedule.
 
@@ -15,6 +16,7 @@ The model is whatever Amel runs the skill under; Opus on escalation, never on sc
 
 - **Bug lane:** step 5 ended red — test file, hash and test-only SHA in `state.md`; Stop 2 answered if it fired; `evidence/goal.active` armed.
 - **Feature lane:** Amel's explicit "go"; the criteria lock recorded by the Docs-Keeper; the Chief of Engineering's seam sign-off for cross-platform work; every plan step carrying all four fields. A missing one stops the platform `blocked`, naming it.
+- **Design lane:** the project profile proven, `intake: closed` in `state.md`, and for any screen track the foundation commit recorded.
 
 ## Plan steps
 
@@ -61,7 +63,7 @@ Builds still pass through the build slot whatever the runner.
   git -C <repo_path> worktree add <path> -b <branch> <test-sha>
   ```
 
-  Feature lane: `<path>` is `<repo_path>/.worktrees/<feature-key>-<platform>-track-<n>`, branch `<feature-key>-<platform>-track-<n>`, `<test-sha>` the platform branch's test commit. Bug lane: `<repo_path>/.worktrees/<KEY>-track-<n>`, branch `<KEY>-track-<n>`, `<test-sha>` the test-only SHA in `state.md`. Every track sees the red tests; none sees another track's edits. The absolute path is the developer packet's `worktree`.
+  Feature lane: `<path>` is `<repo_path>/.worktrees/<feature-key>-<platform>-track-<n>`, branch `<feature-key>-<platform>-track-<n>`, `<test-sha>` the platform branch's test commit. Bug lane: `<repo_path>/.worktrees/<KEY>-track-<n>`, branch `<KEY>-track-<n>`, `<test-sha>` the test-only SHA in `state.md`. Design lane: `<repo_path>/.worktrees/design-<feature-slug>-<screen>`, branch `design-<feature-slug>-<screen>`, branched from the foundation commit in place of a test commit. Every track sees the red tests; none sees another track's edits. The absolute path is the developer packet's `worktree`.
 - **Removed after successful integration**, always. The merged commits live on the platform branch.
 - A **blocked** track's worktree is kept: a failed run is exactly when Amel digs in.
 
@@ -85,7 +87,7 @@ Identical whether one track runs or five:
 - **One commit per step.**
 - **Run the track's acceptance tests after every step.** It tells you which criterion each step actually delivered.
 - The mechanical layer (lint, format, pre-commit hooks) runs before the reviewer sees the diff.
-- **Review between steps**, fresh context: the two SHAs bounding the step, the plan step with its `criteria`, nothing else. Bug lane: `step-reviewer`. Feature lane: `reviewer-<platform>`, composed from its role files. A developer cannot launch either, so the Team Lead runs the reviewer over each returned track's commits in order before integrating. Critical / Important → a fresh developer for that track, against **that track's** fix budget. A comment that breaks the engineering discipline rule is Important; Minor findings carry to cleanup. The Team Lead's report records each finding and its disposition.
+- **Review between steps**, fresh context: the two SHAs bounding the step, the plan step with its `criteria`, nothing else. Bug lane: `step-reviewer`. Feature lane: `reviewer-<platform>`, composed from its role files. Design lane: `step-reviewer`, once over a screen's whole track, with `design-qa` judging the captures every round. A developer cannot launch either, so the Team Lead runs the reviewer over each returned track's commits in order before integrating. Critical / Important → a fresh developer for that track, against **that track's** fix budget. A comment that breaks the engineering discipline rule is Important; Minor findings carry to cleanup. The Team Lead's report records each finding and its disposition.
 
 The Team Lead does not add a second review of its own. It integrates.
 

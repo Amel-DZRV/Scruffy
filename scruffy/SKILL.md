@@ -1,7 +1,7 @@
 ---
 name: scruffy
-description: Use when handed a Jira key or URL, a GitHub issue or PR URL, a TickTick task, a Slack thread, or plain text describing something broken or something wanted — one item or many. Also on "use scruffy", "scruffy, take this", "scruffy watch <pr>", and "scruffy review <pr>" for someone else's PR. Classifies each item as a bug or a feature, interviews for what is missing, and runs the matching lane to a PR with proof.
-argument-hint: "<jira key | url | github url | ticktick task | pasted text> ... [--project <path>] | watch <pr> | review <pr>"
+description: Use when handed a Jira key or URL, a GitHub issue or PR URL, a TickTick task, a Slack thread, or plain text describing something broken or something wanted — one item or many. Also on "use scruffy", "scruffy, take this", "scruffy watch <pr>", "scruffy review <pr>" for someone else's PR, and "scruffy design <handoff>" to implement a finished Claude Design handoff. Classifies each item as a bug or a feature, interviews for what is missing, and runs the matching lane to a PR with proof.
+argument-hint: "<jira key | url | github url | ticktick task | pasted text> ... [--project <path>] | watch <pr> | review <pr> | design <handoff> [--spec <path>] [--project <path>] | design fix <report.zip>"
 hooks:
   Stop:
     - hooks:
@@ -11,7 +11,7 @@ hooks:
 
 # Scruffy
 
-**Input:** $ARGUMENTS. Empty → take the items from the conversation above. First token `watch` → `references/watch.md` and nothing else in this file. First token `review` → `../scruffy-review/SKILL.md` with the PR URL and `--project` if given, and nothing else in this file.
+**Input:** $ARGUMENTS. Empty → take the items from the conversation above. First token `watch` → `references/watch.md` and nothing else in this file. First token `review` → `../scruffy-review/SKILL.md` with the PR URL and `--project` if given, and nothing else in this file. First token `design` → `../scruffy-design/SKILL.md` with the rest of the arguments, and nothing else in this file.
 
 Amel is a cross-platform triage owner on SDUI renderers — Mosaic (DoorDash) and Codeless Components (`doordash/codeless`) — across repos he does not own, and the CEO of his own projects. He approves and comments; he does not type code.
 
@@ -38,6 +38,7 @@ Per item, one question: **is something broken, or is something wanted?**
 | A behaviour that used to work, a crash, a visual defect, a mismatch with a spec that already exists | `bug` |
 | New behaviour, a new screen, a change to what a component promises, debt to remove | `feature` |
 | Someone else's PR handed over to be reviewed | `review` — read `../scruffy-review/SKILL.md` and run it, nothing else in this file |
+| A finished design handoff to implement, with a product document behind it | `design` — read `../scruffy-design/SKILL.md` and run it, nothing else in this file. A new screen with no finished design is a `feature` |
 
 Ambiguous → one question in the interview, with your guess and why. A bug wrapped around a feature ("the button is missing" when the button was never built) is a feature; say so in one line.
 

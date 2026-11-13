@@ -58,6 +58,16 @@ The UI-pair gate and radius-trumps-greenness apply unchanged; the feature lane h
 
 **A new contract at a seam is not, by itself, shared radius.** A cross-platform feature that introduces its own contract (an endpoint, a data shape nothing else reads) and has the Chief of Engineering's seam sign-off is contained. A change that alters a contract other code already reads is shared.
 
+### Design lane tier criteria
+
+The design lane awards two of the three tiers and never `MERGE-READY`: whether a screen looks right is Amel's decision on the review page, so its proof is at best "holds, the judgement is his". Its PR body, not this block, carries the per-state table (`../scruffy-design/references/hand-off.md` §The PR).
+
+| Verdict | Criteria — all of them |
+|---|---|
+| **REVIEW NEEDED** | every state captured through the harness and judged by `design-qa` on the final branch, suite delta against baseline is zero, no screen blocked or deferred |
+| **PROOF INCOMPLETE** | any state blocked or not captured, any process failure, a behaviour line with neither a passing test nor a stated reason, a screen deferred on the cap |
+
+
 For a cross-platform feature, the **Chief of Engineering reconciles** the platforms' verdicts. The feature's verdict is the lowest tier of any platform, unless the Chief records a reason the lower verdict does not apply to the feature as a whole. A reconciliation never raises a tier above what a platform's own proof supports.
 
 ## Lane-specific rows
